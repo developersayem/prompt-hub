@@ -39,6 +39,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
+import { UserNav } from "@/components/user-nav";
 
 // Mock data
 const prompts: {
@@ -220,10 +221,7 @@ export default function FeedPage() {
                 <Plus className="h-4 w-4 mr-2" />
                 Create Prompt
               </Button>
-              <Avatar>
-                <AvatarImage src="/placeholder.svg?height=32&width=32" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
+              <UserNav />
             </div>
           </div>
         </div>
