@@ -1,20 +1,41 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ArrowLeft, Upload, X, Sparkles, DollarSign, Eye, Save, Send } from "lucide-react"
-import Link from "next/link"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  ArrowLeft,
+  Upload,
+  X,
+  Sparkles,
+  DollarSign,
+  Eye,
+  Save,
+  Send,
+} from "lucide-react";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function CreatePromptPage() {
   const [formData, setFormData] = useState({
@@ -29,45 +50,45 @@ export default function CreatePromptPage() {
     isPaid: false,
     price: "",
     previewMode: "full",
-  })
+  });
 
-  const [currentTag, setCurrentTag] = useState("")
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [currentTag, setCurrentTag] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
   const handleAddTag = () => {
     if (currentTag.trim() && !formData.tags.includes(currentTag.trim())) {
       setFormData({
         ...formData,
         tags: [...formData.tags, currentTag.trim()],
-      })
-      setCurrentTag("")
+      });
+      setCurrentTag("");
     }
-  }
+  };
 
   const handleRemoveTag = (tagToRemove: string) => {
     setFormData({
       ...formData,
       tags: formData.tags.filter((tag) => tag !== tagToRemove),
-    })
-  }
+    });
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
+    const file = e.target.files?.[0];
     if (file) {
-      setUploadedFile(file)
+      setUploadedFile(file);
     }
-  }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    console.log("Creating prompt:", formData)
+    e.preventDefault();
+    console.log("Creating prompt:", formData);
     // Handle form submission
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700">
+      <header className="bg-neutral-50 dark:bg-neutral-950 border-b dark:border-gray-700">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -104,7 +125,9 @@ export default function CreatePromptPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Basic Information</CardTitle>
-                <CardDescription>Provide the essential details about your prompt</CardDescription>
+                <CardDescription>
+                  Provide the essential details about your prompt
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -113,7 +136,9 @@ export default function CreatePromptPage() {
                     id="title"
                     placeholder="Enter a compelling title for your prompt"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -125,7 +150,9 @@ export default function CreatePromptPage() {
                     placeholder="Describe what your prompt does and what results it generates"
                     rows={3}
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -135,7 +162,9 @@ export default function CreatePromptPage() {
                     <Label htmlFor="category">Category *</Label>
                     <Select
                       value={formData.category}
-                      onValueChange={(value) => setFormData({ ...formData, category: value })}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, category: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a category" />
@@ -147,7 +176,9 @@ export default function CreatePromptPage() {
                         <SelectItem value="writing">Writing</SelectItem>
                         <SelectItem value="business">Business</SelectItem>
                         <SelectItem value="education">Education</SelectItem>
-                        <SelectItem value="entertainment">Entertainment</SelectItem>
+                        <SelectItem value="entertainment">
+                          Entertainment
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -156,7 +187,9 @@ export default function CreatePromptPage() {
                     <Label htmlFor="aiModel">AI Model Used *</Label>
                     <Select
                       value={formData.aiModel}
-                      onValueChange={(value) => setFormData({ ...formData, aiModel: value })}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, aiModel: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select AI model" />
@@ -168,7 +201,9 @@ export default function CreatePromptPage() {
                         <SelectItem value="dall-e-3">DALL-E 3</SelectItem>
                         <SelectItem value="dall-e-2">DALL-E 2</SelectItem>
                         <SelectItem value="midjourney">Midjourney</SelectItem>
-                        <SelectItem value="stable-diffusion">Stable Diffusion</SelectItem>
+                        <SelectItem value="stable-diffusion">
+                          Stable Diffusion
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -180,7 +215,9 @@ export default function CreatePromptPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Prompt Content</CardTitle>
-                <CardDescription>Enter your prompt and upload the generated result</CardDescription>
+                <CardDescription>
+                  Enter your prompt and upload the generated result
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -190,7 +227,9 @@ export default function CreatePromptPage() {
                     placeholder="Enter the exact prompt you used to generate the result"
                     rows={4}
                     value={formData.promptText}
-                    onChange={(e) => setFormData({ ...formData, promptText: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, promptText: e.target.value })
+                    }
                     required
                   />
                 </div>
@@ -199,7 +238,9 @@ export default function CreatePromptPage() {
                   <Label>Result Type *</Label>
                   <RadioGroup
                     value={formData.resultType}
-                    onValueChange={(value) => setFormData({ ...formData, resultType: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, resultType: value })
+                    }
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="text" id="text" />
@@ -224,7 +265,12 @@ export default function CreatePromptPage() {
                       placeholder="Paste the text result generated by the AI"
                       rows={6}
                       value={formData.resultContent}
-                      onChange={(e) => setFormData({ ...formData, resultContent: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          resultContent: e.target.value,
+                        })
+                      }
                       required
                     />
                   </div>
@@ -234,21 +280,31 @@ export default function CreatePromptPage() {
                     <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center">
                       <input
                         type="file"
-                        accept={formData.resultType === "image" ? "image/*" : "video/*"}
+                        accept={
+                          formData.resultType === "image"
+                            ? "image/*"
+                            : "video/*"
+                        }
                         onChange={handleFileUpload}
                         className="hidden"
                         id="file-upload"
                       />
                       <label htmlFor="file-upload" className="cursor-pointer">
                         <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                        <p className="text-sm text-gray-600">Click to upload or drag and drop</p>
+                        <p className="text-sm text-gray-600">
+                          Click to upload or drag and drop
+                        </p>
                         <p className="text-xs text-gray-500 mt-1">
-                          {formData.resultType === "image" ? "PNG, JPG, GIF up to 10MB" : "MP4, MOV up to 50MB"}
+                          {formData.resultType === "image"
+                            ? "PNG, JPG, GIF up to 10MB"
+                            : "MP4, MOV up to 50MB"}
                         </p>
                       </label>
                       {uploadedFile && (
                         <div className="mt-4 p-2 bg-green-50 rounded-md">
-                          <p className="text-sm text-green-700">Uploaded: {uploadedFile.name}</p>
+                          <p className="text-sm text-green-700">
+                            Uploaded: {uploadedFile.name}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -261,7 +317,9 @@ export default function CreatePromptPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Tags</CardTitle>
-                <CardDescription>Add relevant tags to help users discover your prompt</CardDescription>
+                <CardDescription>
+                  Add relevant tags to help users discover your prompt
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex space-x-2">
@@ -269,7 +327,9 @@ export default function CreatePromptPage() {
                     placeholder="Add a tag"
                     value={currentTag}
                     onChange={(e) => setCurrentTag(e.target.value)}
-                    onKeyPress={(e) => e.key === "Enter" && (e.preventDefault(), handleAddTag())}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), handleAddTag())
+                    }
                   />
                   <Button type="button" onClick={handleAddTag}>
                     Add
@@ -279,9 +339,16 @@ export default function CreatePromptPage() {
                 {formData.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {formData.tags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="flex items-center gap-1">
+                      <Badge
+                        key={tag}
+                        variant="secondary"
+                        className="flex items-center gap-1"
+                      >
                         #{tag}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => handleRemoveTag(tag)} />
+                        <X
+                          className="h-3 w-3 cursor-pointer"
+                          onClick={() => handleRemoveTag(tag)}
+                        />
                       </Badge>
                     ))}
                   </div>
@@ -293,17 +360,23 @@ export default function CreatePromptPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Monetization</CardTitle>
-                <CardDescription>Choose whether to offer your prompt for free or set a price</CardDescription>
+                <CardDescription>
+                  Choose whether to offer your prompt for free or set a price
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Paid Prompt</Label>
-                    <p className="text-sm text-gray-500">Enable to sell your prompt (you keep 90% of revenue)</p>
+                    <p className="text-sm text-gray-500">
+                      Enable to sell your prompt (you keep 90% of revenue)
+                    </p>
                   </div>
                   <Switch
                     checked={formData.isPaid}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isPaid: checked })}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, isPaid: checked })
+                    }
                   />
                 </div>
 
@@ -321,25 +394,43 @@ export default function CreatePromptPage() {
                           placeholder="9.99"
                           className="pl-10"
                           value={formData.price}
-                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, price: e.target.value })
+                          }
                           required={formData.isPaid}
                         />
                       </div>
                     </div>
 
                     <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-blue-900 mb-2">Revenue Breakdown</h4>
+                      <h4 className="font-medium text-blue-900 mb-2">
+                        Revenue Breakdown
+                      </h4>
                       <div className="space-y-1 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-blue-700">Your earnings (90%):</span>
+                          <span className="text-blue-700">
+                            Your earnings (90%):
+                          </span>
                           <span className="font-medium text-blue-900">
-                            ${formData.price ? (Number.parseFloat(formData.price) * 0.9).toFixed(2) : "0.00"}
+                            $
+                            {formData.price
+                              ? (
+                                  Number.parseFloat(formData.price) * 0.9
+                                ).toFixed(2)
+                              : "0.00"}
                           </span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-blue-700">Platform fee (10%):</span>
+                          <span className="text-blue-700">
+                            Platform fee (10%):
+                          </span>
                           <span className="font-medium text-blue-900">
-                            ${formData.price ? (Number.parseFloat(formData.price) * 0.1).toFixed(2) : "0.00"}
+                            $
+                            {formData.price
+                              ? (
+                                  Number.parseFloat(formData.price) * 0.1
+                                ).toFixed(2)
+                              : "0.00"}
                           </span>
                         </div>
                       </div>
@@ -363,5 +454,5 @@ export default function CreatePromptPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
