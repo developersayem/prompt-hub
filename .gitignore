@@ -1,0 +1,15 @@
+# Node
+node_modules/
+.env
+
+# Frontend
+client/node_modules/
+client/.next/
+client/.env.local
+
+# Logs
+logs
+*.log
+
+# OS
+.DS_Store
