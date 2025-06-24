@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Separator } from "@/components/ui/separator"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 import {
   Heart,
   MessageCircle,
@@ -23,9 +23,10 @@ import {
   DollarSign,
   Eye,
   Lock,
-} from "lucide-react"
-import Link from "next/link"
-import { ThemeToggle } from "@/components/theme-toggle"
+} from "lucide-react";
+import Link from "next/link";
+import { ThemeToggle } from "@/components/theme-toggle";
+import Image from "next/image";
 
 // Mock data
 const prompts = [
@@ -43,7 +44,8 @@ const prompts = [
     aiModel: "GPT-4",
     resultType: "text",
     tags: ["linkedin", "marketing", "social-media"],
-    preview: "Create a professional LinkedIn post about the importance of continuous learning in tech careers...",
+    preview:
+      "Create a professional LinkedIn post about the importance of continuous learning in tech careers...",
     createdAt: "2 hours ago",
   },
   {
@@ -78,25 +80,26 @@ const prompts = [
     aiModel: "Claude",
     resultType: "text",
     tags: ["code", "review", "programming"],
-    preview: "Review this React component and suggest improvements for performance and readability...",
+    preview:
+      "Review this React component and suggest improvements for performance and readability...",
     createdAt: "1 day ago",
   },
-]
+];
 
 export default function FeedPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 border-b dark:border-gray-700 sticky top-0 z-50">
+      <header className="bg-neutral-50 dark:bg-neutral-950 border-b dark:border-gray-700 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Link href="/" className="flex items-center space-x-2">
                 <Sparkles className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold">PromptHub</span>
+                <span className="text-xl font-bold">Prompt Hub</span>
               </Link>
               <div className="relative hidden md:block">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -174,21 +177,27 @@ export default function FeedPage() {
                     All
                   </Button>
                   <Button
-                    variant={selectedCategory === "marketing" ? "default" : "outline"}
+                    variant={
+                      selectedCategory === "marketing" ? "default" : "outline"
+                    }
                     size="sm"
                     onClick={() => setSelectedCategory("marketing")}
                   >
                     Marketing
                   </Button>
                   <Button
-                    variant={selectedCategory === "design" ? "default" : "outline"}
+                    variant={
+                      selectedCategory === "design" ? "default" : "outline"
+                    }
                     size="sm"
                     onClick={() => setSelectedCategory("design")}
                   >
                     Design
                   </Button>
                   <Button
-                    variant={selectedCategory === "programming" ? "default" : "outline"}
+                    variant={
+                      selectedCategory === "programming" ? "default" : "outline"
+                    }
                     size="sm"
                     onClick={() => setSelectedCategory("programming")}
                   >
@@ -204,12 +213,17 @@ export default function FeedPage() {
 
             {/* Prompt Cards */}
             {prompts.map((prompt) => (
-              <Card key={prompt.id} className="hover:shadow-lg transition-shadow">
+              <Card
+                key={prompt.id}
+                className="hover:shadow-lg transition-shadow"
+              >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">
                       <Avatar>
-                        <AvatarImage src={prompt.authorAvatar || "/placeholder.svg"} />
+                        <AvatarImage
+                          src={prompt.authorAvatar || "/placeholder.svg"}
+                        />
                         <AvatarFallback>
                           {prompt.author
                             .split(" ")
@@ -219,7 +233,9 @@ export default function FeedPage() {
                       </Avatar>
                       <div>
                         <p className="font-semibold">{prompt.author}</p>
-                        <p className="text-sm text-gray-500">{prompt.createdAt}</p>
+                        <p className="text-sm text-gray-500">
+                          {prompt.createdAt}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -236,7 +252,9 @@ export default function FeedPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">{prompt.title}</h3>
+                    <h3 className="text-xl font-semibold mb-2">
+                      {prompt.title}
+                    </h3>
                     <p className="text-gray-600">{prompt.description}</p>
                   </div>
 
@@ -250,7 +268,7 @@ export default function FeedPage() {
                     ) : (
                       <div>
                         {prompt.resultType === "image" ? (
-                          <img
+                          <Image
                             src={prompt.preview || "/placeholder.svg"}
                             alt="Prompt result"
                             className="w-full rounded-lg"
@@ -344,7 +362,10 @@ export default function FeedPage() {
                   { name: "Mike Johnson", prompts: 32, earnings: "$1,890" },
                   { name: "Alex Rodriguez", prompts: 28, earnings: "$1,560" },
                 ].map((creator, index) => (
-                  <div key={index} className="flex items-center justify-between">
+                  <div
+                    key={index}
+                    className="flex items-center justify-between"
+                  >
                     <div className="flex items-center space-x-2">
                       <Avatar className="h-8 w-8">
                         <AvatarImage src="/placeholder.svg?height=32&width=32" />
@@ -357,7 +378,9 @@ export default function FeedPage() {
                       </Avatar>
                       <div>
                         <p className="text-sm font-medium">{creator.name}</p>
-                        <p className="text-xs text-gray-500">{creator.prompts} prompts</p>
+                        <p className="text-xs text-gray-500">
+                          {creator.prompts} prompts
+                        </p>
                       </div>
                     </div>
                     <Badge variant="outline" className="text-xs">
@@ -392,5 +415,5 @@ export default function FeedPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
