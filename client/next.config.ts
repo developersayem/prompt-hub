@@ -1,7 +1,15 @@
+// client/next.config.ts
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
-  // turbopack: {}, // optional, but valid to omit it completely
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      "@": path.resolve(__dirname), // If you're NOT using src folder
+    };
+    return config;
+  },
 };
 
 export default nextConfig;
