@@ -375,7 +375,7 @@ export default function FeedPage() {
                           <h4 className="font-medium">Result Type</h4>
                           <RadioGroup
                             value={filters.resultType}
-                            onValueChange={(value) =>
+                            onValueChange={(value: string) =>
                               handleFilterChange("resultType", value)
                             }
                           >
@@ -406,7 +406,7 @@ export default function FeedPage() {
                           <div className="px-3">
                             <Slider
                               value={filters.priceRange}
-                              onValueChange={(value) =>
+                              onValueChange={(value: number[]) =>
                                 handleFilterChange("priceRange", value)
                               }
                               max={100}
@@ -466,7 +466,7 @@ export default function FeedPage() {
                           <h4 className="font-medium">Sort By</h4>
                           <RadioGroup
                             value={filters.sortBy}
-                            onValueChange={(value) =>
+                            onValueChange={(value: string) =>
                               handleFilterChange("sortBy", value)
                             }
                           >
