@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { UserNav } from "@/components/user-nav";
 
 // Mock data
 const statsData = [
@@ -103,7 +104,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-950">
       {/* Header */}
-      <header className="bg-white dark:bg-neutral-950 border-b dark:border-gray-700">
+      <header className="bg-white dark:bg-neutral-950 border-b dark:border-gray-700 fixed top-0 w-full z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -113,19 +114,20 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <ThemeToggle />
               <Link href="/create">
                 <Button>
                   <Plus className="h-4 w-4 mr-2" />
                   Create New Prompt
                 </Button>
               </Link>
+              <ThemeToggle />
+              <UserNav />
             </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 mt-20">
         <Tabs
           value={activeTab}
           onValueChange={setActiveTab}

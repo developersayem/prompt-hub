@@ -199,7 +199,7 @@ export default function FeedPage() {
             <div className="flex items-center space-x-2">
               <Link href="/" className="flex items-center space-x-2">
                 <Sparkles className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold">PromptHub</span>
+                <span className="text-xl font-bold">Prompt Hub</span>
               </Link>
             </div>
 
@@ -216,11 +216,11 @@ export default function FeedPage() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <ThemeToggle />
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Prompt
               </Button>
+              <ThemeToggle />
               <UserNav />
             </div>
           </div>
