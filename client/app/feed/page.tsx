@@ -216,10 +216,12 @@ export default function FeedPage() {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Prompt
-              </Button>
+              <Link href="/create">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Prompt
+                </Button>
+              </Link>
               <ThemeToggle />
               <UserNav />
             </div>
