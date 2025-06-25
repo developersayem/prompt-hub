@@ -25,6 +25,9 @@ const actionTypes = {
   REMOVE_TOAST: "REMOVE_TOAST",
 } as const
 
+const action = actionTypes.ADD_TOAST;
+console.log(`Action type: ${action}`);
+
 let count = 0
 
 function genId() {
