@@ -95,7 +95,7 @@ export default function LandingPage() {
                 Start Creating <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link href="/browse">
+            <Link href="/feed">
               <Button
                 size="lg"
                 variant="outline"
