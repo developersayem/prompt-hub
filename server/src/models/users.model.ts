@@ -1,6 +1,15 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
-import jwt from "jsonwebtoken"
+import jwt from 'jsonwebtoken';
+
+export interface ISocialLinks{
+ facebook?: string
+  instagram?: string
+  github?: string 
+  linkedIn?: string
+  x?: string
+  portfolio?: string
+}
 
 export interface IUser extends Document {
   name: string;
@@ -8,111 +17,116 @@ export interface IUser extends Document {
   password: string;
   avatar?: string;
   bio?: string;
-  friends: mongoose.Types.ObjectId[];
-  friendRequests: mongoose.Types.ObjectId[];
-  online: boolean;
-  lastSeen: Date;
-  socketId?: string;
-  refreshToken:string;
+  socialLinks?: ISocialLinks;
+  credits: number;
+  isGoogleAuthenticated?: boolean;
+  isCertified?: boolean;
+  prompt: mongoose.Schema.Types.ObjectId[];
+  purchasedPrompts: mongoose.Schema.Types.ObjectId[];
+  bookmarks: mongoose.Schema.Types.ObjectId[];
+  refreshToken: string;
 
-  // Add instance methods here:
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): string;
   generateRefreshToken(): string;
 }
 
-const userSchema: Schema<IUser> = new Schema({
-  name: { 
-    type: String,
-    required: true
-  },
-  email: { 
-    type: String,
-    unique: true,
-    required: true
-  },
-  password: {
-    type: String,
-    required: true
-  },
-  avatar: {
-    type: String,
-    default: '',
-    required: true
-  },
-  bio: {
-    type: String,
-    default: ''
-  },
-  friends: [
-    { 
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User' 
-    }],
-  friendRequests: [
-    { 
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User' 
-    }],
-  online: {
-    type: Boolean,
-    default: false
-  },
-  lastSeen: {
-    type: Date,
-    default: Date.now
-  },
-    refreshToken: {
-        type: String,
+const userSchema = new Schema<IUser>(
+  {
+    name: { 
+      type: String,
+      required: true 
     },
-  socketId: String,
-}, { timestamps: true });
+    email: { 
+      type: String,
+      unique: true,
+      required: true
+    },
+    password: {
+      type: String,
+      required: true
+    },
+    isGoogleAuthenticated: {
+      type: Boolean,
+      default: false
+    },
+    isCertified: {
+      type: Boolean,
+      default: false
+    },
+    avatar: {
+      type: String,
+      default: '',
+      required: true
+    },
+    bio: {
+      type: String,
+      default: ''
+    },
+    socialLinks: {
+      facebook: { type: String, default: '' },
+      instagram: { type: String, default: '' },
+      github: { type: String, default: '' },
+      linkedIn: { type: String, default: '' },
+      x: { type: String, default: '' },
+      portfolio: { type: String, default: '' }
+    },
+    credits: { 
+      type: Number,
+      default: 1000
+    },
+    prompt: [{ 
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Prompt'
+    }],
+    purchasedPrompts: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Prompt'
+    }],
+    bookmarks: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Prompt'
+    }],
+    refreshToken: {
+      type: String
+    },
+  },
+  { timestamps: true }
+);
 
+userSchema.pre('save', async function (next) {
+  const user = this as IUser;
+  if (!user.isModified('password')) return next();
+  user.password = await bcrypt.hash(user.password, 10);
+  next();
+});
 
+userSchema.methods.isPasswordCorrect = async function (password: string) {
+  const user = this as IUser;
+  return await bcrypt.compare(password, user.password);
+};
 
-//hash password before save 
-userSchema.pre("save", async function(next){
-const user = this as unknown as IUser;
-if(!user.isModified("password")) next()
+userSchema.methods.generateAccessToken = function (): string {
+  const expiresIn = Number(process.env.JWT_ACCESS_TOKEN_EXPIRY || 3600);
+  return jwt.sign(
+    {
+      _id: this._id,
+      email: this.email
+    },
+    process.env.JWT_ACCESS_TOKEN_SECRET!,
+    { expiresIn }
+  );
+};
 
-user.password = await bcrypt.hash(user.password,10)
-next();
-})
+userSchema.methods.generateRefreshToken = function (): string {
+  const expiresIn = Number(process.env.JWT_REFRESH_TOKEN_EXPIRY || 604800); // default 7d
+  return jwt.sign(
+    {
+      _id: this._id
+    },
+    process.env.JWT_REFRESH_TOKEN_SECRET!,
+    { expiresIn }
+  );
+};
 
-
-// compare password
-userSchema.methods.isPasswordCorrect = async function(password:string){
-    const user = this as IUser;
-    return await bcrypt.compare(password,user.password)
-}
-
-
-//generate assess token
-userSchema.methods.generateAccessToken = function():string{
-
-    const expiresIn =parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRY!, 10)
-
-    return jwt.sign({
-        _id:this._id,
-        userName: this.userName,
-        email: this.email
-    },process.env.JWT_ACCESS_TOKEN_SECRET !,{
-        expiresIn:expiresIn
-    })
-    
-}
-
-
-//generate refresh token
-userSchema.methods.generateRefreshToken = function():string{
-    const expiresIn =parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRY!, 10)
-
-    return jwt.sign({
-        _id:this._id,
-    },process.env.JWT_REFRESH_TOKEN_SECRET !,{
-        expiresIn:expiresIn
-    })
-}
-
-export const User =  mongoose.model<IUser>('User', userSchema);
-
+export const User = mongoose.model<IUser>('User', userSchema);
