@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 
 export interface ISocialLinks{
  facebook?: string
@@ -107,25 +107,28 @@ userSchema.methods.isPasswordCorrect = async function (password: string) {
 };
 
 userSchema.methods.generateAccessToken = function (): string {
-  const expiresIn = Number(process.env.JWT_ACCESS_TOKEN_EXPIRY || 3600);
+  const expiresIn = (process.env.JWT_ACCESS_TOKEN_EXPIRY || "1h") as `${number}${"s" | "m" | "h" | "d"}`; // e.g., '1h', '10d'
+  const options: SignOptions = { expiresIn };
+
   return jwt.sign(
     {
       _id: this._id,
       email: this.email
     },
-    process.env.JWT_ACCESS_TOKEN_SECRET!,
-    { expiresIn }
+    process.env.JWT_ACCESS_TOKEN_SECRET as string,
+    options
   );
 };
 
 userSchema.methods.generateRefreshToken = function (): string {
-  const expiresIn = Number(process.env.JWT_REFRESH_TOKEN_EXPIRY || 604800); // default 7d
+  const expiresIn =(process.env.JWT_REFRESH_TOKEN_EXPIRY || "7d") as `${number}${"s" | "m" | "h" | "d"}`; // e.g., '1h', '10d' // default 7d
+  const options: SignOptions = { expiresIn };
   return jwt.sign(
     {
       _id: this._id
     },
     process.env.JWT_REFRESH_TOKEN_SECRET!,
-    { expiresIn }
+    options  // Ensure algorithm is specified
   );
 };
 
