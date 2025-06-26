@@ -7,7 +7,7 @@ import { loggerMiddleware } from "./middlewares/loggerMiddleware";
 const app = express();
 
 // Your frontend origin
-const allowedOrigin =[ "http://localhost:3000", "https://prompt-hub.vercel.app"];
+const allowedOrigin = ["http://localhost:3000", "https://prompt-hub.vercel.app", "https://prompt-hub-six.vercel.app"];
 
 // Setup CORS with credentials and specific origin
 app.use(
