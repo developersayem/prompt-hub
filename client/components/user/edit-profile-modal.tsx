@@ -87,7 +87,7 @@ export function EditProfileModal({ user, onClose }: EditProfileModalProps) {
 
           {/* Basic Info */}
           <div className="space-y-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
@@ -97,7 +97,7 @@ export function EditProfileModal({ user, onClose }: EditProfileModalProps) {
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="bio">Bio</Label>
               <Textarea
                 id="bio"
@@ -114,7 +114,7 @@ export function EditProfileModal({ user, onClose }: EditProfileModalProps) {
             <h3 className="text-lg font-semibold">Social Links</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(formData.socialLinks).map(([platform, url]) => (
-                <div key={platform}>
+                <div key={platform} className="space-y-2">
                   <Label htmlFor={platform}>
                     {platform.charAt(0).toUpperCase() + platform.slice(1)}
                   </Label>
