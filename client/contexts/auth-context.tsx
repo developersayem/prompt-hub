@@ -2,14 +2,29 @@
 
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 
-interface User {
+export interface ISocialLinks {
+  facebook?: string;
+  instagram?: string;
+  github?: string;
+  linkedIn?: string;
+  x?: string;
+  portfolio?: string;
+}
+export interface IUser {
   _id: string;
   name: string;
   email: string;
+  password: string;
   avatar?: string;
   bio?: string;
-  online: boolean;
-  lastSeen: string;
+  socialLinks?: ISocialLinks;
+  credits: number;
+  isGoogleAuthenticated?: boolean;
+  isCertified?: boolean;
+  prompt: [];
+  purchasedPrompts: [];
+  bookmarks: [];
+  refreshToken: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -20,7 +35,7 @@ interface Tokens {
 }
 
 interface AuthState {
-  user: User | null;
+  user: IUser | null;
   tokens: Tokens | null; // We won't store tokens here, but keep for typing
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -28,10 +43,10 @@ interface AuthState {
 
 type AuthAction =
   | { type: "LOGIN_START" }
-  | { type: "LOGIN_SUCCESS"; payload: { user: User; tokens: Tokens | null } }
+  | { type: "LOGIN_SUCCESS"; payload: { user: IUser; tokens: Tokens | null } }
   | { type: "LOGIN_FAILURE" }
   | { type: "LOGOUT" }
-  | { type: "UPDATE_USER"; payload: Partial<User> }
+  | { type: "UPDATE_USER"; payload: Partial<IUser> }
   | { type: "SET_LOADING"; payload: boolean };
 
 const initialState: AuthState = {
@@ -73,7 +88,7 @@ interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
-  updateUser: (data: Partial<User>) => void;
+  updateUser: (data: Partial<IUser>) => void;
 }
 
 interface RegisterData {
@@ -183,7 +198,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: "LOGOUT" });
   };
 
-  const updateUser = (data: Partial<User>) => {
+  const updateUser = (data: Partial<IUser>) => {
     if (!state.user) return;
 
     const updatedUser = { ...state.user, ...data };

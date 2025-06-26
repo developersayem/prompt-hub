@@ -39,7 +39,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
-import { UserNav } from "@/components/user-nav";
+import { UserNav } from "@/components/user/user-nav";
 
 // Mock data
 const prompts: {

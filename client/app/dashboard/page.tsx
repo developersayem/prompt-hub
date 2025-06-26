@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { UserNav } from "@/components/user-nav";
+import { UserNav } from "@/components/user/user-nav";
 
 // Mock data
 const statsData = [

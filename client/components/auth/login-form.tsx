@@ -15,12 +15,14 @@ import { Label } from "@/components/ui/label";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
   const { login } = useAuth();
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -40,7 +42,7 @@ export function LoginForm({
       const { email, password } = formData;
       await login(email, password);
       toast.success("Login successful!");
-      // router.push("/dashboard");
+      router.push("/profile");
     } catch (error) {
       toast.error("Login failed");
       console.log("Login error:", error);

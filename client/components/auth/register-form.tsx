@@ -78,7 +78,8 @@ export function RegisterForm() {
       });
 
       toast.success("Registration successful!");
-      // optionally redirect here e.g. router.push('/dashboard')
+      // optionally redirect here e.g.
+      // router.push('/dashboard')
     } catch (err) {
       setError("Registration failed. Please try again.");
       toast.error("Registration failed");
