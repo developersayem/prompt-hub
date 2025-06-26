@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import multer from "multer";
-import { loggerMiddleware } from "./middlewares/loggerMiddleware.ts";
+import { loggerMiddleware } from "./middlewares/loggerMiddleware";
 
 const app = express();
 
@@ -38,8 +38,8 @@ app.use(loggerMiddleware);
 
 
 // Import routes
-import healthCheckRoutes from "./routes/health-check.routes.ts";
-import userRoutes from "./routes/users.routes.ts";
+import healthCheckRoutes from "./routes/health-check.routes";
+import userRoutes from "./routes/users.routes";
 
 // Routes that don't use file upload parsing
 app.use("/api/v1/health-check", healthCheckRoutes);

@@ -1,9 +1,9 @@
 import type{ Request, Response, NextFunction } from "express";
 import type{ JwtPayload } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
-import { ApiError } from "../utils/ApiError.ts";
-import { User } from "../models/users.model.ts";
-import asyncHandler from "../utils/asyncHandler.ts";
+import { ApiError } from "../utils/ApiError";
+import { User } from "../models/users.model";
+import asyncHandler from "../utils/asyncHandler";
 
 // Extend Request to include `user`
 export interface AuthenticatedRequest extends Request {

@@ -1,13 +1,13 @@
 import type { Request, Response } from "express";
 import { Types } from "mongoose";
-import asyncHandler from "../utils/asyncHandler.ts";
-import { ApiError } from "../utils/ApiError.ts";
-import { User } from "../models/users.model.ts";
+import asyncHandler from "../utils/asyncHandler";
+import { ApiError } from "../utils/ApiError";
+import { User } from "../models/users.model";
 import {
   deleteFromCloudinary,
   uploadOnCloudinary,
-} from "../utils/cloudinary.ts";
-import { ApiResponse } from "../utils/ApiResponse.ts";
+} from "../utils/cloudinary";
+import { ApiResponse } from "../utils/ApiResponse";
 import type { UploadApiResponse } from "cloudinary";
 
 interface TokenResponse {

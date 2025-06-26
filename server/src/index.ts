@@ -1,7 +1,7 @@
-import {app} from "./app.ts"
 import dotenv from "dotenv"
-import connectDB from "./db/index.ts"
-import logger from "./utils/logger.ts";
+import connectDB from "./db/index"
+import logger from "./utils/logger";
+import { app } from "./app";
 
 dotenv.config({
     path:"./.env"

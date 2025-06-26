@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { healthCheckController } from "../controller/health-check.controller.ts";
+import { healthCheckController } from "../controller/health-check.controller";
 
 
 

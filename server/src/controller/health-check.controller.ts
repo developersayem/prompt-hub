@@ -1,5 +1,5 @@
-import { ApiResponse } from "../utils/ApiResponse.ts";
-import asyncHandler from "../utils/asyncHandler.ts";
+import { ApiResponse } from "../utils/ApiResponse";
+import asyncHandler from "../utils/asyncHandler";
 
 
 const healthCheckController = asyncHandler(async (req, res) => {
