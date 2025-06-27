@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sparkles, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth-context";
+import GoogleLoginButton from "../shared/google-login-button";
 
 export function RegisterForm() {
   const { register } = useAuth();
@@ -186,9 +187,7 @@ export function RegisterForm() {
               <Button type="submit" className="w-full">
                 Create Account
               </Button>
-              <Button variant="outline" className="w-full" type="button">
-                Login with Google
-              </Button>
+              <GoogleLoginButton />
             </div>
           </div>
           <div className="text-center text-sm mt-4">

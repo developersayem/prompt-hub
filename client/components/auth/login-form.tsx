@@ -16,6 +16,7 @@ import { Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import GoogleLoginButton from "../shared/google-login-button";
 
 export function LoginForm({
   className,
@@ -107,9 +108,7 @@ export function LoginForm({
                 <Button type="submit" className="w-full">
                   Login
                 </Button>
-                <Button variant="outline" className="w-full" type="button">
-                  Login with Google
-                </Button>
+                <GoogleLoginButton />
               </div>
             </div>
             <div className="mt-4 text-center text-sm">
