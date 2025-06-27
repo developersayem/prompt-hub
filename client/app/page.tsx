@@ -45,7 +45,7 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center space-x-4">
             <ThemeToggle />
-            <Link href="/login">
+            <Link href="/auth/login">
               <Button
                 variant="ghost"
                 className="font-medium text-slate-900 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800"
@@ -53,7 +53,7 @@ export default function LandingPage() {
                 Sign In
               </Button>
             </Link>
-            <Link href="/signup">
+            <Link href="/auth/signup">
               <Button className="text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 font-medium">
                 Get Started
               </Button>
@@ -87,7 +87,7 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Link href="/signup">
+            <Link href="/auth/signup">
               <Button
                 size="lg"
                 className="text-lg px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
@@ -282,7 +282,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <Link href="/signup">
+          <Link href="/auth/signup">
             <Button
               size="lg"
               variant="secondary"

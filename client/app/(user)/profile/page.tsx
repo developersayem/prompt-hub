@@ -34,12 +34,10 @@ import {
   Settings,
   ArrowLeft,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function ProfilePage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showPurchaseCredits, setShowPurchaseCredits] = useState(false);
   const [showGetCertified, setShowGetCertified] = useState(false);
@@ -61,9 +59,6 @@ export default function ProfilePage() {
     x: Twitter,
     portfolio: Globe,
   };
-
-  // If user is not logged in, redirect to login page
-  if (!user) return router.push("/login");
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 py-8">

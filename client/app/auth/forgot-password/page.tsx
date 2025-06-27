@@ -259,7 +259,7 @@ export default function ResetPasswordPage() {
                   </div>
                 </div>
               </div>
-              <Link href="/login">
+              <Link href="/auth/login">
                 <Button className="w-full">Continue to Sign In</Button>
               </Link>
             </CardContent>

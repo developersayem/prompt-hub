@@ -47,6 +47,7 @@ const generateAccessTokenAndRefreshToken = async (
 
 //get user data 
  const userController = asyncHandler(async (req: Request, res: Response) => {
+  console.log(req)
   const user = await User.findById((req as any).user._id).select("-password -refreshToken");
   if (!user) throw new ApiError(404, "User not found");
 
@@ -220,7 +221,6 @@ const loginUserController = asyncHandler(
       );
   }
 );
-
 
 //Controller for user login out
 const logoutUser = asyncHandler(

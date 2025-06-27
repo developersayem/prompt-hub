@@ -4,6 +4,10 @@ import jwt from "jsonwebtoken";
 import { ApiError } from "../utils/ApiError";
 import { User } from "../models/users.model";
 import asyncHandler from "../utils/asyncHandler";
+import dotenv from "dotenv";
+dotenv.config();
+
+
 
 // Extend Request to include `user`
 export interface AuthenticatedRequest extends Request {
@@ -28,7 +32,7 @@ export const verifyJWT = asyncHandler(
     try {
       const decoded = jwt.verify(
         token,
-        process.env.ACCESS_TOKEN_SECRET as string
+        process.env.JWT_ACCESS_TOKEN_SECRET as string
       ) as DecodedToken;
 
       const user = await User.findById(decoded._id).select("-password -refreshToken");
