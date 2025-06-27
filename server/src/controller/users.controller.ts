@@ -146,7 +146,7 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
     res
       .cookie("accessToken", accessToken, cookieOptions)
       .cookie("refreshToken", refreshToken, cookieOptions)
-      .redirect("/dashboard"); // change this to frontend dashboard route
+      .redirect(process.env.CLIENT_REDIRECT_URL as string); // change this to frontend dashboard route
   } catch (error) {
     console.error("Google login error:", error);
     throw new ApiError(500, "Something went wrong during Google login");

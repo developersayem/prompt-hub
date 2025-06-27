@@ -1,1 +1,1 @@
-export const DB_NAME = "pingme";
+export const DB_NAME = "prompt-hub";
