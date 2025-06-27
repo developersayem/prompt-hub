@@ -54,6 +54,7 @@ app.use(passport.session());
 // Import routes
 import healthCheckRoutes from "./routes/health-check.routes";
 import userRoutes from "./routes/users.routes";
+import promptRoutes from "./routes/prompt.routes";
 
 // Routes that don't use file upload parsing
 app.use("/api/v1/health-check", healthCheckRoutes);
@@ -62,5 +63,6 @@ app.use("/api/v1/health-check", healthCheckRoutes);
 // e.g., in users.routes.ts:
 // router.post("/register", upload.single("avatar"), yourRegisterHandler);
 app.use("/api/v1/users", userRoutes);
+app.use("/api/v1/prompt", promptRoutes);
 
 export { app };

@@ -21,7 +21,7 @@ export interface IUser extends Document {
   credits: number;
   isGoogleAuthenticated?: boolean;
   isCertified?: boolean;
-  prompt: mongoose.Schema.Types.ObjectId[];
+  prompts: mongoose.Schema.Types.ObjectId[];
   purchasedPrompts: mongoose.Schema.Types.ObjectId[];
   bookmarks: mongoose.Schema.Types.ObjectId[];
   refreshToken: string;
@@ -77,7 +77,7 @@ const userSchema = new Schema<IUser>(
       type: Number,
       default: 1000,
     },
-    prompt: [
+    prompts: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Prompt",
