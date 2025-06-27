@@ -127,6 +127,32 @@ const userRegistrationController = asyncHandler(
   }
 );
 
+// Controller for Google OAuth callback
+const googleOAuthCallbackController = async (req: Request, res: Response) => {
+  const user = req.user as any;
+
+  if (!user) {
+    return res.redirect("/login?error=No user found");
+  }
+
+  try {
+    const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id);
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    };
+
+    res
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .redirect("/dashboard"); // change this to frontend dashboard route
+  } catch (error) {
+    console.error("Google login error:", error);
+    throw new ApiError(500, "Something went wrong during Google login");
+  }
+};
+
 // Controller for user login
 const loginUserController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -213,6 +239,7 @@ const logoutUser = asyncHandler(
 
 export { 
   userRegistrationController,
+  googleOAuthCallbackController,
   loginUserController,
   logoutUser
 };

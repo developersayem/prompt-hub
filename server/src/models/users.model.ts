@@ -1,14 +1,14 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import bcrypt from 'bcrypt';
-import jwt, { SignOptions } from 'jsonwebtoken';
+import mongoose, { Schema, Document } from "mongoose";
+import bcrypt from "bcrypt";
+import jwt, { SignOptions } from "jsonwebtoken";
 
-export interface ISocialLinks{
- facebook?: string
-  instagram?: string
-  github?: string 
-  linkedIn?: string
-  x?: string
-  portfolio?: string
+export interface ISocialLinks {
+  facebook?: string;
+  instagram?: string;
+  github?: string;
+  linkedIn?: string;
+  x?: string;
+  portfolio?: string;
 }
 
 export interface IUser extends Document {
@@ -33,70 +33,78 @@ export interface IUser extends Document {
 
 const userSchema = new Schema<IUser>(
   {
-    name: { 
+    name: {
       type: String,
-      required: true 
+      required: true,
     },
-    email: { 
+    email: {
       type: String,
       unique: true,
-      required: true
+      required: true,
     },
     password: {
       type: String,
-      required: true
+      required: function () {
+        return !this.isGoogleAuthenticated;
+      },
     },
     isGoogleAuthenticated: {
       type: Boolean,
-      default: false
+      default: false,
     },
     isCertified: {
       type: Boolean,
-      default: false
+      default: false,
     },
     avatar: {
       type: String,
-      default: '',
-      required: true
+      default: "",
+      required: true,
     },
     bio: {
       type: String,
-      default: ''
+      default: "",
     },
     socialLinks: {
-      facebook: { type: String, default: '' },
-      instagram: { type: String, default: '' },
-      github: { type: String, default: '' },
-      linkedIn: { type: String, default: '' },
-      x: { type: String, default: '' },
-      portfolio: { type: String, default: '' }
+      facebook: { type: String, default: "" },
+      instagram: { type: String, default: "" },
+      github: { type: String, default: "" },
+      linkedIn: { type: String, default: "" },
+      x: { type: String, default: "" },
+      portfolio: { type: String, default: "" },
     },
-    credits: { 
+    credits: {
       type: Number,
-      default: 1000
+      default: 1000,
     },
-    prompt: [{ 
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Prompt'
-    }],
-    purchasedPrompts: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Prompt'
-    }],
-    bookmarks: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Prompt'
-    }],
+    prompt: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Prompt",
+      },
+    ],
+    purchasedPrompts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Prompt",
+      },
+    ],
+    bookmarks: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Prompt",
+      },
+    ],
     refreshToken: {
-      type: String
+      type: String,
     },
   },
   { timestamps: true }
 );
 
-userSchema.pre('save', async function (next) {
+userSchema.pre("save", async function (next) {
   const user = this as IUser;
-  if (!user.isModified('password')) return next();
+  if (!user.isModified("password")) return next();
   user.password = await bcrypt.hash(user.password, 10);
   next();
 });
@@ -107,13 +115,14 @@ userSchema.methods.isPasswordCorrect = async function (password: string) {
 };
 
 userSchema.methods.generateAccessToken = function (): string {
-  const expiresIn = (process.env.JWT_ACCESS_TOKEN_EXPIRY || "1h") as `${number}${"s" | "m" | "h" | "d"}`; // e.g., '1h', '10d'
+  const expiresIn = (process.env.JWT_ACCESS_TOKEN_EXPIRY ||
+    "1h") as `${number}${"s" | "m" | "h" | "d"}`; // e.g., '1h', '10d'
   const options: SignOptions = { expiresIn };
 
   return jwt.sign(
     {
       _id: this._id,
-      email: this.email
+      email: this.email,
     },
     process.env.JWT_ACCESS_TOKEN_SECRET as string,
     options
@@ -121,15 +130,16 @@ userSchema.methods.generateAccessToken = function (): string {
 };
 
 userSchema.methods.generateRefreshToken = function (): string {
-  const expiresIn =(process.env.JWT_REFRESH_TOKEN_EXPIRY || "7d") as `${number}${"s" | "m" | "h" | "d"}`; // e.g., '1h', '10d' // default 7d
+  const expiresIn = (process.env.JWT_REFRESH_TOKEN_EXPIRY ||
+    "7d") as `${number}${"s" | "m" | "h" | "d"}`; // e.g., '1h', '10d' // default 7d
   const options: SignOptions = { expiresIn };
   return jwt.sign(
     {
-      _id: this._id
+      _id: this._id,
     },
     process.env.JWT_REFRESH_TOKEN_SECRET!,
-    options  // Ensure algorithm is specified
+    options // Ensure algorithm is specified
   );
 };
 
-export const User = mongoose.model<IUser>('User', userSchema);
+export const User = mongoose.model<IUser>("User", userSchema);

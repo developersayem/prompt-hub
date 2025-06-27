@@ -3,6 +3,9 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import multer from "multer";
 import { loggerMiddleware } from "./middlewares/loggerMiddleware";
+import passport from "passport";
+import session from "express-session";
+import "./config/passport"; // import passport config
 
 const app = express();
 
@@ -34,6 +37,17 @@ app.use(express.static("public"));
 
 // Use custom logger middleware early
 app.use(loggerMiddleware);
+
+ // Passport.js setup
+ app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "keyboard cat",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 
