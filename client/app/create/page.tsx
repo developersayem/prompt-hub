@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { toast } from "sonner";
 
 export default function CreatePromptPage() {
   const [formData, setFormData] = useState({
@@ -79,10 +80,67 @@ export default function CreatePromptPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Creating prompt:", formData);
-    // Handle form submission
+
+    if (
+      (formData.resultType === "image" || formData.resultType === "video") &&
+      !uploadedFile
+    ) {
+      alert("Please upload a file for image or video prompts.");
+      return;
+    }
+
+    // Prepare formData for sending
+    const formDataToSend = new FormData();
+
+    formDataToSend.append("title", formData.title);
+    formDataToSend.append("description", formData.description || "");
+    formDataToSend.append("category", formData.category);
+    formDataToSend.append("promptText", formData.promptText);
+    formDataToSend.append("resultType", formData.resultType);
+    formDataToSend.append("aiModel", formData.aiModel);
+    formDataToSend.append("isPaid", String(formData.isPaid));
+    formDataToSend.append("price", formData.price || "0");
+
+    // Add tags - append each tag individually
+    formData.tags.forEach((tag) => formDataToSend.append("tags", tag));
+
+    if (formData.resultType === "text") {
+      formDataToSend.append("resultContent", formData.resultContent);
+    } else {
+      // image or video => append file
+      if (uploadedFile) {
+        formDataToSend.append("promptContent", uploadedFile);
+      }
+    }
+
+    console.log("formDataToSend:", formDataToSend);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/create`,
+        {
+          method: "POST",
+          credentials: "include",
+          body: formDataToSend,
+        }
+      );
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        const errorMsg = result.message || "Something went wrong!";
+        console.error("Backend error:", errorMsg);
+        alert(errorMsg);
+        return;
+      }
+
+      toast.success("Prompt created!");
+      //TODO: window.location.href = "/feed";
+    } catch (err) {
+      console.error("Submit error:", err);
+      toast.error("Failed to create prompt");
+    }
   };
 
   return (
