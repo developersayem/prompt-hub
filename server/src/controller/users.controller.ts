@@ -45,6 +45,14 @@ const generateAccessTokenAndRefreshToken = async (
   }
 };
 
+//get user data 
+ const userController = asyncHandler(async (req: Request, res: Response) => {
+  const user = await User.findById((req as any).user._id).select("-password -refreshToken");
+  if (!user) throw new ApiError(404, "User not found");
+
+  res.status(200).json(new ApiResponse(200, { user }, "User fetched successfully"));
+})
+
 //controller for user registration
 const userRegistrationController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -132,7 +140,7 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
   const user = req.user as any;
 
   if (!user) {
-    return res.redirect("/login?error=No user found");
+    return res.redirect("/auth/login?error=No user found");
   }
 
   try {
@@ -146,7 +154,7 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
     res
       .cookie("accessToken", accessToken, cookieOptions)
       .cookie("refreshToken", refreshToken, cookieOptions)
-      .redirect(process.env.CLIENT_REDIRECT_URL as string); // change this to frontend dashboard route
+      .redirect(`${process.env.FRONTEND_URL}/auth/google/success`); // change this to frontend dashboard route
   } catch (error) {
     console.error("Google login error:", error);
     throw new ApiError(500, "Something went wrong during Google login");
@@ -238,6 +246,7 @@ const logoutUser = asyncHandler(
 );
 
 export { 
+  userController,
   userRegistrationController,
   googleOAuthCallbackController,
   loginUserController,

@@ -6,6 +6,6 @@ const multer_middlewares_1 = require("../middlewares/multer.middlewares");
 const auth_middlewares_1 = require("../middlewares/auth.middlewares");
 const router = (0, express_1.Router)();
 router.route("/register").post(multer_middlewares_1.upload.fields([{ name: "avatar", maxCount: 1 }]), users_controller_1.userRegistrationController);
-router.route("/login").post(users_controller_1.loginUserController);
+router.route("/auth/login").post(users_controller_1.loginUserController);
 router.route("/logout").post(auth_middlewares_1.verifyJWT, users_controller_1.logoutUser);
 exports.default = router;
