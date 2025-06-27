@@ -38,6 +38,7 @@ import { useState } from "react";
 
 export default function ProfilePage() {
   const { user } = useAuth();
+  console.log("useravatar:", user?.avatar);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showPurchaseCredits, setShowPurchaseCredits] = useState(false);
   const [showGetCertified, setShowGetCertified] = useState(false);
@@ -93,10 +94,14 @@ export default function ProfilePage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <Avatar className="w-20 h-20">
                 <AvatarImage
-                  src={user?.avatar || "/placeholder.svg"}
-                  alt={user?.name}
+                  src={user?.avatar}
+                  alt={user?.name || "User"}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "/default-avatar.png"; // fallback image
+                  }}
                 />
-                <AvatarFallback className="text-lg">
+                <AvatarFallback className="text-lg uppercase">
                   {user?.name
                     .split(" ")
                     .map((n) => n[0])

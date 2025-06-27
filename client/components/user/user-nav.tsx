@@ -24,8 +24,12 @@ export function UserNav() {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
             <AvatarImage
-              src={user?.avatar?.toString() || ""}
+              src={user?.avatar}
               alt={user?.name || "User"}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = "/default-avatar.png"; // fallback image
+              }}
             />
             <AvatarFallback>
               {user?.name
