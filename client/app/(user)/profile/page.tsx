@@ -34,6 +34,7 @@ import {
   Settings,
   ArrowLeft,
 } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 export default function ProfilePage() {
@@ -68,7 +69,7 @@ export default function ProfilePage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="sm"
                 className="flex items-center gap-2"
@@ -76,7 +77,13 @@ export default function ProfilePage() {
               >
                 <ArrowLeft className="w-5 h-5" />
                 Back
-              </Button>
+              </Button> */}
+              <Link href="/feed">
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Feed
+                </Button>
+              </Link>
               {/* <h1 className="text-2xl font-bold">Profile</h1> */}
             </div>
             <div className="flex items-center space-x-4">

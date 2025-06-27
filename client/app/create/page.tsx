@@ -30,8 +30,8 @@ import {
   X,
   Sparkles,
   DollarSign,
-  Eye,
-  Save,
+  // Eye,
+  // Save,
   Send,
 } from "lucide-react";
 import Link from "next/link";
@@ -105,13 +105,17 @@ export default function CreatePromptPage() {
             </div>
             <div className="flex items-center space-x-2">
               <ThemeToggle />
-              <Button variant="outline">
+              {/* <Button variant="outline">
                 <Save className="h-4 w-4 mr-2" />
                 Save Draft
               </Button>
               <Button variant="outline">
                 <Eye className="h-4 w-4 mr-2" />
                 Preview
+              </Button> */}
+              <Button type="submit">
+                <Send className="h-4 w-4 mr-2" />
+                Publish Prompt
               </Button>
             </div>
           </div>
@@ -324,7 +328,7 @@ export default function CreatePromptPage() {
               <CardContent className="space-y-4">
                 <div className="flex space-x-2">
                   <Input
-                    placeholder="Add a tag"
+                    placeholder="Add tags ex: marketing, AI, writing, etc."
                     value={currentTag}
                     onChange={(e) => setCurrentTag(e.target.value)}
                     onKeyPress={(e) =>
@@ -442,9 +446,9 @@ export default function CreatePromptPage() {
 
             {/* Submit */}
             <div className="flex justify-end space-x-4">
-              <Button type="button" variant="outline">
+              {/* <Button type="button" variant="outline">
                 Save as Draft
-              </Button>
+              </Button> */}
               <Button type="submit">
                 <Send className="h-4 w-4 mr-2" />
                 Publish Prompt
