@@ -77,7 +77,7 @@ export default function ProfilePage() {
                 <ArrowLeft className="w-5 h-5" />
                 Back
               </Button>
-              <h1 className="text-2xl font-bold">Profile</h1>
+              {/* <h1 className="text-2xl font-bold">Profile</h1> */}
             </div>
             <div className="flex items-center space-x-4">
               <ThemeToggle />
@@ -93,19 +93,14 @@ export default function ProfilePage() {
           <CardHeader className="pb-4">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
               <Avatar className="w-20 h-20">
-                <AvatarImage
-                  src={user?.avatar}
-                  alt={user?.name || "User"}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = "/default-avatar.png"; // fallback image
-                  }}
-                />
+                <AvatarImage src={user?.avatar} alt={user?.name || "User"} />
                 <AvatarFallback className="text-lg uppercase">
                   {user?.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")}
+                    ? user?.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                    : "UA"}
                 </AvatarFallback>
               </Avatar>
 
