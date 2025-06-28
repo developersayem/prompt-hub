@@ -46,7 +46,7 @@ const generateAccessTokenAndRefreshToken = async (
 };
 
 //get user data 
- const userController = asyncHandler(async (req: Request, res: Response) => {
+const userController = asyncHandler(async (req: Request, res: Response) => {
   console.log(req)
   const user = await User.findById((req as any).user._id).select("-password -refreshToken");
   if (!user) throw new ApiError(404, "User not found");
@@ -108,6 +108,7 @@ const userRegistrationController = asyncHandler(
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
+        sameSite: false, // crucial for cross-origin cookie usage
       };
 
       //send response
@@ -150,6 +151,7 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: false,
     };
 
     res
@@ -201,6 +203,7 @@ const loginUserController = asyncHandler(
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
+      sameSite: false,
     };
 
     // Send response with tokens set in cookies and user data in JSON

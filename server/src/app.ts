@@ -10,14 +10,23 @@ import "./config/passport"; // import passport config
 const app = express();
 
 // Your frontend origin
-const allowedOrigin = ["http://localhost:3000", "https://prompt-hub.vercel.app", "https://prompt-hub-six.vercel.app"];
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://prompt-hub.vercel.app",
+  "https://prompt-hub-six.vercel.app",
+];
 
-// Setup CORS with credentials and specific origin
 app.use(
   cors({
-    origin: allowedOrigin,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
-     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
 
