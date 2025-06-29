@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 
 export interface ISocialLinks {
@@ -104,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const router = useRouter();
 
   useEffect(() => {
     // Load user from localStorage (tokens are in cookies, so no localStorage for tokens)
@@ -189,15 +191,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("user");
-    // clear cookies
-    const date = new Date(Date.now() - 1000);
-    document.cookie = `accessToken=; expires=${date.toUTCString()}; path=/;`;
-    document.cookie = `refreshToken=; expires=${date.toUTCString()}; path=/;`;
-    dispatch({ type: "LOGOUT" });
-  };
+  const logout = async () => {
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/logout`,
+        {
+          method: "POST",
+          credentials: "include", // important to send cookies
+        }
+      );
 
+      localStorage.removeItem("user");
+
+      dispatch({ type: "LOGOUT" });
+
+      // Optional: redirect user to login page
+      router.push("/auth/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
   const updateUser = (data: Partial<IUser>) => {
     if (!state.user) return;
 
