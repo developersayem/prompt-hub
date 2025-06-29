@@ -6,7 +6,7 @@ import type { UploadApiResponse } from "cloudinary";
 import { uploadOnCloudinary } from "../utils/cloudinary";
 import { Prompt } from "../models/prompts.model";
 import { User } from "../models/users.model";
-import mongoose from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { Like } from "../models/like.model"; // adjust the path
 
 
@@ -125,6 +125,8 @@ const likePromptController = asyncHandler(async (req: Request, res: Response) =>
   if (!userId) throw new ApiError(401, "Unauthorized");
 
   const { promptId } = req.body;
+  console.log("Prompt ID:", promptId);
+  console.log(req.body);
 
   // Check if prompt exists
   const prompt = await Prompt.findById(promptId);
@@ -136,6 +138,10 @@ const likePromptController = asyncHandler(async (req: Request, res: Response) =>
 
   // Create new like
   const newLike = await Like.create({ user: userId, prompt: promptId });
+
+  // Add like to prompt
+  prompt.likes.push(newLike._id as Types.ObjectId);
+  await prompt.save();
 
   res.status(200).json(
     new ApiResponse(200, { data: newLike }, "Prompt liked successfully")

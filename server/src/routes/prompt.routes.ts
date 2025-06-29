@@ -2,7 +2,7 @@ import { Router } from "express";
 
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import { createPromptController } from "../controller/prompt.controller";
+import { createPromptController, likePromptController } from "../controller/prompt.controller";
 
 
 const router = Router()
@@ -15,7 +15,7 @@ router.post("/create",
 );
 
 // prompt like route
-router.post("/like", verifyJWT,)
+router.post("/like", verifyJWT,likePromptController)
 
 
 
