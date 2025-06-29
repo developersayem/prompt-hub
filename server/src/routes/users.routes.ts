@@ -29,7 +29,7 @@ router.get(
   googleOAuthCallbackController
 );
 
-router.route("/auth/login").post(
+router.route("/login").post(
     loginUserController
 )
 

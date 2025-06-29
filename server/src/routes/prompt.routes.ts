@@ -7,13 +7,15 @@ import { createPromptController } from "../controller/prompt.controller";
 
 const router = Router()
 
-// Prompt Routes
-//TODO! verifyJWT
+// Prompt Creation Routes
 router.post("/create",
     verifyJWT,
     upload.fields([{ name: "promptContent", maxCount: 1 }]),
     createPromptController
 );
+
+// prompt like route
+router.post("/like", verifyJWT,)
 
 
 

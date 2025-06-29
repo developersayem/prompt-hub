@@ -7,6 +7,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary";
 import { Prompt } from "../models/prompts.model";
 import { User } from "../models/users.model";
 import mongoose from "mongoose";
+import { Like } from "../models/like.model"; // adjust the path
+
 
 // Controller to handle prompt creation
 const createPromptController = asyncHandler(async (req: Request, res: Response) => {
@@ -117,4 +119,30 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
   );
 });
 
-export { createPromptController };
+// Controller to handle prompt like
+const likePromptController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  const { promptId } = req.body;
+
+  // Check if prompt exists
+  const prompt = await Prompt.findById(promptId);
+  if (!prompt) throw new ApiError(404, "Prompt not found");
+
+  // Check if like already exists
+  const alreadyLiked = await Like.findOne({ user: userId, prompt: promptId });
+  if (alreadyLiked) throw new ApiError(400, "You have already liked this prompt");
+
+  // Create new like
+  const newLike = await Like.create({ user: userId, prompt: promptId });
+
+  res.status(200).json(
+    new ApiResponse(200, { data: newLike }, "Prompt liked successfully")
+  );
+});
+
+export { 
+  createPromptController,
+  likePromptController
+};
