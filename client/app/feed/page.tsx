@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { toast } from "sonner";
 import { useCallback } from "react";
+import { useAuth } from "@/contexts/auth-context";
 
 // Define the IPrompt interface
 export interface IPrompt {
@@ -81,6 +82,7 @@ export interface IPrompt {
 }
 
 export default function FeedPage() {
+  const { user } = useAuth();
   // Initialize prompts as an empty array to prevent the map error
   const [prompts, setPrompts] = useState<IPrompt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,6 +101,7 @@ export default function FeedPage() {
   const [selectedPrompt, setSelectedPrompt] = useState<IPrompt | null>(null);
   const [showPromptModal, setShowPromptModal] = useState(false);
 
+  // Function to fetch prompts
   const fetchPrompts = useCallback(async () => {
     try {
       setLoading(true);
@@ -147,6 +150,59 @@ export default function FeedPage() {
       setLoading(false);
     }
   }, [selectedCategory, filters]);
+
+  //Function to like prompt
+  const handleLikePrompt = async (promptId: string) => {
+    const userId = user?._id;
+    if (!userId) {
+      toast.error("Please login to like prompts");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/like`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ promptId }),
+        }
+      );
+
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.message || "Failed to like prompt");
+
+      // If backend returns updated prompt:
+      if (result.updatedPrompt) {
+        setPrompts((prevPrompts) =>
+          prevPrompts.map((prompt) =>
+            prompt._id === promptId ? result.updatedPrompt : prompt
+          )
+        );
+      } else {
+        // fallback: toggle locally with string conversion to avoid mismatch
+        setPrompts((prevPrompts) =>
+          prevPrompts.map((prompt) =>
+            prompt._id === promptId
+              ? {
+                  ...prompt,
+                  likes: prompt.likes.map(String).includes(userId)
+                    ? prompt.likes.filter((id) => String(id) !== userId)
+                    : [...prompt.likes, userId],
+                }
+              : prompt
+          )
+        );
+      }
+
+      toast.success(result.message);
+    } catch (error) {
+      console.log("Error liking prompt:", error);
+      toast.error("Something went wrong");
+    }
+  };
 
   // fetch prompts from database
   useEffect(() => {
@@ -616,17 +672,25 @@ export default function FeedPage() {
                       <Sparkles className="h-4 w-4 mr-1" />
                       Generated with {prompt.aiModel}
                     </div>
-
                     <Separator />
 
                     {/* Actions */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <Button variant="ghost" size="sm">
-                          <Heart className="h-4 w-4 mr-2" />
-                          {Array.isArray(prompt.likes)
-                            ? prompt.likes.length
-                            : 0}
+                        <Button
+                          onClick={() => handleLikePrompt(prompt._id)}
+                          variant="ghost"
+                          size="sm"
+                          title="Like this prompt"
+                        >
+                          <Heart
+                            className={`h-4 w-4 mr-2 ${
+                              prompt.likes.includes(user?._id ?? "")
+                                ? "text-red-500"
+                                : "text-gray-500"
+                            }`}
+                          />
+                          {prompt.likes.length}
                         </Button>
                         <Button variant="ghost" size="sm">
                           <MessageCircle className="h-4 w-4 mr-2" />
@@ -670,7 +734,7 @@ export default function FeedPage() {
       </div>
       {/* Prompt Detail Modal */}
       <Dialog open={showPromptModal} onOpenChange={setShowPromptModal}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-5xl max-h-fit overflow-y-auto">
           {selectedPrompt && (
             <>
               <DialogHeader>
@@ -698,7 +762,7 @@ export default function FeedPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 mt-2">
                     <Badge variant="secondary">{selectedPrompt.category}</Badge>
                     {selectedPrompt.price ? (
                       <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
@@ -726,7 +790,7 @@ export default function FeedPage() {
                         : selectedPrompt.promptText}
                     </p>
                   </div>
-                </div>{" "}
+                </div>
                 {/* 👈 CLOSE the “Prompt” wrapper */}
                 {/* Generated Result */}
                 <div className="space-y-4">
