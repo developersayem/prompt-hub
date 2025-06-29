@@ -575,13 +575,20 @@ export default function FeedPage() {
                               className="w-full rounded-lg"
                             />
                           ) : prompt.resultType === "video" ? (
-                            <video
-                              controls
-                              className="w-full rounded-lg"
-                              src={prompt.resultContent || ""}
-                            >
-                              Your browser does not support the video tag.
-                            </video>
+                            <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">
+                              <video
+                                controls
+                                preload="metadata"
+                                className="w-full h-auto max-h-[500px] rounded-xl bg-black"
+                                poster="/video-thumbnail.png" // optional placeholder
+                              >
+                                <source
+                                  src={prompt.resultContent || ""}
+                                  type="video/mp4"
+                                />
+                                Your browser does not support the video tag.
+                              </video>
+                            </div>
                           ) : (
                             <p className="text-sm whitespace-pre-wrap text-black capitalize">
                               {prompt.resultContent}
@@ -737,13 +744,20 @@ export default function FeedPage() {
                         />
                       </div>
                     ) : selectedPrompt.resultType === "video" ? (
-                      <video
-                        controls
-                        className="w-full max-h-[400px] rounded-lg object-contain"
-                        src={selectedPrompt.resultContent || ""}
-                      >
-                        Your browser does not support the video tag.
-                      </video>
+                      <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">
+                        <video
+                          controls
+                          preload="metadata"
+                          className="w-full h-auto max-h-[500px] rounded-xl bg-black"
+                          poster="/video-thumbnail.png" // optional placeholder
+                        >
+                          <source
+                            src={selectedPrompt.resultContent || ""}
+                            type="video/mp4"
+                          />
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
                     ) : (
                       <div className="space-y-4">
                         <p className="text-sm leading-relaxed">
