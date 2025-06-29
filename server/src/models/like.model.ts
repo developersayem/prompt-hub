@@ -2,7 +2,8 @@ import mongoose, { Document, Schema, Types } from "mongoose";
 
 export interface ILike extends Document {
   user: Types.ObjectId;
-  prompt: Types.ObjectId;
+  prompt?: Types.ObjectId;
+  comment?: Types.ObjectId;
 }
 
 const likeSchema = new Schema<ILike>(
@@ -15,7 +16,10 @@ const likeSchema = new Schema<ILike>(
     prompt: {
       type: Schema.Types.ObjectId,
       ref: "Prompt",
-      required: true,
+    },
+    comment: {
+      type: Schema.Types.ObjectId,
+      ref: "Comment",
     },
   },
   { timestamps: true }

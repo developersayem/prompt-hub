@@ -8,22 +8,16 @@ import { Prompt } from "../models/prompts.model";
 import { User } from "../models/users.model";
 import mongoose, { Types } from "mongoose";
 import { Like } from "../models/like.model"; // adjust the path
+import { Comment } from "../models/comments.model";
+import { populateRepliesRecursively } from "../utils/populateRepliesRecursively";
 
 // Controller for show all prompts
-
 const getAllPromptsController = asyncHandler(async (req: Request, res: Response) => {
   const { category, isPaid, searchString } = req.query;
 
   const query: any = {};
-
-  if (category) {
-    query.category = category;
-  }
-
-  if (isPaid === "true") {
-    query.isPaid = true;
-  }
-
+  if (category) query.category = category;
+  if (isPaid === "true") query.isPaid = true;
   if (typeof searchString === "string" && searchString.trim() !== "") {
     query.$or = [
       { title: { $regex: new RegExp(searchString, "i") } },
@@ -31,28 +25,34 @@ const getAllPromptsController = asyncHandler(async (req: Request, res: Response)
     ];
   }
 
-  // 1. Fetch prompts
   const prompts = await Prompt.find(query)
     .sort({ createdAt: -1 })
     .populate("creator", "-password -refreshToken")
-    .lean(); // Convert to plain JS object so we can attach custom fields
+    .populate({
+      path: "comments",
+      match: { parentComment: null },
+      select: "text createdAt user replies likes",
+    })
+    .lean();
 
-  // 2. Fetch all likes
-  const likes = await Like.find().lean();
+  // Recursively populate nested replies + user data
+  for (const prompt of prompts) {
+    for (const comment of prompt.comments) {
+      await populateRepliesRecursively(comment);
+    }
+  }
 
-  // 3. Map: promptId => [userId1, userId2, ...]
+  // Attach likes for prompts
+  const promptLikes = await Like.find({ prompt: { $ne: null } }).lean();
+
   const likeMap: Record<string, string[]> = {};
-  for (const like of likes) {
+  for (const like of promptLikes) {
     const promptId = String(like.prompt);
     const userId = String(like.user);
-
-    if (!likeMap[promptId]) {
-      likeMap[promptId] = [];
-    }
+    if (!likeMap[promptId]) likeMap[promptId] = [];
     likeMap[promptId].push(userId);
   }
 
-  // 4. Attach likes to prompts
   const promptsWithLikes = prompts.map((prompt) => ({
     ...prompt,
     likes: likeMap[String(prompt._id)] || [],
@@ -211,11 +211,165 @@ const likePromptController = asyncHandler(async (req: Request, res: Response) =>
     .json(new ApiResponse(200, { data: newLike }, "Liked successfully"));
 });
 
-export default likePromptController;
+//Controller for comments
+const createCommentController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  const { promptId, text } = req.body;
+
+  if (!userId) throw new ApiError(401, "Unauthorized");
+  if (!promptId || !text) throw new ApiError(400, "Prompt ID and text are required");
+
+  // Optional: check if prompt exists
+  const promptExists = await Prompt.findById(promptId);
+  if (!promptExists) throw new ApiError(404, "Prompt not found");
+
+  // Create new comment
+  const newComment = await Comment.create({
+    user: userId,
+    prompt: promptId,
+    text,
+  });
+  // Update prompt comments array
+  promptExists.comments.push(newComment._id as Types.ObjectId);
+  await promptExists.save();
+
+  const populatedComment = await Comment.findById(newComment._id)
+  .populate('user', 'name avatar') // populate only needed user fields
+  .lean();
+
+
+  res.status(201).json(
+    new ApiResponse(201, { comment: populatedComment }, "Comment created successfully"));
+});
+
+// Controller for update comments 
+const updateCommentController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id; // assuming auth middleware sets req.user
+  const { commentId } = req.params;
+  const { text } = req.body;
+
+  if (!text || typeof text !== "string" || text.trim() === "") {
+    throw new ApiError(400, "Comment text is required");
+  }
+
+  const comment = await Comment.findById(commentId);
+  if (!comment) {
+    throw new ApiError(404, "Comment not found");
+  }
+
+  if (String(comment.user) !== String(userId)) {
+    throw new ApiError(403, "You can only edit your own comments");
+  }
+
+  comment.text = text.trim();
+  await comment.save();
+
+  res.status(200).json(
+    new ApiResponse(200, { comment }, "Comment updated successfully")
+  );
+});
+
+// Controller for delete comments
+const deleteCommentController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  const { commentId } = req.params;
+
+  const comment = await Comment.findById(commentId);
+  if (!comment) throw new ApiError(404, "Comment not found");
+
+  if (String(comment.user) !== String(userId)) {
+    throw new ApiError(403, "You are not authorized to delete this comment");
+  }
+
+  // If it's a reply, remove from parent.replies
+  if (comment.parentComment) {
+    await Comment.findByIdAndUpdate(comment.parentComment, {
+      $pull: { replies: comment._id }
+    });
+  } else {
+    // If it's a top-level comment, remove from prompt.comments
+    await Prompt.findByIdAndUpdate(comment.prompt, {
+      $pull: { comments: comment._id }
+    });
+  }
+
+  await comment.deleteOne();
+
+  res.status(200).json(
+    new ApiResponse(200, {}, "Comment deleted successfully")
+  );
+});
+
+// Controller to add comment or reply
+const replyCommentController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  const { promptId, text, parentComment } = req.body;
+  console.log(userId, promptId, text, parentComment)
+
+  if (!text || !promptId || !parentComment) {
+    throw new ApiError(400, "Text, promptId, and parentComment are required");
+  }
+
+  const parent = await Comment.findById(parentComment);
+  if (!parent) throw new ApiError(404, "Parent comment not found");
+
+  const comment = await Comment.create({
+    user: userId,
+    prompt: promptId,
+    text,
+    parentComment: parent._id,
+  });
+
+  // Add reply to parent comment's replies
+  parent.replies.push(comment._id);
+  await parent.save();
+
+  await comment.populate("user", "-password -refreshToken");
+
+  res.status(201).json(new ApiResponse(201, { comment }, "Reply posted successfully"));
+});
+
+// Controller for like comments
+const likeCommentController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  const { commentId } = req.body;
+
+  if (!userId) throw new ApiError(401, "Unauthorized");
+  if (!commentId) throw new ApiError(400, "Comment ID is required");
+
+  const comment = await Comment.findById(commentId);
+  if (!comment) throw new ApiError(404, "Comment not found");
+
+  const alreadyLiked = comment.likes.includes(userId);
+
+  if (alreadyLiked) {
+    // Unlike
+    comment.likes = comment.likes.filter((id: mongoose.Types.ObjectId | string) => String(id) !== String(userId));
+    await comment.save();
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { liked: false }, "Comment unliked"));
+  } else {
+    // Like
+    comment.likes.push(userId);
+    await comment.save();
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { liked: true }, "Comment liked"));
+  }
+});
+
+
+
 
 
 export { 
   getAllPromptsController,
   createPromptController,
-  likePromptController
+  likePromptController,
+  createCommentController,
+  updateCommentController,
+  deleteCommentController,
+  replyCommentController,
+  likeCommentController
 };
