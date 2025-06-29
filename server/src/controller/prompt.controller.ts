@@ -10,6 +10,7 @@ import mongoose, { Types } from "mongoose";
 import { Like } from "../models/like.model"; // adjust the path
 
 // Controller for show all prompts
+
 const getAllPromptsController = asyncHandler(async (req: Request, res: Response) => {
   const { category, isPaid, searchString } = req.query;
 
@@ -30,13 +31,37 @@ const getAllPromptsController = asyncHandler(async (req: Request, res: Response)
     ];
   }
 
+  // 1. Fetch prompts
   const prompts = await Prompt.find(query)
     .sort({ createdAt: -1 })
-    .populate("creator", "-password -refreshToken");
+    .populate("creator", "-password -refreshToken")
+    .lean(); // Convert to plain JS object so we can attach custom fields
 
-  res.status(200).json(new ApiResponse(200, { data: prompts }, "Prompts fetched successfully"));
+  // 2. Fetch all likes
+  const likes = await Like.find().lean();
+
+  // 3. Map: promptId => [userId1, userId2, ...]
+  const likeMap: Record<string, string[]> = {};
+  for (const like of likes) {
+    const promptId = String(like.prompt);
+    const userId = String(like.user);
+
+    if (!likeMap[promptId]) {
+      likeMap[promptId] = [];
+    }
+    likeMap[promptId].push(userId);
+  }
+
+  // 4. Attach likes to prompts
+  const promptsWithLikes = prompts.map((prompt) => ({
+    ...prompt,
+    likes: likeMap[String(prompt._id)] || [],
+  }));
+
+  res.status(200).json(
+    new ApiResponse(200, { data: promptsWithLikes }, "Prompts fetched successfully")
+  );
 });
-
 
 // Controller to handle prompt creation
 const createPromptController = asyncHandler(async (req: Request, res: Response) => {
@@ -147,34 +172,47 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
   );
 });
 
-// Controller to handle prompt like
+// Controller to handle like/unlike
 const likePromptController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
   if (!userId) throw new ApiError(401, "Unauthorized");
 
   const { promptId } = req.body;
-  console.log("Prompt ID:", promptId);
-  console.log(req.body);
+  if (!promptId) throw new ApiError(400, "Prompt ID is required");
 
-  // Check if prompt exists
   const prompt = await Prompt.findById(promptId);
   if (!prompt) throw new ApiError(404, "Prompt not found");
 
-  // Check if like already exists
-  const alreadyLiked = await Like.findOne({ user: userId, prompt: promptId });
-  if (alreadyLiked) throw new ApiError(400, "You have already liked this prompt");
+  // Check if the user already liked the prompt
+  const existingLike = await Like.findOne({ user: userId, prompt: promptId });
 
-  // Create new like
+  if (existingLike) {
+    // Unlike: remove the like document and update prompt.likes array
+    await Like.deleteOne({ _id: (existingLike as any)._id });
+
+    prompt.likes = prompt.likes.filter(
+      (likeId) => likeId.toString() !== ((existingLike as any)._id as Types.ObjectId).toString()
+    );
+    await prompt.save();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { data: null }, "Disliked successfully"));
+  }
+
+  // Like: create new like and update prompt.likes array
   const newLike = await Like.create({ user: userId, prompt: promptId });
 
-  // Add like to prompt
   prompt.likes.push(newLike._id as Types.ObjectId);
   await prompt.save();
 
-  res.status(200).json(
-    new ApiResponse(200, { data: newLike }, "Prompt liked successfully")
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { data: newLike }, "Liked successfully"));
 });
+
+export default likePromptController;
+
 
 export { 
   getAllPromptsController,
