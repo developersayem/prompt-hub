@@ -1,0 +1,56 @@
+{
+  "statusCode": 200,
+  "data": {
+    "data": [
+      {
+        "_id": "68610a0492567ab956175744",
+        "title": "test post",
+        "description": "test post",
+        "tags": ["ai", "coding"],
+        "category": "programming",
+        "promptText": "this is the test post",
+        "resultType": "image",
+        "resultContent": "https://res.cloudinary.com/djgkha9ss/image/upload/v1751190019/moesmahd76jwtoersqje.jpg",
+        "aiModel": "claude",
+        "price": 0,
+        "isPaid": true,
+        "creator": {
+          "socialLinks": {
+            "facebook": "",
+            "instagram": "",
+            "github": "",
+            "linkedIn": "",
+            "x": "",
+            "portfolio": ""
+          },
+          "_id": "685fcbf5c1995d40ee467b17",
+          "name": "Sayem Molla",
+          "email": "sayemmolla012@gmail.com",
+          "isGoogleAuthenticated": false,
+          "isCertified": false,
+          "avatar": "http://res.cloudinary.com/djgkha9ss/image/upload/v1751108597/mzdjpyitvo6nhgfwhuqt.webp",
+          "bio": "",
+          "credits": 1000,
+          "prompts": [
+            "686109e992567ab95617573f",
+            "68610a0492567ab956175744",
+            "68610a2892567ab956175749"
+          ],
+          "purchasedPrompts": [],
+          "bookmarks": [],
+          "createdAt": "2025-06-28T11:03:17.885Z",
+          "updatedAt": "2025-06-29T09:40:56.414Z",
+          "__v": 3
+        },
+        "likes": ["68610fdb7af2a473323aeb9f"],
+        "comments": [],
+        "buyers": [],
+        "createdAt": "2025-06-29T09:40:20.265Z",
+        "updatedAt": "2025-06-29T10:05:15.515Z",
+        "__v": 1
+      }
+    ]
+  },
+  "message": "Prompts fetched successfully",
+  "success": true
+}

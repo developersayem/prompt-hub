@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -12,20 +11,14 @@ import {
   MessageCircle,
   Share2,
   Bookmark,
-  Search,
   Filter,
   Plus,
   Sparkles,
-  Home,
-  TrendingUp,
-  User,
-  Settings,
   DollarSign,
   Eye,
   Lock,
 } from "lucide-react";
 import Link from "next/link";
-import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Dialog,
   DialogContent,
@@ -39,85 +32,60 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
-import { UserNav } from "@/components/user/user-nav";
+import { toast } from "sonner";
+import { useCallback } from "react";
 
-// Mock data
-const prompts: {
-  id: number;
+// Define the IPrompt interface
+export interface IPrompt {
+  _id: string;
   title: string;
   description: string;
-  author: string;
-  authorAvatar: string;
-  category: string;
-  type: "free" | "paid";
-  price?: number;
-  likes: number;
-  comments: number;
-  shares: number;
-  aiModel: string;
-  resultType: "text" | "image" | "video";
   tags: string[];
-  preview: string;
+  category: string;
+  promptText: string;
+  resultType: "text" | "image" | "video";
+  resultContent: string;
+  aiModel: string;
+  price: number;
+  isPaid: boolean;
+  creator: {
+    _id: string;
+    name: string;
+    email: string;
+    isGoogleAuthenticated: boolean;
+    isCertified: boolean;
+    avatar: string;
+    bio: string;
+    credits: number;
+    prompts: string[];
+    purchasedPrompts: string[];
+    bookmarks: string[];
+    socialLinks: {
+      facebook: string;
+      instagram: string;
+      github: string;
+      linkedIn: string;
+      x: string;
+      portfolio: string;
+    };
+    createdAt: string;
+    updatedAt: string;
+    __v: number;
+  };
+  likes: string[];
+  comments: string[];
+  buyers: string[];
   createdAt: string;
-}[] = [
-  {
-    id: 1,
-    title: "Professional LinkedIn Post Generator",
-    description: "Generate engaging LinkedIn posts for any industry or topic",
-    author: "Sarah Chen",
-    authorAvatar: "/placeholder.svg?height=40&width=40",
-    category: "Marketing",
-    type: "free",
-    likes: 234,
-    comments: 45,
-    shares: 12,
-    aiModel: "GPT-4",
-    resultType: "text",
-    tags: ["linkedin", "marketing", "social-media"],
-    preview:
-      "Create a professional LinkedIn post about the importance of continuous learning in tech careers...",
-    createdAt: "2 hours ago",
-  },
-  {
-    id: 2,
-    title: "Stunning Logo Design Prompts",
-    description: "Create beautiful, modern logos for any business",
-    author: "Mike Johnson",
-    authorAvatar: "/placeholder.svg?height=40&width=40",
-    category: "Design",
-    type: "paid",
-    price: 9.99,
-    likes: 567,
-    comments: 89,
-    shares: 34,
-    aiModel: "DALL-E 3",
-    resultType: "image",
-    tags: ["logo", "design", "branding"],
-    preview: "/placeholder.svg?height=300&width=300",
-    createdAt: "5 hours ago",
-  },
-  {
-    id: 3,
-    title: "Code Review Assistant",
-    description: "Get detailed code reviews and improvement suggestions",
-    author: "Alex Rodriguez",
-    authorAvatar: "/placeholder.svg?height=40&width=40",
-    category: "Programming",
-    type: "free",
-    likes: 189,
-    comments: 23,
-    shares: 8,
-    aiModel: "Claude",
-    resultType: "text",
-    tags: ["code", "review", "programming"],
-    preview:
-      "Review this React component and suggest improvements for performance and readability...",
-    createdAt: "1 day ago",
-  },
-];
+  updatedAt: string;
+  __v: number;
+}
 
 export default function FeedPage() {
-  const [searchQuery, setSearchQuery] = useState("");
+  // Initialize prompts as an empty array to prevent the map error
+  const [prompts, setPrompts] = useState<IPrompt[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [filters, setFilters] = useState({
@@ -128,27 +96,62 @@ export default function FeedPage() {
     tags: [] as string[],
   });
 
-  interface IPrompt {
-    id: number;
-    title: string;
-    description: string;
-    author: string;
-    authorAvatar: string;
-    category: string;
-    type: "free" | "paid";
-    price?: number;
-    likes: number;
-    comments: number;
-    shares: number;
-    aiModel: string;
-    resultType: "text" | "image" | "video";
-    tags: string[];
-    preview: string;
-    createdAt: string;
-  }
-
   const [selectedPrompt, setSelectedPrompt] = useState<IPrompt | null>(null);
   const [showPromptModal, setShowPromptModal] = useState(false);
+
+  const fetchPrompts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const queryParams = new URLSearchParams();
+
+      if (selectedCategory !== "all") {
+        queryParams.append("category", selectedCategory);
+      }
+
+      if (filters.resultType !== "all") {
+        queryParams.append("searchString", filters.resultType);
+      }
+
+      // If price range starts above 0, assume paid prompts
+      if (filters.priceRange[0] > 0) {
+        queryParams.append("isPaid", "true");
+      }
+
+      const response = await fetch(
+        `${
+          process.env.NEXT_PUBLIC_BACKEND_URL
+        }/api/v1/prompt?${queryParams.toString()}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const promptsData = Array.isArray(data.data.data) ? data.data.data : [];
+      setPrompts(promptsData);
+      toast.success("Prompts fetched successfully!");
+    } catch (error) {
+      console.error("Error fetching prompts:", error);
+      setError("Failed to fetch prompts. Please try again.");
+      setPrompts([]);
+      toast.error("Failed to fetch prompts.");
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedCategory, filters]);
+
+  // fetch prompts from database
+  useEffect(() => {
+    fetchPrompts();
+  }, [fetchPrompts]);
 
   const handleFilterChange = (
     key: string,
@@ -192,80 +195,8 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      {/* Header */}
-      <header className="bg-neutral-50 dark:bg-neutral-950 border-b dark:border-gray-700 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Link href="/" className="flex items-center space-x-2">
-                <Sparkles className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold">Prompt Hub</span>
-              </Link>
-            </div>
-
-            <div className="flex-1 max-w-md mx-8">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search prompts..."
-                  className="pl-10 w-full"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4">
-              <Link href="/create">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Prompt
-                </Button>
-              </Link>
-              <ThemeToggle />
-              <UserNav />
-            </div>
-          </div>
-        </div>
-      </header>
-
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Left Sidebar */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-24">
-              <CardHeader>
-                <CardTitle className="text-lg">Navigation</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button variant="ghost" className="w-full justify-start">
-                  <Home className="h-4 w-4 mr-3" />
-                  Home Feed
-                </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <TrendingUp className="h-4 w-4 mr-3" />
-                  Trending
-                </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Bookmark className="h-4 w-4 mr-3" />
-                  Saved
-                </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <User className="h-4 w-4 mr-3" />
-                  My Prompts
-                </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <DollarSign className="h-4 w-4 mr-3" />
-                  Earnings
-                </Button>
-                <Button variant="ghost" className="w-full justify-start">
-                  <Settings className="h-4 w-4 mr-3" />
-                  Settings
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
+        <div className="">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Filters */}
@@ -528,219 +459,205 @@ export default function FeedPage() {
               </CardContent>
             </Card>
 
+            {/* Loading State */}
+            {loading && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="flex justify-center items-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    <span className="ml-2">Loading prompts...</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Error State */}
+            {error && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <p className="text-red-500 mb-4">{error}</p>
+                    <Button onClick={fetchPrompts}>Try Again</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Empty State */}
+            {!loading && !error && prompts.length === 0 && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 mb-4">No prompts found.</p>
+                    <Link href="/create">
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create First Prompt
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Prompt Cards */}
-            {prompts.map((prompt) => (
-              <Card
-                key={prompt.id}
-                className="hover:shadow-lg transition-shadow"
-              >
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Avatar>
-                        <AvatarImage
-                          src={prompt.authorAvatar || "/placeholder.svg"}
-                        />
-                        <AvatarFallback>
-                          {prompt.author
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold">{prompt.author}</p>
-                        <p className="text-sm text-gray-500">
-                          {prompt.createdAt}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">{prompt.category}</Badge>
-                      {prompt.type === "paid" ? (
-                        <Badge className="bg-green-100 text-green-800">
-                          <DollarSign className="h-3 w-3 mr-1" />${prompt.price}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline">Free</Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h3 className="text-xl font-semibold mb-2">
-                      {prompt.title}
-                    </h3>
-                    <p className="text-gray-600">{prompt.description}</p>
-                  </div>
-
-                  {/* Preview Content */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    {prompt.type === "paid" ? (
-                      <div className="flex items-center justify-center py-8 text-gray-500">
-                        <Lock className="h-8 w-8 mr-2" />
-                        <span>Preview available after purchase</span>
-                      </div>
-                    ) : (
-                      <div>
-                        {prompt.resultType === "image" ? (
-                          <Image
-                            src={prompt.preview || "/placeholder.svg"}
-                            alt="Prompt result"
-                            className="w-full rounded-lg"
+            {!loading &&
+              !error &&
+              prompts.length > 0 &&
+              prompts.map((prompt) => (
+                <Card
+                  key={prompt._id}
+                  className="hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center space-x-3">
+                        <Avatar>
+                          <AvatarImage
+                            src={prompt.creator.avatar || "/placeholder.svg"}
                           />
-                        ) : (
-                          <p className="text-sm">{prompt.preview}</p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Tags */}
-                  <div className="flex flex-wrap gap-2">
-                    {prompt.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-
-                  {/* AI Model */}
-                  <div className="flex items-center text-sm text-gray-500">
-                    <Sparkles className="h-4 w-4 mr-1" />
-                    Generated with {prompt.aiModel}
-                  </div>
-
-                  <Separator />
-
-                  {/* Actions */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <Button variant="ghost" size="sm">
-                        <Heart className="h-4 w-4 mr-2" />
-                        {prompt.likes}
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        {prompt.comments}
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        <Share2 className="h-4 w-4 mr-2" />
-                        {prompt.shares}
-                      </Button>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Button variant="ghost" size="sm">
-                        <Bookmark className="h-4 w-4" />
-                      </Button>
-                      {prompt.type === "paid" ? (
-                        <Button
-                          size="sm"
-                          onClick={() => handleViewPrompt(prompt)}
-                        >
-                          Buy for ${prompt.price}
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewPrompt(prompt)}
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Full
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Right Sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="sticky top-24 space-y-6">
-              {/* Trending Tags */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Trending Tags</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="secondary">#marketing</Badge>
-                    <Badge variant="secondary">#design</Badge>
-                    <Badge variant="secondary">#ai-art</Badge>
-                    <Badge variant="secondary">#copywriting</Badge>
-                    <Badge variant="secondary">#coding</Badge>
-                    <Badge variant="secondary">#business</Badge>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Top Creators */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Top Creators</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {[
-                    { name: "Sarah Chen", prompts: 45, earnings: "$2,340" },
-                    { name: "Mike Johnson", prompts: 32, earnings: "$1,890" },
-                    { name: "Alex Rodriguez", prompts: 28, earnings: "$1,560" },
-                  ].map((creator, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src="/placeholder.svg?height=32&width=32" />
                           <AvatarFallback>
-                            {creator.name
+                            {prompt.creator.name
                               .split(" ")
                               .map((n) => n[0])
                               .join("")}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="text-sm font-medium">{creator.name}</p>
-                          <p className="text-xs text-gray-500">
-                            {creator.prompts} prompts
+                          <p className="font-semibold">{prompt.creator.name}</p>
+                          <p className="text-sm text-gray-500">
+                            {new Intl.DateTimeFormat("en-US", {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }).format(new Date(prompt.createdAt))}
                           </p>
                         </div>
                       </div>
-                      <Badge variant="outline" className="text-xs">
-                        {creator.earnings}
-                      </Badge>
+                      <div className="flex items-center space-x-2">
+                        <Badge variant="secondary">{prompt.category}</Badge>
+                        {prompt.price ? (
+                          <Badge className="bg-green-100 text-green-800">
+                            <DollarSign className="h-3 w-3 mr-1" />$
+                            {prompt.price}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">Free</Badge>
+                        )}
+                      </div>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h3 className="text-xl font-semibold mb-2 capitalize">
+                        {prompt.title}
+                      </h3>
+                      <p className="text-gray-600 capitalize">
+                        {prompt.description}
+                      </p>
+                    </div>
 
-              {/* Quick Stats */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Community Stats</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Total Prompts</span>
-                    <span className="font-semibold">12,456</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">
-                      Active Creators
-                    </span>
-                    <span className="font-semibold">3,289</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">This Week</span>
-                    <span className="font-semibold">+234 prompts</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                    {/* Preview Content */}
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      {prompt.price ? (
+                        <div className="flex items-center justify-center py-8 text-gray-500">
+                          <Lock className="h-8 w-8 mr-2" />
+                          <span>Preview available after purchase</span>
+                        </div>
+                      ) : (
+                        <div>
+                          {prompt.resultType === "image" ? (
+                            <Image
+                              width={400}
+                              height={400}
+                              src={prompt.resultContent || "/placeholder.svg"}
+                              alt="Prompt result"
+                              className="w-full rounded-lg"
+                            />
+                          ) : prompt.resultType === "video" ? (
+                            <video
+                              controls
+                              className="w-full rounded-lg"
+                              src={prompt.resultContent || ""}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          ) : (
+                            <p className="text-sm whitespace-pre-wrap text-black capitalize">
+                              {prompt.resultContent}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Tags */}
+                    <div className="flex flex-wrap gap-2">
+                      {prompt.tags.map((tag, index) => (
+                        <Badge
+                          key={`${tag}-${index}`}
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          #{tag}
+                        </Badge>
+                      ))}
+                    </div>
+
+                    {/* AI Model */}
+                    <div className="flex items-center text-sm text-gray-500">
+                      <Sparkles className="h-4 w-4 mr-1" />
+                      Generated with {prompt.aiModel}
+                    </div>
+
+                    <Separator />
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <Button variant="ghost" size="sm">
+                          <Heart className="h-4 w-4 mr-2" />
+                          {Array.isArray(prompt.likes)
+                            ? prompt.likes.length
+                            : 0}
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          {Array.isArray(prompt.comments)
+                            ? prompt.comments.length
+                            : 0}
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Share
+                        </Button>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="ghost" size="sm">
+                          <Bookmark className="h-4 w-4" />
+                        </Button>
+                        {prompt.price ? (
+                          <Button
+                            size="sm"
+                            onClick={() => handleViewPrompt(prompt)}
+                          >
+                            Buy for ${prompt.price}
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewPrompt(prompt)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Full
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
           </div>
         </div>
       </div>
@@ -754,10 +671,12 @@ export default function FeedPage() {
                   <div className="flex items-center space-x-3">
                     <Avatar>
                       <AvatarImage
-                        src={selectedPrompt.authorAvatar || "/placeholder.svg"}
+                        src={
+                          selectedPrompt.creator.avatar || "/placeholder.svg"
+                        }
                       />
                       <AvatarFallback>
-                        {selectedPrompt.author
+                        {selectedPrompt.creator.name
                           .split(" ")
                           .map((n: string) => n[0])
                           .join("")}
@@ -768,13 +687,13 @@ export default function FeedPage() {
                         {selectedPrompt.title}
                       </DialogTitle>
                       <p className="text-sm text-muted-foreground">
-                        by {selectedPrompt.author}
+                        by {selectedPrompt.creator.name}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Badge variant="secondary">{selectedPrompt.category}</Badge>
-                    {selectedPrompt.type === "paid" ? (
+                    {selectedPrompt.price ? (
                       <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                         <DollarSign className="h-3 w-3 mr-1" />$
                         {selectedPrompt.price}
@@ -795,9 +714,9 @@ export default function FeedPage() {
                   <h4 className="font-medium">The Prompt</h4>
                   <div className="bg-muted rounded-lg p-4">
                     <p className="text-sm font-mono">
-                      {selectedPrompt.type === "paid"
+                      {selectedPrompt.price
                         ? "🔒 Full prompt available after purchase. This is a premium prompt that generates high-quality results for professional use."
-                        : selectedPrompt.preview}
+                        : selectedPrompt.promptText}
                     </p>
                   </div>
                 </div>{" "}
@@ -805,42 +724,37 @@ export default function FeedPage() {
                 {/* Generated Result */}
                 <div className="space-y-4">
                   <h4 className="font-medium">Generated Result</h4>
-                  <div className="bg-muted rounded-lg p-4">
-                    {selectedPrompt.type === "paid" ? (
-                      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-                        <Lock className="h-12 w-12 mb-4" />
-                        <h3 className="font-medium mb-2">Premium Content</h3>
-                        <p className="text-sm text-center mb-6 max-w-md">
-                          This is a premium prompt with exclusive content.
-                          Purchase to unlock the full prompt and see the
-                          complete generated result.
-                        </p>
-                        <Button className="bg-gradient-to-r from-primary to-secondary">
-                          <DollarSign className="h-4 w-4 mr-2" />
-                          Buy for ${selectedPrompt.price}
-                        </Button>
+                  <div className="bg-muted rounded-lg p-4 max-w-full">
+                    {selectedPrompt.resultType === "image" ? (
+                      <div className="relative w-full h-[400px]">
+                        <Image
+                          fill
+                          src={
+                            selectedPrompt.resultContent || "/placeholder.svg"
+                          }
+                          alt="Generated result"
+                          className="rounded-lg object-contain"
+                        />
                       </div>
+                    ) : selectedPrompt.resultType === "video" ? (
+                      <video
+                        controls
+                        className="w-full max-h-[400px] rounded-lg object-contain"
+                        src={selectedPrompt.resultContent || ""}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
                     ) : (
-                      <div>
-                        {selectedPrompt.resultType === "image" ? (
-                          <Image
-                            src={selectedPrompt.preview || "/placeholder.svg"}
-                            alt="Generated result"
-                            className="w-full rounded-lg max-h-96 object-cover"
-                          />
-                        ) : (
-                          <div className="space-y-4">
-                            <p className="text-sm leading-relaxed">
-                              {selectedPrompt.preview}
-                            </p>
-                            <div className="text-xs text-muted-foreground">
-                              <p>
-                                This is the complete generated result. You can
-                                copy and use this content freely.
-                              </p>
-                            </div>
-                          </div>
-                        )}
+                      <div className="space-y-4">
+                        <p className="text-sm leading-relaxed">
+                          {selectedPrompt.resultContent}
+                        </p>
+                        <div className="text-xs text-muted-foreground">
+                          <p>
+                            This is the complete generated result. You can copy
+                            and use this content freely.
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -857,17 +771,13 @@ export default function FeedPage() {
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">
-                          Result Type:
-                        </span>
-                        <span className="font-medium capitalize">
-                          {selectedPrompt.resultType}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
                         <span className="text-muted-foreground">Created:</span>
                         <span className="font-medium">
-                          {selectedPrompt.createdAt}
+                          {new Intl.DateTimeFormat("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          }).format(new Date(selectedPrompt.createdAt))}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -885,7 +795,7 @@ export default function FeedPage() {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Likes:</span>
                         <span className="font-medium">
-                          {selectedPrompt.likes}
+                          {selectedPrompt.likes.length}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -897,7 +807,8 @@ export default function FeedPage() {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Shares:</span>
                         <span className="font-medium">
-                          {selectedPrompt.shares}
+                          {/* TODO: add share functionality */}
+                          {/* {selectedPrompt.shares} */}
                         </span>
                       </div>
                     </div>
@@ -919,7 +830,7 @@ export default function FeedPage() {
                   <div className="flex items-center space-x-4">
                     <Button variant="ghost" size="sm">
                       <Heart className="h-4 w-4 mr-2" />
-                      {selectedPrompt.likes}
+                      {selectedPrompt.likes.length}
                     </Button>
                     <Button variant="ghost" size="sm">
                       <MessageCircle className="h-4 w-4 mr-2" />
@@ -934,7 +845,7 @@ export default function FeedPage() {
                     <Button variant="ghost" size="sm">
                       <Bookmark className="h-4 w-4" />
                     </Button>
-                    {selectedPrompt.type === "paid" ? (
+                    {selectedPrompt.price ? (
                       <Button className="bg-gradient-to-r from-primary to-secondary">
                         <DollarSign className="h-4 w-4 mr-2" />
                         Buy for ${selectedPrompt.price}
