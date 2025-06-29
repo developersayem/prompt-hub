@@ -24,21 +24,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  ArrowLeft,
-  Upload,
-  X,
-  Sparkles,
-  DollarSign,
-  // Eye,
-  // Save,
-  Send,
-} from "lucide-react";
+import { ArrowLeft, Upload, X, DollarSign, Send } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { UserNav } from "@/components/user/user-nav";
 
 export default function CreatePromptPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -131,12 +125,13 @@ export default function CreatePromptPage() {
       if (!res.ok) {
         const errorMsg = result.message || "Something went wrong!";
         console.error("Backend error:", errorMsg);
-        alert(errorMsg);
+        toast.error(errorMsg);
         return;
       }
 
       toast.success("Prompt created!");
       //TODO: window.location.href = "/feed";
+      router.push("./feed");
     } catch (err) {
       console.error("Submit error:", err);
       toast.error("Failed to create prompt");
@@ -146,7 +141,7 @@ export default function CreatePromptPage() {
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
       {/* Header */}
-      <header className="bg-neutral-50 dark:bg-neutral-950 border-b dark:border-gray-700">
+      <header className="bg-white dark:bg-neutral-950 border-b dark:border-gray-700 fixed top-0 w-full z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -156,31 +151,17 @@ export default function CreatePromptPage() {
                   Back to Feed
                 </Button>
               </Link>
-              <div className="flex items-center space-x-2">
-                <Sparkles className="h-6 w-6 text-blue-600" />
-                <h1 className="text-xl font-semibold">Create New Prompt</h1>
-              </div>
             </div>
-            <div className="flex items-center space-x-2">
+            <h1 className="text-2xl font-bold text-center">Create a prompt</h1>
+            <div className="flex items-center space-x-4">
               <ThemeToggle />
-              {/* <Button variant="outline">
-                <Save className="h-4 w-4 mr-2" />
-                Save Draft
-              </Button>
-              <Button variant="outline">
-                <Eye className="h-4 w-4 mr-2" />
-                Preview
-              </Button> */}
-              <Button type="submit">
-                <Send className="h-4 w-4 mr-2" />
-                Publish Prompt
-              </Button>
+              <UserNav />
             </div>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 mt-20">
         <div className="max-w-4xl mx-auto">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Basic Information */}

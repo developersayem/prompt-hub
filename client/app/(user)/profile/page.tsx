@@ -69,23 +69,14 @@ export default function ProfilePage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              {/* <Button
-                variant="ghost"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={() => window.history.back()}
-              >
-                <ArrowLeft className="w-5 h-5" />
-                Back
-              </Button> */}
               <Link href="/feed">
                 <Button variant="ghost" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Feed
                 </Button>
               </Link>
-              {/* <h1 className="text-2xl font-bold">Profile</h1> */}
             </div>
+            <h1 className="text-2xl font-bold text-center">Profile</h1>
             <div className="flex items-center space-x-4">
               <ThemeToggle />
               <UserNav />
