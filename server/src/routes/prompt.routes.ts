@@ -2,10 +2,13 @@ import { Router } from "express";
 
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import { createPromptController, likePromptController } from "../controller/prompt.controller";
+import { createPromptController, getAllPromptsController, likePromptController } from "../controller/prompt.controller";
 
 
 const router = Router()
+//get all prompts
+router.get("/", verifyJWT, getAllPromptsController)
+
 
 // Prompt Creation Routes
 router.post("/create",

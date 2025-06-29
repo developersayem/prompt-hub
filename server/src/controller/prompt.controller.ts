@@ -9,6 +9,34 @@ import { User } from "../models/users.model";
 import mongoose, { Types } from "mongoose";
 import { Like } from "../models/like.model"; // adjust the path
 
+// Controller for show all prompts
+const getAllPromptsController = asyncHandler(async (req: Request, res: Response) => {
+  const { category, isPaid, searchString } = req.query;
+
+  const query: any = {};
+
+  if (category) {
+    query.category = category;
+  }
+
+  if (isPaid === "true") {
+    query.isPaid = true;
+  }
+
+  if (typeof searchString === "string" && searchString.trim() !== "") {
+    query.$or = [
+      { title: { $regex: new RegExp(searchString, "i") } },
+      { description: { $regex: new RegExp(searchString, "i") } },
+    ];
+  }
+
+  const prompts = await Prompt.find(query)
+    .sort({ createdAt: -1 })
+    .populate("creator", "-password -refreshToken");
+
+  res.status(200).json(new ApiResponse(200, { data: prompts }, "Prompts fetched successfully"));
+});
+
 
 // Controller to handle prompt creation
 const createPromptController = asyncHandler(async (req: Request, res: Response) => {
@@ -149,6 +177,7 @@ const likePromptController = asyncHandler(async (req: Request, res: Response) =>
 });
 
 export { 
+  getAllPromptsController,
   createPromptController,
   likePromptController
 };
