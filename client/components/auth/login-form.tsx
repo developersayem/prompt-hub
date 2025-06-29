@@ -44,7 +44,7 @@ export function LoginForm({
       const { email, password } = formData;
       await login(email, password);
       toast.success("Login successful!");
-      router.push("/profile");
+      router.push("/feed");
     } catch (error) {
       toast.error("Login failed");
       console.log("Login error:", error);
