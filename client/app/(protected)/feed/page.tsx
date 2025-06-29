@@ -17,6 +17,7 @@ import {
   DollarSign,
   Eye,
   Lock,
+  Send,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -35,51 +36,9 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { useCallback } from "react";
 import { useAuth } from "@/contexts/auth-context";
-
-// Define the IPrompt interface
-export interface IPrompt {
-  _id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  category: string;
-  promptText: string;
-  resultType: "text" | "image" | "video";
-  resultContent: string;
-  aiModel: string;
-  price: number;
-  isPaid: boolean;
-  creator: {
-    _id: string;
-    name: string;
-    email: string;
-    isGoogleAuthenticated: boolean;
-    isCertified: boolean;
-    avatar: string;
-    bio: string;
-    credits: number;
-    prompts: string[];
-    purchasedPrompts: string[];
-    bookmarks: string[];
-    socialLinks: {
-      facebook: string;
-      instagram: string;
-      github: string;
-      linkedIn: string;
-      x: string;
-      portfolio: string;
-    };
-    createdAt: string;
-    updatedAt: string;
-    __v: number;
-  };
-  likes: string[];
-  comments: string[];
-  buyers: string[];
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-}
+import { CommentThread } from "@/components/feed/CommentThread";
+import { IPrompt } from "@/types/prompts-type";
+import { IComment } from "@/types/comments.type";
 
 export default function FeedPage() {
   const { user } = useAuth();
@@ -100,8 +59,80 @@ export default function FeedPage() {
 
   const [selectedPrompt, setSelectedPrompt] = useState<IPrompt | null>(null);
   const [showPromptModal, setShowPromptModal] = useState(false);
+  const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
+  const [newComment, setNewComment] = useState<Record<string, string>>({});
 
-  // Function to fetch prompts
+  // Function for recursive comment updater
+  function addReplyRecursively(
+    comments: IComment[],
+    parentId: string,
+    newReply: IComment
+  ): IComment[] {
+    return comments.map((comment) => {
+      if (comment._id === parentId) {
+        return {
+          ...comment,
+          replies: [...(comment.replies || []), newReply],
+        };
+      }
+
+      return {
+        ...comment,
+        replies: addReplyRecursively(comment.replies || [], parentId, newReply),
+      };
+    });
+  }
+  // Function for recursive like updater
+  function updateCommentLikeRecursively(
+    comments: IComment[],
+    commentId: string,
+    userId: string
+  ): IComment[] {
+    return comments.map((comment) => {
+      if (comment._id === commentId) {
+        const alreadyLiked = comment.likes.includes(userId);
+        return {
+          ...comment,
+          likes: alreadyLiked
+            ? comment.likes.filter((id) => id !== userId)
+            : [...comment.likes, userId],
+        };
+      }
+
+      return {
+        ...comment,
+        replies: updateCommentLikeRecursively(
+          comment.replies || [],
+          commentId,
+          userId
+        ),
+      };
+    });
+  }
+  // Helper to recursively remove comment or nested reply
+  const removeCommentRecursive = (
+    comments: IComment[],
+    commentId: string
+  ): IComment[] => {
+    return comments
+      .map((comment) => {
+        if (comment._id === commentId) {
+          return null; // remove it
+        }
+
+        if (comment.replies && comment.replies.length > 0) {
+          return {
+            ...comment,
+            replies: removeCommentRecursive(comment.replies, commentId),
+          };
+        }
+
+        return comment;
+      })
+      .filter(Boolean) as IComment[];
+  };
+
+  // Function for handling fetch prompts
   const fetchPrompts = useCallback(async () => {
     try {
       setLoading(true);
@@ -151,14 +182,8 @@ export default function FeedPage() {
     }
   }, [selectedCategory, filters]);
 
-  //Function to like prompt
+  //Function for handling like
   const handleLikePrompt = async (promptId: string) => {
-    const userId = user?._id;
-    if (!userId) {
-      toast.error("Please login to like prompts");
-      return;
-    }
-
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/like`,
@@ -171,35 +196,221 @@ export default function FeedPage() {
       );
 
       const result = await res.json();
-
       if (!res.ok) throw new Error(result.message || "Failed to like prompt");
 
-      // If backend returns updated prompt:
-      if (result.updatedPrompt) {
-        setPrompts((prevPrompts) =>
-          prevPrompts.map((prompt) =>
-            prompt._id === promptId ? result.updatedPrompt : prompt
-          )
-        );
-      } else {
-        // fallback: toggle locally with string conversion to avoid mismatch
-        setPrompts((prevPrompts) =>
-          prevPrompts.map((prompt) =>
-            prompt._id === promptId
-              ? {
-                  ...prompt,
-                  likes: prompt.likes.map(String).includes(userId)
-                    ? prompt.likes.filter((id) => String(id) !== userId)
-                    : [...prompt.likes, userId],
-                }
-              : prompt
-          )
-        );
+      const updatedPrompts = prompts.map((prompt) =>
+        prompt._id === promptId
+          ? {
+              ...prompt,
+              likes: prompt.likes.includes(user?._id ?? "")
+                ? prompt.likes.filter((id) => id !== user?._id)
+                : [...prompt.likes, user?._id ?? ""],
+            }
+          : prompt
+      );
+
+      setPrompts(updatedPrompts);
+
+      // 🔥 ALSO update the selectedPrompt if it's the one being liked
+      if (selectedPrompt && selectedPrompt._id === promptId) {
+        const updatedPrompt = updatedPrompts.find((p) => p._id === promptId);
+        if (updatedPrompt) {
+          setSelectedPrompt(updatedPrompt);
+        }
       }
 
       toast.success(result.message);
-    } catch (error) {
-      console.log("Error liking prompt:", error);
+    } catch (err) {
+      console.error("Like failed:", err);
+      toast.error("Something went wrong");
+    }
+  };
+  // Function for adding comment
+  const handleAddComment = async (promptId: string, commentText: string) => {
+    if (!commentText.trim()) return;
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/comment`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ promptId, text: commentText }),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to comment");
+
+      const result = await res.json();
+      console.log(result);
+
+      // Update UI optimistically or re-fetch prompts
+      const updatedPrompts = prompts.map((prompt) =>
+        prompt._id === promptId
+          ? {
+              ...prompt,
+              comments: [
+                ...prompt.comments,
+                {
+                  ...result.data.comment,
+                  user: {
+                    _id: user?._id,
+                    name: user?.name,
+                    avatar: user?.avatar,
+                  },
+                },
+              ],
+            }
+          : prompt
+      );
+      setPrompts(updatedPrompts);
+      setNewComment((prev) => ({ ...prev, [promptId]: "" }));
+      toast.success(result.message);
+    } catch (err) {
+      console.error("Error posting comment:", err);
+      toast.error("Something went wrong");
+    }
+  };
+
+  // Function for updating comment
+  const handleUpdateComment = async (commentId: string, newText: string) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/comment/${commentId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ text: newText }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message);
+
+      // Optimistically update comment in UI
+      const updatedPrompts = prompts.map((prompt) => ({
+        ...prompt,
+        comments: prompt.comments.map((comment) =>
+          comment._id === commentId ? { ...comment, text: newText } : comment
+        ),
+      }));
+      setPrompts(updatedPrompts);
+      toast.success(result.message);
+    } catch (err) {
+      console.error("Error updating comment:", err);
+      toast.error("Failed to update comment");
+    }
+  };
+
+  // Function for deleting comment
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/comment/${commentId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to delete");
+
+      // Recursively remove the comment from all prompts
+      const updatedPrompts = prompts.map((prompt) => ({
+        ...prompt,
+        comments: removeCommentRecursive(prompt.comments, commentId),
+      }));
+
+      setPrompts(updatedPrompts);
+      toast.success("Comment deleted");
+    } catch (err) {
+      console.log(err);
+      toast.error("Failed to delete comment");
+    }
+  };
+
+  // Function for liking a comment
+  const handleLikeComment = async (commentId: string) => {
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/comment/like`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ commentId }),
+        }
+      );
+
+      if (res.ok) {
+        const updatedPrompts = prompts.map((prompt) => ({
+          ...prompt,
+          comments: updateCommentLikeRecursively(
+            prompt.comments,
+            commentId,
+            user?._id as string
+          ),
+        }));
+        setPrompts(updatedPrompts);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Function for replying to a comment
+  const handleReply = async (
+    promptId: string,
+    commentId: string,
+    text: string
+  ) => {
+    if (!text.trim()) {
+      toast.error("Reply cannot be empty");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/comment/reply`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ promptId, text, parentComment: commentId }),
+        }
+      );
+
+      if (!res.ok) {
+        const data = await res.json();
+        toast.error(data.message || "Failed to post reply");
+        return;
+      }
+
+      const result = await res.json();
+
+      // Update state: find the prompt, then find the comment, then add the new reply
+      const updatedPrompts = prompts.map((prompt) =>
+        prompt._id === promptId
+          ? {
+              ...prompt,
+              comments: addReplyRecursively(
+                prompt.comments,
+                commentId,
+                result.data.comment
+              ),
+            }
+          : prompt
+      );
+
+      setPrompts(updatedPrompts);
+
+      toast.success(result.message);
+    } catch (err) {
+      console.error(err);
       toast.error("Something went wrong");
     }
   };
@@ -677,6 +888,7 @@ export default function FeedPage() {
                     {/* Actions */}
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
+                        {/* LIKES BUTTON */}
                         <Button
                           onClick={() => handleLikePrompt(prompt._id)}
                           variant="ghost"
@@ -692,12 +904,23 @@ export default function FeedPage() {
                           />
                           {prompt.likes.length}
                         </Button>
-                        <Button variant="ghost" size="sm">
+                        {/* COMMENTS BUTTON */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() =>
+                            setOpenComments((prev) => ({
+                              ...prev,
+                              [prompt._id]: !prev[prompt._id],
+                            }))
+                          }
+                        >
                           <MessageCircle className="h-4 w-4 mr-2" />
                           {Array.isArray(prompt.comments)
                             ? prompt.comments.length
                             : 0}
                         </Button>
+                        {/* SHARE BUTTON */}
                         <Button variant="ghost" size="sm">
                           <Share2 className="h-4 w-4 mr-2" />
                           Share
@@ -726,6 +949,76 @@ export default function FeedPage() {
                         )}
                       </div>
                     </div>
+                    <>
+                      {openComments[prompt._id] && (
+                        <div className="mt-4 space-y-3 transition-all duration-500 ease-in-out">
+                          {/* Add New Comment */}
+                          <div className="flex items-start space-x-3">
+                            <Avatar className="w-8 h-8">
+                              <AvatarImage
+                                src={user?.avatar || "/placeholder.svg"}
+                              />
+                              <AvatarFallback>
+                                {user?.name
+                                  ?.split(" ")
+                                  .map((n) => n[0])
+                                  .join("")}
+                              </AvatarFallback>
+                            </Avatar>
+
+                            <div className="flex-1">
+                              <form
+                                className="flex items-center space-x-2"
+                                onSubmit={(e) => {
+                                  e.preventDefault();
+                                  handleAddComment(
+                                    prompt._id,
+                                    newComment[prompt._id] || ""
+                                  );
+                                }}
+                              >
+                                <input
+                                  type="text"
+                                  value={newComment[prompt._id] || ""}
+                                  onChange={(e) =>
+                                    setNewComment((prev) => ({
+                                      ...prev,
+                                      [prompt._id]: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Write a comment..."
+                                  className="w-full px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
+                                />
+                                <Button size="lg" type="submit">
+                                  <Send />
+                                </Button>
+                              </form>
+                            </div>
+                          </div>
+
+                          {/* Show Existing Comments */}
+                          <div className="space-y-2 ">
+                            {prompt.comments?.length === 0 && (
+                              <p className="text-sm text-gray-400">
+                                No comments yet.
+                              </p>
+                            )}
+                            {prompt.comments.map((comment) => (
+                              <CommentThread
+                                key={comment._id}
+                                comment={comment}
+                                currentUserId={user?._id as string}
+                                promptId={prompt._id}
+                                onLike={handleLikeComment}
+                                onReply={handleReply}
+                                onDelete={handleDeleteComment}
+                                onEdit={handleUpdateComment}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
                   </CardContent>
                 </Card>
               ))}
@@ -879,7 +1172,7 @@ export default function FeedPage() {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Comments:</span>
                         <span className="font-medium">
-                          {selectedPrompt.comments}
+                          {selectedPrompt.comments.length}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -906,13 +1199,26 @@ export default function FeedPage() {
                 {/* Actions */}
                 <div className="flex items-center justify-between pt-4 border-t">
                   <div className="flex items-center space-x-4">
-                    <Button variant="ghost" size="sm">
-                      <Heart className="h-4 w-4 mr-2" />
+                    <Button
+                      onClick={() => handleLikePrompt(selectedPrompt._id)}
+                      variant="ghost"
+                      size="sm"
+                      title="Like this prompt"
+                    >
+                      <Heart
+                        className={`h-4 w-4 mr-2 ${
+                          selectedPrompt.likes.includes(user?._id ?? "")
+                            ? "text-red-500"
+                            : "text-gray-500"
+                        }`}
+                      />
                       {selectedPrompt.likes.length}
                     </Button>
                     <Button variant="ghost" size="sm">
                       <MessageCircle className="h-4 w-4 mr-2" />
-                      {selectedPrompt.comments}
+                      {selectedPrompt?.comments?.map((comment) => (
+                        <>{comment.text}</>
+                      ))}
                     </Button>
                     <Button variant="ghost" size="sm">
                       <Share2 className="h-4 w-4 mr-2" />
