@@ -359,9 +359,67 @@ const likeCommentController = asyncHandler(async (req: Request, res: Response) =
   }
 });
 
+// Controller for my prompts
+const getMyPromptsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = (req as any).user?._id;
 
+    if (!userId) throw new ApiError(401, "Unauthorized");
 
+    const prompts = await Prompt.find({ creator: userId }).sort({ createdAt: -1 });
 
+    res
+      .status(200)
+      .json(new ApiResponse(200, { data: prompts }, "Prompts fetched successfully"));
+  }
+);
+
+// Controller for get single
+const getSinglePromptController = asyncHandler(async (req: Request, res: Response) => {
+    const promptId = req.params.id;
+    console.log("promptId",promptId)
+    const userId = (req as any).user?._id;
+    const ip =
+      (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress;
+
+    const prompt = await Prompt.findById(promptId).populate(
+      "creator",
+      "name avatar"
+    );
+
+    if (!prompt) {
+      throw new ApiError(404, "Prompt not found");
+    }
+
+    let shouldUpdate = false;
+
+    if (userId) {
+      const hasViewed = prompt.viewedBy.some(
+        (id) => id.toString() === userId.toString()
+      );
+      if (!hasViewed) {
+        prompt.viewedBy.push(userId);
+        prompt.views += 1;
+        shouldUpdate = true;
+      }
+    } else if (ip && typeof ip === "string") {
+      const hasViewed = prompt.viewedIPs.includes(ip);
+      if (!hasViewed) {
+        prompt.viewedIPs.push(ip);
+        prompt.views += 1;
+        shouldUpdate = true;
+      }
+    }
+
+    if (shouldUpdate) {
+      await prompt.save();
+    }
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, { prompt }, "Prompt fetched successfully"));
+  }
+);
 
 export { 
   getAllPromptsController,
@@ -371,5 +429,7 @@ export {
   updateCommentController,
   deleteCommentController,
   replyCommentController,
-  likeCommentController
+  likeCommentController,
+  getMyPromptsController,
+  getSinglePromptController
 };

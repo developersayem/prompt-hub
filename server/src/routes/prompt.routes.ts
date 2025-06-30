@@ -2,7 +2,7 @@ import { Router } from "express";
 
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import { createCommentController, createPromptController, deleteCommentController, getAllPromptsController, likeCommentController, likePromptController, replyCommentController, updateCommentController } from "../controller/prompt.controller";
+import { createCommentController, createPromptController, deleteCommentController, getAllPromptsController, getMyPromptsController, getSinglePromptController, likeCommentController, likePromptController, replyCommentController, updateCommentController } from "../controller/prompt.controller";
 
 
 const router = Router()
@@ -28,7 +28,10 @@ router.delete("/comment/:commentId", verifyJWT, deleteCommentController);
 router.post("/comment/reply", verifyJWT, replyCommentController);
 //Route for like comment
 router.post("/comment/like", verifyJWT, likeCommentController);
-
+// Route for my prompts
+router.get("/my-prompts", verifyJWT, getMyPromptsController)
+// Route to get single
+router.get("/:id", verifyJWT, getSinglePromptController);
 
 
 
