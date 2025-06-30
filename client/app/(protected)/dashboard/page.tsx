@@ -9,7 +9,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart,
@@ -22,21 +21,16 @@ import {
   LineChart,
   Line,
 } from "recharts";
-import {
-  DollarSign,
-  Eye,
-  Heart,
-  MessageCircle,
-  TrendingUp,
-  Plus,
-  Edit,
-  Trash2,
-  MoreHorizontal,
-  Download,
-} from "lucide-react";
+import { DollarSign, Eye, Heart, TrendingUp, Plus } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserNav } from "@/components/user/user-nav";
+import { useRouter, useSearchParams } from "next/navigation";
+import MyPromptsTab from "@/components/dashboard/my-prompts-tab";
+import EarningsTab from "@/components/dashboard/earnings-tab";
+import AnalyticsTab from "@/components/dashboard/analytics-tab";
+import ProfileTab from "@/components/dashboard/profile-tab";
+import SettingsTab from "@/components/dashboard/settings-tab";
 
 // Mock data
 const statsData = [
@@ -89,8 +83,10 @@ const myPrompts = [
 ];
 
 export default function DashboardPage() {
-  const [activeTab, setActiveTab] = useState("overview");
-
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab") || "overview";
+  const [activeTab, setActiveTab] = useState(tabParam);
   const totalEarnings = myPrompts.reduce(
     (sum, prompt) => sum + prompt.earnings,
     0
@@ -130,14 +126,19 @@ export default function DashboardPage() {
       <div className="container mx-auto px-4 py-8 mt-20">
         <Tabs
           value={activeTab}
-          onValueChange={setActiveTab}
+          onValueChange={(value) => {
+            setActiveTab(value);
+            router.push(`/dashboard?tab=${value}`);
+          }}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="prompts">My Prompts</TabsTrigger>
             <TabsTrigger value="earnings">Earnings</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -299,273 +300,16 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
-          <TabsContent value="prompts" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold">My Prompts</h2>
-              <div className="flex space-x-2">
-                <Button variant="outline" size="sm">
-                  Filter
-                </Button>
-                <Button variant="outline" size="sm">
-                  Sort
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid gap-6">
-              {myPrompts.map((prompt) => (
-                <Card key={prompt.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <h3 className="text-lg font-semibold">
-                            {prompt.title}
-                          </h3>
-                          <Badge
-                            variant={
-                              prompt.status === "published"
-                                ? "default"
-                                : "secondary"
-                            }
-                          >
-                            {prompt.status}
-                          </Badge>
-                          <Badge variant="outline">{prompt.category}</Badge>
-                          {prompt.type === "paid" ? (
-                            <Badge className="bg-green-100 text-green-800">
-                              <DollarSign className="h-3 w-3 mr-1" />$
-                              {prompt.price}
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline">Free</Badge>
-                          )}
-                        </div>
-
-                        <div className="flex items-center space-x-6 text-sm text-gray-600">
-                          <div className="flex items-center space-x-1">
-                            <Eye className="h-4 w-4" />
-                            <span>{prompt.views}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Heart className="h-4 w-4" />
-                            <span>{prompt.likes}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <MessageCircle className="h-4 w-4" />
-                            <span>{prompt.comments}</span>
-                          </div>
-                          {prompt.type === "paid" && (
-                            <div className="flex items-center space-x-1">
-                              <DollarSign className="h-4 w-4" />
-                              <span>${prompt.earnings.toFixed(2)} earned</span>
-                            </div>
-                          )}
-                          <span>Created {prompt.createdAt}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="earnings" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Total Earnings</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold text-green-600">
-                    ${totalEarnings.toFixed(2)}
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    Lifetime earnings
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">This Month</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">$89.50</div>
-                  <p className="text-sm text-gray-600 mt-2">
-                    +23% from last month
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">
-                    Available for Payout
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold">$67.30</div>
-                  <Button className="mt-4 w-full">
-                    <Download className="h-4 w-4 mr-2" />
-                    Request Payout
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Earnings History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    {
-                      date: "2024-01-20",
-                      prompt: "Logo Design Collection",
-                      amount: 11.69,
-                      buyer: "john@example.com",
-                    },
-                    {
-                      date: "2024-01-18",
-                      prompt: "Logo Design Collection",
-                      amount: 11.69,
-                      buyer: "sarah@example.com",
-                    },
-                    {
-                      date: "2024-01-15",
-                      prompt: "Logo Design Collection",
-                      amount: 11.69,
-                      buyer: "mike@example.com",
-                    },
-                  ].map((transaction, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between py-3 border-b"
-                    >
-                      <div>
-                        <p className="font-medium">{transaction.prompt}</p>
-                        <p className="text-sm text-gray-600">
-                          Purchased by {transaction.buyer}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium text-green-600">
-                          +${transaction.amount}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          {transaction.date}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Performance by Category</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {[
-                      {
-                        category: "Marketing",
-                        prompts: 5,
-                        views: 2340,
-                        earnings: 45.6,
-                      },
-                      {
-                        category: "Design",
-                        prompts: 3,
-                        views: 1890,
-                        earnings: 89.3,
-                      },
-                      {
-                        category: "Programming",
-                        prompts: 2,
-                        views: 1200,
-                        earnings: 21.97,
-                      },
-                    ].map((cat, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between"
-                      >
-                        <div>
-                          <p className="font-medium">{cat.category}</p>
-                          <p className="text-sm text-gray-600">
-                            {cat.prompts} prompts
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium">{cat.views} views</p>
-                          <p className="text-sm text-green-600">
-                            ${cat.earnings}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Top Performing Prompts</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {myPrompts
-                      .sort((a, b) => b.views - a.views)
-                      .slice(0, 3)
-                      .map((prompt, index) => (
-                        <div
-                          key={prompt.id}
-                          className="flex items-center space-x-3"
-                        >
-                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-sm font-medium text-blue-600">
-                              #{index + 1}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium">{prompt.title}</p>
-                            <p className="text-sm text-gray-600">
-                              {prompt.views} views
-                            </p>
-                          </div>
-                          <Badge variant="outline">{prompt.category}</Badge>
-                        </div>
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+          {/* My Prompts Tab */}
+          <MyPromptsTab value="prompts" />
+          {/* Earnings Tab */}
+          <EarningsTab value="earnings" />
+          {/* Analytics Tab */}
+          <AnalyticsTab value="analytics" />
+          {/* Profile Tab */}
+          <ProfileTab value="profile" />
+          {/* Settings Tab */}
+          <SettingsTab value="settings" />
         </Tabs>
       </div>
     </div>

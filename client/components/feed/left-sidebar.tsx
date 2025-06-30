@@ -38,19 +38,19 @@ export default function LeftSidebar() {
               Saved
             </Button>
           </Link>
-          <Link href="/feed/my-prompts">
+          <Link href="/dashboard?tab=prompts">
             <Button variant="ghost" className="w-full justify-start">
               <User className="h-4 w-4 mr-3" />
               My Prompts
             </Button>
           </Link>
-          <Link href="/feed/earnings">
+          <Link href="/dashboard?tab=earnings">
             <Button variant="ghost" className="w-full justify-start">
               <DollarSign className="h-4 w-4 mr-3" />
               Earnings
             </Button>
           </Link>
-          <Link href="/settings">
+          <Link href="/dashboard?tab=settings">
             <Button variant="ghost" className="w-full justify-start">
               <Settings className="h-4 w-4 mr-3" />
               Settings
