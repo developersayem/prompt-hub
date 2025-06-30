@@ -1,5 +1,5 @@
 import {
-  DollarSign,
+  Coins,
   Edit,
   Eye,
   Heart,
@@ -11,47 +11,53 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { TabsContent } from "../ui/tabs";
 import { Card, CardContent } from "../ui/card";
+import { useCallback, useEffect, useState } from "react";
+import { IPrompt } from "@/types/prompts-type";
+import { toast } from "sonner";
 
 const MyPromptsTab = ({ value }: { value: string }) => {
-  const myPrompts = [
-    {
-      id: 1,
-      title: "Professional LinkedIn Post Generator",
-      category: "Marketing",
-      type: "free",
-      views: 1234,
-      likes: 89,
-      comments: 23,
-      earnings: 0,
-      status: "published",
-      createdAt: "2024-01-15",
-    },
-    {
-      id: 2,
-      title: "Logo Design Prompts Collection",
-      category: "Design",
-      type: "paid",
-      price: 12.99,
-      views: 567,
-      likes: 45,
-      comments: 12,
-      earnings: 156.87,
-      status: "published",
-      createdAt: "2024-01-10",
-    },
-    {
-      id: 3,
-      title: "Code Review Assistant",
-      category: "Programming",
-      type: "free",
-      views: 890,
-      likes: 67,
-      comments: 18,
-      earnings: 0,
-      status: "draft",
-      createdAt: "2024-01-20",
-    },
-  ];
+  const [myPrompts, setMyPrompts] = useState<IPrompt[]>([]);
+  console.log("myPrompts:", myPrompts);
+
+  // Function for handling fetch prompts
+  const fetchPrompts = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const promptsData = Array.isArray(data.data.data) ? data.data.data : [];
+      setMyPrompts(promptsData);
+      toast.success("Prompts fetched successfully!");
+    } catch (error) {
+      console.error("Error fetching prompts:", error);
+      setMyPrompts([]);
+      toast.error("Failed to fetch prompts.");
+    }
+  }, []);
+
+  // fetch prompts from database
+  useEffect(() => {
+    fetchPrompts();
+  }, [fetchPrompts]);
+
+  // const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
+
+  // const handleSave = async (updated: Prompt) => {
+  //   // optional: send PATCH request to backend
+  //   console.log("Saving updated prompt:", updated);
+  // };
+
   return (
     <TabsContent value={value} className="space-y-6">
       <div className="flex items-center justify-between">
@@ -68,23 +74,24 @@ const MyPromptsTab = ({ value }: { value: string }) => {
 
       <div className="grid gap-6">
         {myPrompts.map((prompt) => (
-          <Card key={prompt.id}>
+          <Card key={prompt._id}>
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center space-x-2 mb-2">
                     <h3 className="text-lg font-semibold">{prompt.title}</h3>
-                    <Badge
+                    {/* <Badge
                       variant={
                         prompt.status === "published" ? "default" : "secondary"
                       }
                     >
                       {prompt.status}
-                    </Badge>
+                    </Badge> */}
                     <Badge variant="outline">{prompt.category}</Badge>
-                    {prompt.type === "paid" ? (
+                    {prompt.isPaid === true ? (
                       <Badge className="bg-green-100 text-green-800">
-                        <DollarSign className="h-3 w-3 mr-1" />${prompt.price}
+                        <Coins className="h-3 w-3 mr-1" />
+                        {prompt.price}
                       </Badge>
                     ) : (
                       <Badge variant="outline">Free</Badge>
@@ -94,23 +101,29 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                   <div className="flex items-center space-x-6 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
                       <Eye className="h-4 w-4" />
-                      <span>{prompt.views}</span>
+                      <span>999 views</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Heart className="h-4 w-4" />
-                      <span>{prompt.likes}</span>
+                      <span>{prompt.likes.length}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <MessageCircle className="h-4 w-4" />
-                      <span>{prompt.comments}</span>
+                      <span>{prompt.comments.length}</span>
                     </div>
-                    {prompt.type === "paid" && (
+                    {prompt.isPaid === true && (
                       <div className="flex items-center space-x-1">
-                        <DollarSign className="h-4 w-4" />
-                        <span>${prompt.earnings.toFixed(2)} earned</span>
+                        <Coins className="h-4 w-4" />
+                        <span>{prompt?.price} earned</span>
                       </div>
                     )}
-                    <span>Created {prompt.createdAt}</span>
+                    <span>
+                      {new Intl.DateTimeFormat("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      }).format(new Date(prompt.createdAt))}
+                    </span>
                   </div>
                 </div>
 

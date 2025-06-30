@@ -14,10 +14,10 @@ import {
   Filter,
   Plus,
   Sparkles,
-  DollarSign,
   Eye,
   Lock,
   Send,
+  Coins,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -39,6 +39,11 @@ import { useAuth } from "@/contexts/auth-context";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { IPrompt } from "@/types/prompts-type";
 import { IComment } from "@/types/comments.type";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function FeedPage() {
   const { user } = useAuth();
@@ -171,7 +176,6 @@ export default function FeedPage() {
       const data = await response.json();
       const promptsData = Array.isArray(data.data.data) ? data.data.data : [];
       setPrompts(promptsData);
-      toast.success("Prompts fetched successfully!");
     } catch (error) {
       console.error("Error fetching prompts:", error);
       setError("Failed to fetch prompts. Please try again.");
@@ -218,8 +222,6 @@ export default function FeedPage() {
           setSelectedPrompt(updatedPrompt);
         }
       }
-
-      toast.success(result.message);
     } catch (err) {
       console.error("Like failed:", err);
       toast.error("Something went wrong");
@@ -266,7 +268,6 @@ export default function FeedPage() {
       );
       setPrompts(updatedPrompts);
       setNewComment((prev) => ({ ...prev, [promptId]: "" }));
-      toast.success(result.message);
     } catch (err) {
       console.error("Error posting comment:", err);
       toast.error("Something went wrong");
@@ -297,7 +298,6 @@ export default function FeedPage() {
         ),
       }));
       setPrompts(updatedPrompts);
-      toast.success(result.message);
     } catch (err) {
       console.error("Error updating comment:", err);
       toast.error("Failed to update comment");
@@ -324,7 +324,6 @@ export default function FeedPage() {
       }));
 
       setPrompts(updatedPrompts);
-      toast.success("Comment deleted");
     } catch (err) {
       console.log(err);
       toast.error("Failed to delete comment");
@@ -407,8 +406,6 @@ export default function FeedPage() {
       );
 
       setPrompts(updatedPrompts);
-
-      toast.success(result.message);
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong");
@@ -454,10 +451,37 @@ export default function FeedPage() {
       tags: [],
     });
   };
+  // Function for counting view and view the prompt
+  const handleViewPrompt = async (prompt: IPrompt) => {
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/${prompt._id}`,
+        {
+          method: "GET",
+          credentials: "include", // if using cookies
+        }
+      );
 
-  const handleViewPrompt = (prompt: IPrompt) => {
-    setSelectedPrompt(prompt);
-    setShowPromptModal(true);
+      // Optional: open modal or navigate
+      // 1. If showing in modal:
+      setSelectedPrompt(prompt);
+      setShowPromptModal(true);
+
+      // 2. Or redirect to a full view page:
+      // router.push(`/prompt/${prompt._id}`);
+    } catch (error) {
+      console.error("Error counting view", error);
+    }
+  };
+
+  //Function for copy prompt
+  const handleCopyPrompt = async (prompt: string) => {
+    try {
+      await navigator.clipboard.writeText(prompt);
+      toast.success("Prompt copied to clipboard");
+    } catch (error) {
+      console.error("Error copying prompt", error);
+    }
   };
 
   return (
@@ -609,7 +633,7 @@ export default function FeedPage() {
                               onValueChange={(value: number[]) =>
                                 handleFilterChange("priceRange", value)
                               }
-                              max={100}
+                              max={1000}
                               step={5}
                               className="w-full"
                             />
@@ -804,10 +828,15 @@ export default function FeedPage() {
                       <div className="flex items-center space-x-2">
                         <Badge variant="secondary">{prompt.category}</Badge>
                         {prompt.price ? (
-                          <Badge className="bg-green-100 text-green-800">
-                            <DollarSign className="h-3 w-3 mr-1" />$
-                            {prompt.price}
-                          </Badge>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Badge className="bg-green-100 text-green-800">
+                                <Coins className="h-3 w-3 mr-1" />
+                                {prompt.price}
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>Credits</TooltipContent>
+                          </Tooltip>
                         ) : (
                           <Badge variant="outline">Free</Badge>
                         )}
@@ -925,6 +954,11 @@ export default function FeedPage() {
                           <Share2 className="h-4 w-4 mr-2" />
                           Share
                         </Button>
+                        {/* view count show  */}
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          {prompt.views}
+                        </Button>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Button variant="ghost" size="sm">
@@ -1027,7 +1061,7 @@ export default function FeedPage() {
       </div>
       {/* Prompt Detail Modal */}
       <Dialog open={showPromptModal} onOpenChange={setShowPromptModal}>
-        <DialogContent className="max-w-5xl max-h-fit overflow-y-auto">
+        <DialogContent className="max-w-5xl w-full max-h-[90vh] overflow-y-auto rounded-xl p-6">
           {selectedPrompt && (
             <>
               <DialogHeader>
@@ -1055,13 +1089,18 @@ export default function FeedPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2 mt-2">
+                  <div className="flex items-center space-x-2 mt- mr-8">
                     <Badge variant="secondary">{selectedPrompt.category}</Badge>
                     {selectedPrompt.price ? (
-                      <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                        <DollarSign className="h-3 w-3 mr-1" />$
-                        {selectedPrompt.price}
-                      </Badge>
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge className="bg-green-100 text-green-800">
+                            <Coins className="h-3 w-3 mr-1" />
+                            {selectedPrompt.price}
+                          </Badge>
+                        </TooltipTrigger>
+                        <TooltipContent>Credits</TooltipContent>
+                      </Tooltip>
                     ) : (
                       <Badge variant="outline">Free</Badge>
                     )}
@@ -1157,6 +1196,12 @@ export default function FeedPage() {
                           {selectedPrompt.category}
                         </span>
                       </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Author:</span>
+                        <span className="font-medium">
+                          {selectedPrompt.creator.name}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -1179,7 +1224,13 @@ export default function FeedPage() {
                         <span className="text-muted-foreground">Shares:</span>
                         <span className="font-medium">
                           {/* TODO: add share functionality */}
-                          {/* {selectedPrompt.shares} */}
+                          {/* {selectedPrompt.shares.length} */}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Views:</span>
+                        <span className="font-medium">
+                          {selectedPrompt.views}
                         </span>
                       </div>
                     </div>
@@ -1224,18 +1275,29 @@ export default function FeedPage() {
                       <Share2 className="h-4 w-4 mr-2" />
                       Share
                     </Button>
+                    <Button variant="ghost" size="sm">
+                      <Eye className="h-4 w-4 mr-2" />
+                      {selectedPrompt.views}
+                    </Button>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Button variant="ghost" size="sm">
                       <Bookmark className="h-4 w-4" />
                     </Button>
                     {selectedPrompt.price ? (
-                      <Button className="bg-gradient-to-r from-primary to-secondary">
-                        <DollarSign className="h-4 w-4 mr-2" />
-                        Buy for ${selectedPrompt.price}
+                      <Button className="bg-primary ">
+                        Buy for <Coins className="h-4 w-4" />
+                        {selectedPrompt.price}
                       </Button>
                     ) : (
-                      <Button variant="outline">Copy Prompt</Button>
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          handleCopyPrompt(selectedPrompt.promptText)
+                        }
+                      >
+                        Copy Prompt
+                      </Button>
                     )}
                   </div>
                 </div>

@@ -37,6 +37,7 @@ export interface IPrompt {
     __v: number;
   };
   likes: string[];
+  views: number;
   comments: IComment[];
   buyers: string[];
   createdAt: string;
