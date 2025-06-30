@@ -137,6 +137,18 @@ export default function FeedPage() {
       .filter(Boolean) as IComment[];
   };
 
+  //helper function for count all nested comments
+  const countAllComments = (comments: IComment[]) => {
+    let count = 0;
+    for (const comment of comments) {
+      count += 1;
+      if (comment.replies && comment.replies.length > 0) {
+        count += countAllComments(comment.replies);
+      }
+    }
+    return count;
+  };
+
   // Function for handling fetch prompts
   const fetchPrompts = useCallback(async () => {
     try {
@@ -945,9 +957,7 @@ export default function FeedPage() {
                           }
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />
-                          {Array.isArray(prompt.comments)
-                            ? prompt.comments.length
-                            : 0}
+                          {countAllComments(prompt.comments)}
                         </Button>
                         {/* SHARE BUTTON */}
                         <Button variant="ghost" size="sm">
@@ -1217,7 +1227,7 @@ export default function FeedPage() {
                       <div className="flex justify-between">
                         <span className="text-muted-foreground">Comments:</span>
                         <span className="font-medium">
-                          {selectedPrompt.comments.length}
+                          {countAllComments(selectedPrompt.comments)}
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -1267,9 +1277,7 @@ export default function FeedPage() {
                     </Button>
                     <Button variant="ghost" size="sm">
                       <MessageCircle className="h-4 w-4 mr-2" />
-                      {selectedPrompt?.comments?.map((comment) => (
-                        <>{comment.text}</>
-                      ))}
+                      {countAllComments(selectedPrompt.comments)}
                     </Button>
                     <Button variant="ghost" size="sm">
                       <Share2 className="h-4 w-4 mr-2" />
