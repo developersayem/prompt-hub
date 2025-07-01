@@ -37,7 +37,7 @@ import { toast } from "sonner";
 import { useCallback } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { CommentThread } from "@/components/feed/CommentThread";
-import { IPrompt } from "@/types/prompts-type";
+import { IPrompt } from "@/types/prompts.type";
 import { IComment } from "@/types/comments.type";
 import {
   Tooltip,

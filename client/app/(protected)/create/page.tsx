@@ -29,7 +29,7 @@ import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { UserNav } from "@/components/user/user-nav";
+import { UserNav } from "@/components/dashboard/components/profile/user-nav";
 
 export default function CreatePromptPage() {
   const router = useRouter();

@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "../ui/card";
 import { Badge } from "../ui/badge";
-import { EditProfileModal } from "../user/edit-profile-modal";
+import { EditProfileModal } from "./components/profile/edit-profile-modal";
 import {
   Calendar,
   Coins,
@@ -28,8 +28,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { Separator } from "../ui/separator";
-import { PurchaseCreditsModal } from "../user/purchase-credits-modal";
-import { GetCertifiedModal } from "../user/get-certified-modal";
+import { PurchaseCreditsModal } from "./components/profile/purchase-credits-modal";
+import { GetCertifiedModal } from "./components/profile/get-certified-modal";
 
 const ProfileTab = ({ value }: { value: string }) => {
   const { user } = useAuth();

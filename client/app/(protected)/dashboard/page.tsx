@@ -24,7 +24,7 @@ import {
 import { DollarSign, Eye, Heart, TrendingUp, Plus } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { UserNav } from "@/components/user/user-nav";
+import { UserNav } from "@/components/dashboard/components/profile/user-nav";
 import { useRouter, useSearchParams } from "next/navigation";
 import MyPromptsTab from "@/components/dashboard/my-prompts-tab";
 import EarningsTab from "@/components/dashboard/earnings-tab";

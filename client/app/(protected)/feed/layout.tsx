@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Search, Plus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { UserNav } from "@/components/user/user-nav";
+import { UserNav } from "@/components/dashboard/components/profile/user-nav";
 import { useState } from "react";
 import RightSidebar from "@/components/feed/right-sidebar";
 import LeftSidebar from "@/components/feed/left-sidebar";

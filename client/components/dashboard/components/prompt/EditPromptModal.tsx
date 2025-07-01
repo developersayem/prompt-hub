@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Upload, DollarSign, Send } from "lucide-react";
-import { IPrompt } from "@/types/prompts-type";
+import { IPrompt } from "@/types/prompts.type";
 import {
   Card,
   CardContent,

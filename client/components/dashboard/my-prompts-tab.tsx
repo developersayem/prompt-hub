@@ -12,9 +12,9 @@ import { Button } from "../ui/button";
 import { TabsContent } from "../ui/tabs";
 import { Card, CardContent } from "../ui/card";
 import { useCallback, useEffect, useState } from "react";
-import { IPrompt } from "@/types/prompts-type";
+import { IPrompt } from "@/types/prompts.type";
 import { toast } from "sonner";
-import { EditPromptModal } from "./components/EditPromptModal";
+import { EditPromptModal } from "./components/prompt/EditPromptModal";
 
 const MyPromptsTab = ({ value }: { value: string }) => {
   const [myPrompts, setMyPrompts] = useState<IPrompt[]>([]);
