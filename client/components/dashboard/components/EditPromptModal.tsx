@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import Image from "next/image";
 
 type EditPromptModalProps = {
   prompt: IPrompt;
@@ -107,12 +108,22 @@ export function EditPromptModal({
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div
+      onKeyDown={handleKeyPress}
+      tabIndex={-1} // ✅ This makes the div focusable so it can receive keyboard events
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    >
       <div className="bg-white dark:bg-neutral-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto relative">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+          className="absolute right-0 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
           aria-label="Close modal"
         >
           <X className="h-5 w-5" />
@@ -294,7 +305,9 @@ export function EditPromptModal({
                         </p>
 
                         {formData.resultType === "image" && (
-                          <img
+                          <Image
+                            width={200}
+                            height={200}
                             src={
                               uploadedFile
                                 ? URL.createObjectURL(uploadedFile)

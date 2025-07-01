@@ -85,8 +85,20 @@ const MyPromptsTab = ({ value }: { value: string }) => {
     fetchPrompts();
   }, [fetchPrompts]);
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      console.log(e.key);
+      setIsEditOpen(false);
+    }
+  };
+
   return (
-    <TabsContent value={value} className="space-y-6">
+    <TabsContent
+      onKeyDown={handleKeyPress}
+      tabIndex={-1} // ✅ This makes the div focusable so it can receive keyboard events
+      value={value}
+      className="space-y-6"
+    >
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">My Prompts</h2>
         <div className="flex space-x-2">
