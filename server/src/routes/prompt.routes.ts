@@ -2,15 +2,15 @@ import { Router } from "express";
 
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import { createCommentController, createPromptController, deleteCommentController, getAllPromptsController, getMyPromptsController, getSinglePromptController, likeCommentController, likePromptController, replyCommentController, updateCommentController } from "../controller/prompt.controller";
+import { createCommentController, createPromptController, deleteCommentController, deletePromptController, getAllPromptsController, getMyPromptsController, getSinglePromptController, likeCommentController, likePromptController, replyCommentController, updateCommentController, updatePromptController } from "../controller/prompt.controller";
 
 
 const router = Router()
 
 
-// Get all prompts
+// Route for get all prompts with filters options
 router.get("/", verifyJWT, getAllPromptsController)
-// Prompt Creation Routes
+// Route for create prompt
 router.post("/create",
     verifyJWT,
     upload.fields([{ name: "promptContent", maxCount: 1 }]),
@@ -30,9 +30,12 @@ router.post("/comment/reply", verifyJWT, replyCommentController);
 router.post("/comment/like", verifyJWT, likeCommentController);
 // Route for my prompts
 router.get("/my-prompts", verifyJWT, getMyPromptsController)
-// Route to get single
+// Route for get single
 router.get("/:id", verifyJWT, getSinglePromptController);
-
+// Route for update prompt
+router.put("/:id", verifyJWT, updatePromptController);
+// Route for delete prompt
+router.delete("/:id", verifyJWT, deletePromptController);
 
 
 export default router

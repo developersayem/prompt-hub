@@ -421,6 +421,55 @@ const getSinglePromptController = asyncHandler(async (req: Request, res: Respons
   }
 );
 
+//Controller for update prompt
+const updatePromptController = asyncHandler(async (req: Request, res: Response) => {
+  const promptId = req.params.id;
+  const userId = (req as any).user?._id;
+  const { title, description, category, isPaid, price } = req.body;
+
+  if (!promptId) throw new ApiError(400, "Prompt ID is required");
+
+  const prompt = await Prompt.findById(promptId);
+  if (!prompt) throw new ApiError(404, "Prompt not found");
+
+  if (String(prompt.creator) !== String(userId)) {
+    throw new ApiError(403, "You are not authorized to update this prompt");
+  }
+
+  // Update fields
+  if (title) prompt.title = title;
+  if (description) prompt.description = description;
+  if (category) prompt.category = category;
+  if (typeof isPaid === "boolean") prompt.isPaid = isPaid;
+  if (isPaid && price !== undefined) prompt.price = price;
+
+  const updatedPrompt = await prompt.save();
+
+  res.status(200).json(
+    new ApiResponse(200, { prompt: updatedPrompt }, "Prompt updated successfully")
+  );
+});
+
+// Controller for delete prompts
+const deletePromptController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+ const promptId = req.params.id;
+
+  if (!userId) throw new ApiError(401, "Unauthorized");
+  if (!promptId) throw new ApiError(400, "Prompt ID is required");
+
+  const prompt = await Prompt.findById(promptId);
+  if (!prompt) throw new ApiError(404, "Prompt not found");
+
+  if (String(prompt.creator) !== String(userId)) {
+    throw new ApiError(403, "You are not authorized to delete this prompt");
+  }
+
+  await prompt.deleteOne();
+
+  res.status(200).json(new ApiResponse(200, {}, "Prompt deleted successfully"));
+});
+
 export { 
   getAllPromptsController,
   createPromptController,
@@ -431,5 +480,7 @@ export {
   replyCommentController,
   likeCommentController,
   getMyPromptsController,
-  getSinglePromptController
+  getSinglePromptController,
+  updatePromptController,
+  deletePromptController
 };
