@@ -11,6 +11,14 @@ export interface ISocialLinks {
   portfolio?: string;
 }
 
+export interface IAddress {
+  street: String;
+  city: String;
+  state: String;
+  postalCode: String;
+  country: String;
+}
+
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -24,6 +32,9 @@ export interface IUser extends Document {
   prompts: mongoose.Schema.Types.ObjectId[];
   purchasedPrompts: mongoose.Schema.Types.ObjectId[];
   bookmarks: mongoose.Schema.Types.ObjectId[];
+  address: IAddress;
+  phone: string;
+  countryCode: string;
   refreshToken: string;
 
   isPasswordCorrect(password: string): Promise<boolean>;
@@ -95,6 +106,19 @@ const userSchema = new Schema<IUser>(
         ref: "Prompt",
       },
     ],
+    address: {
+      street: { type: String, default: "" },
+      city: { type: String, default: "" },
+      state: { type: String, default: "" },
+      postalCode: { type: String, default: "" },
+      country: { type: String, default: "" },
+    },
+    phone: {
+      type: String,
+    },
+    countryCode: {
+      type: String,
+    },
     refreshToken: {
       type: String,
     },

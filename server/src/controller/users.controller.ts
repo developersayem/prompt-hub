@@ -225,7 +225,7 @@ const loginUserController = asyncHandler(
   }
 );
 
-//Controller for user login out
+// Controller for user login out
 const logoutUser = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     const authenticatedReq = req as AuthenticatedRequest;
@@ -248,10 +248,81 @@ const logoutUser = asyncHandler(
   }
 );
 
+const updateProfileController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, "User not found");
+
+  const {
+    name,
+    bio,
+    phone,
+    countryCode,
+    address = {},
+    socialLinks = {},
+  } = req.body;
+
+  // Handle avatar upload
+  const avatarLocalPath = (
+    req.files as { [fieldname: string]: Express.Multer.File[] }
+  )?.avatar?.[0]?.path;
+
+  if (avatarLocalPath) {
+    try {
+      const newAvatar = await uploadOnCloudinary(avatarLocalPath);
+
+      // Remove old one if on Cloudinary
+      if (user.avatar?.includes("cloudinary")) {
+        const publicId = user.avatar.split("/").pop()?.split(".")[0];
+        if (publicId) await deleteFromCloudinary(publicId);
+      }
+
+      user.avatar = newAvatar?.secure_url;
+    } catch (err) {
+      console.error("Avatar upload failed:", err);
+      throw new ApiError(500, "Failed to upload new avatar");
+    }
+  }
+
+  // Apply updates
+  if (name) user.name = name;
+  if (bio) user.bio = bio;
+  if (phone) user.phone = phone;
+  if (countryCode) user.countryCode = countryCode;
+
+
+  user.address = {
+  street: address?.street || user.address?.street || "",
+  city: address?.city || user.address?.city || "",
+  state: address?.state || user.address?.state || "",
+  postalCode: address?.postalCode || user.address?.postalCode || "",
+  country: address?.country || user.address?.country || "",
+};
+
+  user.socialLinks = {
+    ...user.socialLinks,
+    ...socialLinks,
+  };
+
+  await user.save();
+
+  const updatedUser = await User.findById(userId).select("-password -refreshToken");
+  if (!updatedUser) throw new ApiError(500, "Failed to fetch updated user");
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "Profile updated successfully"));
+});
+
+
+
 export { 
   userController,
   userRegistrationController,
   googleOAuthCallbackController,
   loginUserController,
-  logoutUser
+  logoutUser,
+  updateProfileController
 };
