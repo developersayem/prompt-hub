@@ -3,11 +3,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import {
   Bookmark,
-  DollarSign,
+  ChartNoAxesCombined,
+  Coins,
   Home,
+  LayoutDashboard,
   Settings,
   TrendingUp,
   User,
+  UserRoundPen,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
@@ -38,6 +41,12 @@ export default function LeftSidebar() {
               Saved
             </Button>
           </Link>
+          <Link href="/dashboard">
+            <Button variant="ghost" className="w-full justify-start">
+              <LayoutDashboard className="h-4 w-4 mr-3" />
+              Dashboard
+            </Button>
+          </Link>
           <Link href="/dashboard?tab=prompts">
             <Button variant="ghost" className="w-full justify-start">
               <User className="h-4 w-4 mr-3" />
@@ -46,8 +55,20 @@ export default function LeftSidebar() {
           </Link>
           <Link href="/dashboard?tab=earnings">
             <Button variant="ghost" className="w-full justify-start">
-              <DollarSign className="h-4 w-4 mr-3" />
+              <Coins className="h-4 w-4 mr-3" />
               Earnings
+            </Button>
+          </Link>
+          <Link href="/dashboard?tab=analytics">
+            <Button variant="ghost" className="w-full justify-start">
+              <ChartNoAxesCombined className="h-4 w-4 mr-3" />
+              Analytics
+            </Button>
+          </Link>
+          <Link href="/dashboard?tab=profile">
+            <Button variant="ghost" className="w-full justify-start">
+              <UserRoundPen className="h-4 w-4 mr-3" />
+              Profile
             </Button>
           </Link>
           <Link href="/dashboard?tab=settings">

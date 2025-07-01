@@ -38,7 +38,6 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       const data = await response.json();
       const promptsData = Array.isArray(data.data.data) ? data.data.data : [];
       setMyPrompts(promptsData);
-      toast.success("Prompts fetched successfully!");
     } catch (error) {
       console.error("Error fetching prompts:", error);
       setMyPrompts([]);

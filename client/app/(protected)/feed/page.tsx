@@ -498,7 +498,7 @@ export default function FeedPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-3">
         <div className="">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
