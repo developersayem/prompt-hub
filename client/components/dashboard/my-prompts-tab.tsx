@@ -14,10 +14,16 @@ import { Card, CardContent } from "../ui/card";
 import { useCallback, useEffect, useState } from "react";
 import { IPrompt } from "@/types/prompts-type";
 import { toast } from "sonner";
+import { EditPromptModal } from "./components/EditPromptModal";
 
 const MyPromptsTab = ({ value }: { value: string }) => {
   const [myPrompts, setMyPrompts] = useState<IPrompt[]>([]);
-  console.log("myPrompts:", myPrompts);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedPrompt, setSelectedPrompt] = useState<IPrompt | null>(null);
+  const openEdit = (prompt: IPrompt) => {
+    setSelectedPrompt(prompt);
+    setIsEditOpen(true);
+  };
 
   // Function for handling fetch prompts
   const fetchPrompts = useCallback(async () => {
@@ -44,18 +50,40 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       toast.error("Failed to fetch prompts.");
     }
   }, []);
+  // Function for delete prompt
+  const deletePrompt = async (prompt: IPrompt) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/${prompt._id}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      toast.success(data.message || "Prompt deleted successfully");
+
+      // Option 1: Refetch all prompts
+      // await fetchPrompts();
+
+      // Option 2: Remove from state directly (faster UI update)
+      setMyPrompts((prev) => prev.filter((p) => p._id !== prompt._id));
+    } catch (error) {
+      console.error("Error deleting prompt:", error);
+      toast.error("Failed to delete prompt.");
+    }
+  };
 
   // fetch prompts from database
   useEffect(() => {
     fetchPrompts();
   }, [fetchPrompts]);
-
-  // const [editingPrompt, setEditingPrompt] = useState<Prompt | null>(null);
-
-  // const handleSave = async (updated: Prompt) => {
-  //   // optional: send PATCH request to backend
-  //   console.log("Saving updated prompt:", updated);
-  // };
 
   return (
     <TabsContent value={value} className="space-y-6">
@@ -100,7 +128,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                   <div className="flex items-center space-x-6 text-sm text-gray-600">
                     <div className="flex items-center space-x-1">
                       <Eye className="h-4 w-4" />
-                      <span>999 views</span>
+                      <span>{prompt.views}</span>
                     </div>
                     <div className="flex items-center space-x-1">
                       <Heart className="h-4 w-4" />
@@ -127,13 +155,23 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                 </div>
 
                 <div className="flex items-center space-x-2">
-                  <Button variant="ghost" size="sm">
+                  <Button
+                    onClick={() => openEdit(prompt)}
+                    variant="ghost"
+                    size="sm"
+                  >
                     <Edit className="h-4 w-4" />
                   </Button>
+
                   <Button variant="ghost" size="sm">
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="text-red-600">
+                  <Button
+                    onClick={() => deletePrompt(prompt)}
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-600"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -142,6 +180,13 @@ const MyPromptsTab = ({ value }: { value: string }) => {
           </Card>
         ))}
       </div>
+      {isEditOpen && selectedPrompt && (
+        <EditPromptModal
+          prompt={selectedPrompt}
+          onClose={() => setIsEditOpen(false)}
+          fetchPrompts={fetchPrompts}
+        />
+      )}
     </TabsContent>
   );
 };
