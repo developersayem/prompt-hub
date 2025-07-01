@@ -5,6 +5,7 @@ import {
   Heart,
   MessageCircle,
   MoreHorizontal,
+  Plus,
   Trash2,
 } from "lucide-react";
 import { Badge } from "../ui/badge";
@@ -16,6 +17,7 @@ import { IPrompt } from "@/types/prompts.type";
 import { toast } from "sonner";
 import { EditPromptModal } from "./components/prompt/EditPromptModal";
 import countAllComments from "@/utils/count-all-nested-comments";
+import Link from "next/link";
 
 const MyPromptsTab = ({ value }: { value: string }) => {
   const [myPrompts, setMyPrompts] = useState<IPrompt[]>([]);
@@ -114,6 +116,22 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       </div>
 
       <div className="grid gap-6">
+        {/* Empty State */}
+        {myPrompts.length === 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <p className="text-gray-500 mb-4">No prompts found.</p>
+                <Link href="/create">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create First Prompt
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         {myPrompts.map((prompt) => (
           <Card key={prompt._id}>
             <CardContent className="pt-6">

@@ -130,7 +130,6 @@ export function EditProfileModal({ user, onClose }: EditProfileModalProps) {
 
         <CardContent className="space-y-6">
           {/* Profile Picture */}
-          {/* Profile Picture */}
           <div className="flex items-center gap-4">
             <Avatar className="w-20 h-20">
               <AvatarImage
