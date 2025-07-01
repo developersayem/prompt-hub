@@ -44,11 +44,13 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import countAllComments from "@/utils/count-all-nested-comments";
 
 export default function FeedPage() {
   const { user } = useAuth();
   // Initialize prompts as an empty array to prevent the map error
   const [prompts, setPrompts] = useState<IPrompt[]>([]);
+  console.log("prompts:", prompts);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -135,18 +137,6 @@ export default function FeedPage() {
         return comment;
       })
       .filter(Boolean) as IComment[];
-  };
-
-  //helper function for count all nested comments
-  const countAllComments = (comments: IComment[]) => {
-    let count = 0;
-    for (const comment of comments) {
-      count += 1;
-      if (comment.replies && comment.replies.length > 0) {
-        count += countAllComments(comment.replies);
-      }
-    }
-    return count;
   };
 
   // Function for handling fetch prompts
@@ -927,72 +917,87 @@ export default function FeedPage() {
                     <Separator />
 
                     {/* Actions */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        {/* LIKES BUTTON */}
+                    <div className="flex space-x-2 w-full">
+                      {/* Each button gets flex-1 to take equal width */}
+                      <Button
+                        onClick={() => handleLikePrompt(prompt._id)}
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 flex items-center justify-center"
+                        title="Like this prompt"
+                      >
+                        <Heart
+                          className={`h-4 w-4 mr-2 ${
+                            prompt.likes.includes(user?._id ?? "")
+                              ? "text-red-500"
+                              : "text-gray-500"
+                          }`}
+                        />
+                        {prompt.likes.length}
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 flex items-center justify-center"
+                        onClick={() =>
+                          setOpenComments((prev) => ({
+                            ...prev,
+                            [prompt._id]: !prev[prompt._id],
+                          }))
+                        }
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        {countAllComments(prompt.comments)}
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 flex items-center justify-center"
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Share
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 flex items-center justify-center"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        {prompt.views}
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex-1 flex items-center justify-center"
+                      >
+                        <Bookmark className="h-4 w-4" />
+                      </Button>
+
+                      {prompt.price ? (
                         <Button
-                          onClick={() => handleLikePrompt(prompt._id)}
-                          variant="ghost"
                           size="sm"
-                          title="Like this prompt"
+                          className="flex-1 flex items-center justify-center"
+                          onClick={() => handleViewPrompt(prompt)}
                         >
-                          <Heart
-                            className={`h-4 w-4 mr-2 ${
-                              prompt.likes.includes(user?._id ?? "")
-                                ? "text-red-500"
-                                : "text-gray-500"
-                            }`}
-                          />
-                          {prompt.likes.length}
+                          Buy for ${prompt.price}
                         </Button>
-                        {/* COMMENTS BUTTON */}
+                      ) : (
                         <Button
-                          variant="ghost"
+                          variant="outline"
                           size="sm"
-                          onClick={() =>
-                            setOpenComments((prev) => ({
-                              ...prev,
-                              [prompt._id]: !prev[prompt._id],
-                            }))
-                          }
+                          className="flex-1 flex items-center justify-center"
+                          onClick={() => handleViewPrompt(prompt)}
                         >
-                          <MessageCircle className="h-4 w-4 mr-2" />
-                          {countAllComments(prompt.comments)}
-                        </Button>
-                        {/* SHARE BUTTON */}
-                        <Button variant="ghost" size="sm">
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Share
-                        </Button>
-                        {/* view count show  */}
-                        <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4 mr-2" />
-                          {prompt.views}
+                          View Full
                         </Button>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Bookmark className="h-4 w-4" />
-                        </Button>
-                        {prompt.price ? (
-                          <Button
-                            size="sm"
-                            onClick={() => handleViewPrompt(prompt)}
-                          >
-                            Buy for ${prompt.price}
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewPrompt(prompt)}
-                          >
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Full
-                          </Button>
-                        )}
-                      </div>
+                      )}
                     </div>
+
                     <>
                       {openComments[prompt._id] && (
                         <div className="mt-4 space-y-3 transition-all duration-500 ease-in-out">

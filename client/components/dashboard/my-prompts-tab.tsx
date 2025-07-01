@@ -15,9 +15,11 @@ import { useCallback, useEffect, useState } from "react";
 import { IPrompt } from "@/types/prompts.type";
 import { toast } from "sonner";
 import { EditPromptModal } from "./components/prompt/EditPromptModal";
+import countAllComments from "@/utils/count-all-nested-comments";
 
 const MyPromptsTab = ({ value }: { value: string }) => {
   const [myPrompts, setMyPrompts] = useState<IPrompt[]>([]);
+  console.log("myPrompts:", myPrompts);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<IPrompt | null>(null);
   const openEdit = (prompt: IPrompt) => {
@@ -148,7 +150,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                     </div>
                     <div className="flex items-center space-x-1">
                       <MessageCircle className="h-4 w-4" />
-                      <span>{prompt.comments.length}</span>
+                      <span> {countAllComments(prompt.comments)}</span>
                     </div>
                     {prompt.isPaid === true && (
                       <div className="flex items-center space-x-1">

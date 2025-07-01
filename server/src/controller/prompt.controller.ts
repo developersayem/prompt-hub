@@ -360,19 +360,50 @@ const likeCommentController = asyncHandler(async (req: Request, res: Response) =
 });
 
 // Controller for my prompts
-const getMyPromptsController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const userId = (req as any).user?._id;
+const getMyPromptsController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
 
-    if (!userId) throw new ApiError(401, "Unauthorized");
+  if (!userId) throw new ApiError(401, "Unauthorized");
 
-    const prompts = await Prompt.find({ creator: userId }).sort({ createdAt: -1 });
+  const query = { creator: userId };
 
-    res
-      .status(200)
-      .json(new ApiResponse(200, { data: prompts }, "Prompts fetched successfully"));
+  const prompts = await Prompt.find(query)
+    .sort({ createdAt: -1 })
+    .populate("creator", "-password -refreshToken")
+    .populate({
+      path: "comments",
+      match: { parentComment: null },
+      select: "text createdAt user replies likes",
+    })
+    .lean();
+
+  // Recursively populate nested replies + user data
+  for (const prompt of prompts) {
+    for (const comment of prompt.comments) {
+      await populateRepliesRecursively(comment);
+    }
   }
-);
+
+  // Attach likes for prompts
+  const promptLikes = await Like.find({ prompt: { $in: prompts.map(p => p._id) } }).lean();
+
+  const likeMap: Record<string, string[]> = {};
+  for (const like of promptLikes) {
+    const promptId = String(like.prompt);
+    const userId = String(like.user);
+    if (!likeMap[promptId]) likeMap[promptId] = [];
+    likeMap[promptId].push(userId);
+  }
+
+  const promptsWithLikes = prompts.map((prompt) => ({
+    ...prompt,
+    likes: likeMap[String(prompt._id)] || [],
+  }));
+
+  res.status(200).json(
+    new ApiResponse(200, { data: promptsWithLikes }, "Your prompts fetched successfully")
+  );
+});
 
 // Controller for get single
 const getSinglePromptController = asyncHandler(async (req: Request, res: Response) => {
