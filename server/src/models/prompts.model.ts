@@ -17,7 +17,7 @@ export interface IPrompt extends Document {
   likes: Types.ObjectId[];
   comments: Types.ObjectId[];
   buyers: Types.ObjectId[];
-   views: number;
+  views: number;
   viewedBy: mongoose.Types.ObjectId[];
   viewedIPs: string[];
 }
@@ -37,12 +37,12 @@ const promptSchema = new Schema<IPrompt>(
     resultContent: { type: String, required: true },
     aiModel: { type: String, required: true },
     price: { type: Number },
-    isPaid: { type: Boolean, required: true },
+    isPaid: { type: Boolean, required: true, default: false },
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
     likes: [{ type: Schema.Types.ObjectId, ref: "Like" }],
     comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],
     buyers: [{ type: Schema.Types.ObjectId, ref: "User" }],
-     views: { type: Number, default: 0 },
+    views: { type: Number, default: 0 },
     viewedBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
     viewedIPs: [{ type: String }]
   },
