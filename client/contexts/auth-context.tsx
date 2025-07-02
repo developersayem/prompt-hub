@@ -124,7 +124,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const user = data.data.user;
 
       localStorage.setItem("user", JSON.stringify(user));
-
+      router.push("/feed");
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
@@ -157,7 +157,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const user = result.data.user;
 
       localStorage.setItem("user", JSON.stringify(user));
-
+      router.push("/feed");
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });

@@ -45,12 +45,13 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import countAllComments from "@/utils/count-all-nested-comments";
+import { PublicProfileModal } from "@/components/shared/public-profile-modal";
+import { IPublicUser } from "@/types/publicUser.type";
 
 export default function FeedPage() {
   const { user } = useAuth();
   // Initialize prompts as an empty array to prevent the map error
   const [prompts, setPrompts] = useState<IPrompt[]>([]);
-  console.log("prompts:", prompts);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +69,9 @@ export default function FeedPage() {
   const [showPromptModal, setShowPromptModal] = useState(false);
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [newComment, setNewComment] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPublicProfile, setShowPublicProfile] = useState(false);
+  const [publicUserData, setPublicUserData] = useState<IPublicUser>();
 
   // Function for recursive comment updater
   function addReplyRecursively(
@@ -485,6 +489,28 @@ export default function FeedPage() {
       console.error("Error copying prompt", error);
     }
   };
+  // Function for public profile
+  const handlePublicProfile = async (userId: string) => {
+    console.log(userId);
+
+    try {
+      setIsLoading(true);
+      setShowPublicProfile(true);
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/profile/basic/${userId}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      console.log(data.data.profile);
+      setPublicUserData(data.data.profile);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error copying prompt", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
@@ -792,6 +818,15 @@ export default function FeedPage() {
                 </CardContent>
               </Card>
             )}
+            {/* public profile model */}
+            {showPublicProfile && publicUserData && (
+              <PublicProfileModal
+                user={publicUserData}
+                open={showPublicProfile}
+                onOpenChange={setShowPublicProfile}
+                isLoading={isLoading}
+              />
+            )}
 
             {/* Prompt Cards */}
             {!loading &&
@@ -804,7 +839,12 @@ export default function FeedPage() {
                 >
                   <CardHeader>
                     <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-3">
+                      <div
+                        onClick={() =>
+                          handlePublicProfile(prompt?.creator?._id)
+                        }
+                        className="flex items-center space-x-3 cursor-pointer"
+                      >
                         <Avatar>
                           <AvatarImage
                             src={prompt.creator.avatar || "/placeholder.svg"}
@@ -997,7 +1037,6 @@ export default function FeedPage() {
                         </Button>
                       )}
                     </div>
-
                     <>
                       {openComments[prompt._id] && (
                         <div className="mt-4 space-y-3 transition-all duration-500 ease-in-out">
