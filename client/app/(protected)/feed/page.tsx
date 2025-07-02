@@ -15,9 +15,9 @@ import {
   Plus,
   Sparkles,
   Eye,
-  Lock,
   Send,
   Coins,
+  Clipboard,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -39,17 +39,23 @@ import { useAuth } from "@/contexts/auth-context";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { IPrompt } from "@/types/prompts.type";
 import { IComment } from "@/types/comments.type";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import countAllComments from "@/utils/count-all-nested-comments";
 import { PublicProfileModal } from "@/components/shared/public-profile-modal";
 import { IPublicUser } from "@/types/publicUser.type";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function FeedPage() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   // Initialize prompts as an empty array to prevent the map error
   const [prompts, setPrompts] = useState<IPrompt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,12 +72,27 @@ export default function FeedPage() {
   });
 
   const [selectedPrompt, setSelectedPrompt] = useState<IPrompt | null>(null);
-  const [showPromptModal, setShowPromptModal] = useState(false);
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [newComment, setNewComment] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [showPublicProfile, setShowPublicProfile] = useState(false);
   const [publicUserData, setPublicUserData] = useState<IPublicUser>();
+  const [expandedPrompts, setExpandedPrompts] = useState<
+    Record<string, boolean>
+  >({});
+  const [expandedDescriptions, setExpandedDescriptions] = useState<
+    Record<string, boolean>
+  >({});
+
+  const toggleExpand = (id: string) => {
+    setExpandedPrompts((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+  const toggleDescription = (id: string) => {
+    setExpandedDescriptions((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Function for recursive comment updater
   function addReplyRecursively(
@@ -137,7 +158,6 @@ export default function FeedPage() {
             replies: removeCommentRecursive(comment.replies, commentId),
           };
         }
-
         return comment;
       })
       .filter(Boolean) as IComment[];
@@ -160,9 +180,9 @@ export default function FeedPage() {
       }
 
       // If price range starts above 0, assume paid prompts
-      if (filters.priceRange[0] > 0) {
-        queryParams.append("isPaid", "true");
-      }
+      // if (filters.priceRange[0] > 0) {
+      //   queryParams.append("isPaid", "true");
+      // }
 
       const response = await fetch(
         `${
@@ -457,38 +477,62 @@ export default function FeedPage() {
       tags: [],
     });
   };
-  // Function for counting view and view the prompt
-  const handleViewPrompt = async (prompt: IPrompt) => {
-    try {
-      await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/${prompt._id}`,
-        {
-          method: "GET",
-          credentials: "include", // if using cookies
-        }
-      );
-
-      // Optional: open modal or navigate
-      // 1. If showing in modal:
-      setSelectedPrompt(prompt);
-      setShowPromptModal(true);
-
-      // 2. Or redirect to a full view page:
-      // router.push(`/prompt/${prompt._id}`);
-    } catch (error) {
-      console.error("Error counting view", error);
-    }
-  };
 
   //Function for copy prompt
-  const handleCopyPrompt = async (prompt: string) => {
+  const handleCopyPrompt = async (prompt: IPrompt) => {
     try {
-      await navigator.clipboard.writeText(prompt);
-      toast.success("Prompt copied to clipboard");
+      if (!prompt) return;
+      if (prompt.paymentStatus === "free") {
+        console.log("promptId:", prompt._id);
+        await navigator.clipboard.writeText(prompt.promptText);
+        toast.success("Prompt copied to clipboard");
+      }
     } catch (error) {
       console.error("Error copying prompt", error);
     }
   };
+  // Function for buying prompt
+  const handleBuyPrompt = async (prompt: IPrompt) => {
+    try {
+      if (!prompt || prompt.paymentStatus !== "paid") return;
+
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/${prompt._id}/buy`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // cookies for auth
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const serverMessage =
+          (data as { message?: string })?.message ||
+          "Purchase failed. Try again.";
+        throw new Error(serverMessage);
+      }
+
+      // ✅ Update user credits
+      updateUser({ credits: data.data.updatedCredits });
+
+      // ✅ Copy prompt text to clipboard
+      await navigator.clipboard.writeText(prompt.promptText);
+
+      toast.success("Prompt purchased and copied to clipboard");
+    } catch (error: unknown) {
+      console.error("Buy Prompt Error:", error);
+      if (error instanceof Error) {
+        toast.error("Failed to purchase the prompt");
+      } else {
+        toast.error("Failed to purchase the prompt");
+      }
+    }
+  };
+
   // Function for public profile
   const handlePublicProfile = async (userId: string) => {
     console.log(userId);
@@ -867,18 +911,13 @@ export default function FeedPage() {
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 capitalize">
                         <Badge variant="secondary">{prompt.category}</Badge>
-                        {prompt.price ? (
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <Badge className="bg-green-100 text-green-800">
-                                <Coins className="h-3 w-3 mr-1" />
-                                {prompt.price}
-                              </Badge>
-                            </TooltipTrigger>
-                            <TooltipContent>Credits</TooltipContent>
-                          </Tooltip>
+                        {prompt.paymentStatus === "paid" ? (
+                          <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
+                            <Coins className="w-3 h-3" />
+                            {prompt.paymentStatus}
+                          </Badge>
                         ) : (
                           <Badge variant="outline">Free</Badge>
                         )}
@@ -890,52 +929,72 @@ export default function FeedPage() {
                       <h3 className="text-xl font-semibold mb-2 capitalize">
                         {prompt.title}
                       </h3>
-                      <p className="text-gray-600 capitalize">
-                        {prompt.description}
-                      </p>
+                      <div className="text-gray-600 text-sm whitespace-pre-wrap capitalize">
+                        {expandedDescriptions[prompt._id]
+                          ? prompt.description
+                          : prompt.description.length > 150
+                          ? `${prompt.description.slice(0, 150)}...`
+                          : prompt.description}
+                        {prompt.description.length > 150 && (
+                          <button
+                            onClick={() => toggleDescription(prompt._id)}
+                            className="text-white hover:underline ml-1"
+                          >
+                            {expandedDescriptions[prompt._id]
+                              ? "See less"
+                              : "See more"}
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     {/* Preview Content */}
                     <div className="bg-gray-50 rounded-lg p-4">
-                      {prompt.price ? (
-                        <div className="flex items-center justify-center py-8 text-gray-500">
-                          <Lock className="h-8 w-8 mr-2" />
-                          <span>Preview available after purchase</span>
+                      {prompt.resultType === "image" ? (
+                        <Image
+                          width={400}
+                          height={400}
+                          src={prompt.resultContent || "/placeholder.svg"}
+                          alt="Prompt result"
+                          className="w-full rounded-lg"
+                        />
+                      ) : prompt.resultType === "video" ? (
+                        <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">
+                          <video
+                            controls
+                            preload="metadata"
+                            className="w-full h-auto max-h-[500px] rounded-xl bg-black"
+                            poster="/video-thumbnail.png" // optional placeholder
+                          >
+                            <source
+                              src={prompt.resultContent || ""}
+                              type="video/mp4"
+                            />
+                            Your browser does not support the video tag.
+                          </video>
                         </div>
                       ) : (
                         <div>
-                          {prompt.resultType === "image" ? (
-                            <Image
-                              width={400}
-                              height={400}
-                              src={prompt.resultContent || "/placeholder.svg"}
-                              alt="Prompt result"
-                              className="w-full rounded-lg"
-                            />
-                          ) : prompt.resultType === "video" ? (
-                            <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">
-                              <video
-                                controls
-                                preload="metadata"
-                                className="w-full h-auto max-h-[500px] rounded-xl bg-black"
-                                poster="/video-thumbnail.png" // optional placeholder
-                              >
-                                <source
-                                  src={prompt.resultContent || ""}
-                                  type="video/mp4"
-                                />
-                                Your browser does not support the video tag.
-                              </video>
-                            </div>
-                          ) : (
-                            <p className="text-sm whitespace-pre-wrap text-black capitalize">
-                              {prompt.resultContent}
-                            </p>
+                          <p className="text-sm whitespace-pre-wrap text-black capitalize">
+                            {expandedPrompts[prompt._id]
+                              ? prompt.resultContent
+                              : prompt.resultContent.length > 200
+                              ? `${prompt.resultContent.slice(0, 200)}...`
+                              : prompt.resultContent}
+                          </p>
+                          {prompt.resultContent.length > 200 && (
+                            <button
+                              onClick={() => toggleExpand(prompt._id)}
+                              className="text-blue-500 hover:underline mt-2 text-sm"
+                            >
+                              {expandedPrompts[prompt._id]
+                                ? "See less"
+                                : "See more"}
+                            </button>
                           )}
                         </div>
                       )}
                     </div>
-
                     {/* Tags */}
                     <div className="flex flex-wrap gap-2">
                       {prompt.tags.map((tag, index) => (
@@ -957,7 +1016,7 @@ export default function FeedPage() {
                     <Separator />
 
                     {/* Actions */}
-                    <div className="flex space-x-2 w-full">
+                    <div className="flex w-full">
                       {/* Each button gets flex-1 to take equal width */}
                       <Button
                         onClick={() => handleLikePrompt(prompt._id)}
@@ -1016,25 +1075,58 @@ export default function FeedPage() {
                       >
                         <Bookmark className="h-4 w-4" />
                       </Button>
-
-                      {prompt.price ? (
-                        <Button
-                          size="sm"
-                          className="flex-1 flex items-center justify-center"
-                          onClick={() => handleViewPrompt(prompt)}
-                        >
-                          Buy for ${prompt.price}
-                        </Button>
-                      ) : (
+                      {prompt.paymentStatus === "free" && (
                         <Button
                           variant="outline"
                           size="sm"
                           className="flex-1 flex items-center justify-center"
-                          onClick={() => handleViewPrompt(prompt)}
+                          onClick={() => handleCopyPrompt(prompt)}
                         >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Full
+                          <Clipboard className="h-4 w-4 mr-2" />
+                          Copy
                         </Button>
+                      )}
+                      {prompt.paymentStatus === "paid" && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="flex-1 flex items-center justify-center"
+                            >
+                              <Coins className="h-4 w-4 mr-2" />
+                              {prompt.price}
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>
+                                Are you absolutely sure?
+                              </AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will
+                                permanently delete your account and remove your
+                                data from our servers.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel
+                                onClick={() => {
+                                  toast.error("Action cancelled");
+                                }}
+                              >
+                                Cancel
+                              </AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => {
+                                  handleBuyPrompt(prompt);
+                                }}
+                              >
+                                Continue
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       )}
                     </div>
                     <>
@@ -1113,251 +1205,6 @@ export default function FeedPage() {
           </div>
         </div>
       </div>
-      {/* Prompt Detail Modal */}
-      <Dialog open={showPromptModal} onOpenChange={setShowPromptModal}>
-        <DialogContent className="max-w-5xl w-full max-h-[90vh] overflow-y-auto rounded-xl p-6">
-          {selectedPrompt && (
-            <>
-              <DialogHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Avatar>
-                      <AvatarImage
-                        src={
-                          selectedPrompt.creator.avatar || "/placeholder.svg"
-                        }
-                      />
-                      <AvatarFallback>
-                        {selectedPrompt.creator.name
-                          .split(" ")
-                          .map((n: string) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <DialogTitle className="text-left">
-                        {selectedPrompt.title}
-                      </DialogTitle>
-                      <p className="text-sm text-muted-foreground">
-                        by {selectedPrompt.creator.name}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2 mt- mr-8">
-                    <Badge variant="secondary">{selectedPrompt.category}</Badge>
-                    {selectedPrompt.price ? (
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <Badge className="bg-green-100 text-green-800">
-                            <Coins className="h-3 w-3 mr-1" />
-                            {selectedPrompt.price}
-                          </Badge>
-                        </TooltipTrigger>
-                        <TooltipContent>Credits</TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <Badge variant="outline">Free</Badge>
-                    )}
-                  </div>
-                </div>
-                <DialogDescription className="text-left mt-4">
-                  {selectedPrompt.description}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-6 py-4">
-                {/* Prompt Content */}
-                <div className="space-y-4">
-                  <h4 className="font-medium">The Prompt</h4>
-                  <div className="bg-muted rounded-lg p-4">
-                    <p className="text-sm font-mono">
-                      {selectedPrompt.price
-                        ? "🔒 Full prompt available after purchase. This is a premium prompt that generates high-quality results for professional use."
-                        : selectedPrompt.promptText}
-                    </p>
-                  </div>
-                </div>
-                {/* 👈 CLOSE the “Prompt” wrapper */}
-                {/* Generated Result */}
-                <div className="space-y-4">
-                  <h4 className="font-medium">Generated Result</h4>
-                  <div className="bg-muted rounded-lg p-4 max-w-full">
-                    {selectedPrompt.resultType === "image" ? (
-                      <div className="relative w-full h-[400px]">
-                        <Image
-                          fill
-                          src={
-                            selectedPrompt.resultContent || "/placeholder.svg"
-                          }
-                          alt="Generated result"
-                          className="rounded-lg object-contain"
-                        />
-                      </div>
-                    ) : selectedPrompt.resultType === "video" ? (
-                      <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">
-                        <video
-                          controls
-                          preload="metadata"
-                          className="w-full h-auto max-h-[500px] rounded-xl bg-black"
-                          poster="/video-thumbnail.png" // optional placeholder
-                        >
-                          <source
-                            src={selectedPrompt.resultContent || ""}
-                            type="video/mp4"
-                          />
-                          Your browser does not support the video tag.
-                        </video>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <p className="text-sm leading-relaxed">
-                          {selectedPrompt.resultContent}
-                        </p>
-                        <div className="text-xs text-muted-foreground">
-                          <p>
-                            This is the complete generated result. You can copy
-                            and use this content freely.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                {/* Metadata */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
-                    <h4 className="font-medium">Details</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">AI Model:</span>
-                        <span className="font-medium">
-                          {selectedPrompt.aiModel}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Created:</span>
-                        <span className="font-medium">
-                          {new Intl.DateTimeFormat("en-US", {
-                            year: "numeric",
-                            month: "short",
-                            day: "numeric",
-                          }).format(new Date(selectedPrompt.createdAt))}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Category:</span>
-                        <span className="font-medium">
-                          {selectedPrompt.category}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Author:</span>
-                        <span className="font-medium">
-                          {selectedPrompt.creator.name}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <h4 className="font-medium">Engagement</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Likes:</span>
-                        <span className="font-medium">
-                          {selectedPrompt.likes.length}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Comments:</span>
-                        <span className="font-medium">
-                          {countAllComments(selectedPrompt.comments)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Shares:</span>
-                        <span className="font-medium">
-                          {/* TODO: add share functionality */}
-                          {/* {selectedPrompt.shares.length} */}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Views:</span>
-                        <span className="font-medium">
-                          {selectedPrompt.views}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                {/* Tags */}
-                <div className="space-y-3">
-                  <h4 className="font-medium">Tags</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedPrompt.tags.map((tag: string) => (
-                      <Badge key={tag} variant="outline" className="text-xs">
-                        #{tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                {/* Actions */}
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex items-center space-x-4">
-                    <Button
-                      onClick={() => handleLikePrompt(selectedPrompt._id)}
-                      variant="ghost"
-                      size="sm"
-                      title="Like this prompt"
-                    >
-                      <Heart
-                        className={`h-4 w-4 mr-2 ${
-                          selectedPrompt.likes.includes(user?._id ?? "")
-                            ? "text-red-500"
-                            : "text-gray-500"
-                        }`}
-                      />
-                      {selectedPrompt.likes.length}
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <MessageCircle className="h-4 w-4 mr-2" />
-                      {countAllComments(selectedPrompt.comments)}
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      <Eye className="h-4 w-4 mr-2" />
-                      {selectedPrompt.views}
-                    </Button>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="ghost" size="sm">
-                      <Bookmark className="h-4 w-4" />
-                    </Button>
-                    {selectedPrompt.price ? (
-                      <Button className="bg-primary ">
-                        Buy for <Coins className="h-4 w-4" />
-                        {selectedPrompt.price}
-                      </Button>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          handleCopyPrompt(selectedPrompt.promptText)
-                        }
-                      >
-                        Copy Prompt
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
