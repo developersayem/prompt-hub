@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 
 export type ResultType = "text" | "image" | "video";
+export type PaymentStatus = "free" | "paid";
 
 export interface IPrompt extends Document {
   title: string;
@@ -12,7 +13,7 @@ export interface IPrompt extends Document {
   resultContent: string;
   aiModel: string;
   price?: number;
-  isPaid: boolean;
+  paymentStatus: PaymentStatus;
   creator: Types.ObjectId;
   likes: Types.ObjectId[];
   comments: Types.ObjectId[];
@@ -37,7 +38,12 @@ const promptSchema = new Schema<IPrompt>(
     resultContent: { type: String, required: true },
     aiModel: { type: String, required: true },
     price: { type: Number },
-    isPaid: { type: Boolean, required: true, default: false },
+    paymentStatus: {
+      type: String,
+      enum: ["free", "paid"],
+      required: true,
+      default: "free",
+    },
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
     likes: [{ type: Schema.Types.ObjectId, ref: "Like" }],
     comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],

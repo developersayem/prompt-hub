@@ -452,11 +452,17 @@ const getSinglePromptController = asyncHandler(async (req: Request, res: Respons
   }
 );
 
-//Controller for update prompt
+// Controller for update prompt
 const updatePromptController = asyncHandler(async (req: Request, res: Response) => {
   const promptId = req.params.id;
   const userId = (req as any).user?._id;
-  const { title, description, category, isPaid, price } = req.body;
+  const {
+    title,
+    description,
+    category,
+    paymentStatus, // string: "free" | "paid"
+    price,
+  } = req.body;
 
   if (!promptId) throw new ApiError(400, "Prompt ID is required");
 
@@ -471,8 +477,11 @@ const updatePromptController = asyncHandler(async (req: Request, res: Response) 
   if (title) prompt.title = title;
   if (description) prompt.description = description;
   if (category) prompt.category = category;
-  if (typeof isPaid === "boolean") prompt.isPaid = isPaid;
-  if (isPaid && price !== undefined) prompt.price = price;
+
+  if (paymentStatus === "free" || paymentStatus === "paid") {
+    prompt.paymentStatus = paymentStatus;
+    prompt.price = paymentStatus === "paid" ? price : undefined;
+  }
 
   const updatedPrompt = await prompt.save();
 
