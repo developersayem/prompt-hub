@@ -9,6 +9,7 @@ import { UserNav } from "@/components/dashboard/components/profile/user-nav";
 import { useState } from "react";
 import RightSidebar from "@/components/feed/right-sidebar";
 import LeftSidebar from "@/components/feed/left-sidebar";
+import CreatePromptModal from "@/components/shared/create-prompt-modal";
 
 interface FeedLayoutProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ interface FeedLayoutProps {
 
 export default function FeedLayout({ children }: FeedLayoutProps) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [openCreateModal, setOpenCreateModal] = useState(false);
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
@@ -43,12 +45,14 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Link href="/create">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Prompt
-                </Button>
-              </Link>
+              <Button onClick={() => setOpenCreateModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Prompt
+              </Button>
+              <CreatePromptModal
+                open={openCreateModal}
+                onClose={() => setOpenCreateModal(false)}
+              />
               <ThemeToggle />
               <UserNav />
             </div>

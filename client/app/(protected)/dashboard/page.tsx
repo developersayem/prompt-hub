@@ -22,7 +22,6 @@ import {
   Line,
 } from "recharts";
 import { DollarSign, Eye, Heart, TrendingUp, Plus } from "lucide-react";
-import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserNav } from "@/components/dashboard/components/profile/user-nav";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -31,6 +30,7 @@ import EarningsTab from "@/components/dashboard/earnings-tab";
 import AnalyticsTab from "@/components/dashboard/analytics-tab";
 import ProfileTab from "@/components/dashboard/profile-tab";
 import SettingsTab from "@/components/dashboard/settings-tab";
+import CreatePromptModal from "@/components/shared/create-prompt-modal";
 
 // Mock data
 const statsData = [
@@ -87,6 +87,7 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(tabParam);
+  const [openCreateModal, setOpenCreateModal] = useState(false);
   const totalEarnings = myPrompts.reduce(
     (sum, prompt) => sum + prompt.earnings,
     0
@@ -110,12 +111,14 @@ export default function DashboardPage() {
               </p>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/create">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create New Prompt
-                </Button>
-              </Link>
+              <Button onClick={() => setOpenCreateModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Prompt
+              </Button>
+              <CreatePromptModal
+                open={openCreateModal}
+                onClose={() => setOpenCreateModal(false)}
+              />
               <ThemeToggle />
               <UserNav />
             </div>
