@@ -8,13 +8,15 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const ApiError_1 = require("../utils/ApiError");
 const users_model_1 = require("../models/users.model");
 const asyncHandler_1 = __importDefault(require("../utils/asyncHandler"));
+const dotenv_1 = __importDefault(require("dotenv"));
+dotenv_1.default.config();
 exports.verifyJWT = (0, asyncHandler_1.default)(async (req, _, next) => {
     const token = req.cookies?.accessToken || req.headers.authorization?.replace("Bearer ", "");
     if (!token) {
         throw new ApiError_1.ApiError(401, "Unauthorized - No token provided");
     }
     try {
-        const decoded = jsonwebtoken_1.default.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const decoded = jsonwebtoken_1.default.verify(token, process.env.JWT_ACCESS_TOKEN_SECRET);
         const user = await users_model_1.User.findById(decoded._id).select("-password -refreshToken");
         if (!user)
             throw new ApiError_1.ApiError(401, "Unauthorized - User not found");

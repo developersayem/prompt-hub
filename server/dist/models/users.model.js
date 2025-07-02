@@ -43,82 +43,110 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userSchema = new mongoose_1.Schema({
     name: {
         type: String,
-        required: true
+        required: true,
     },
     email: {
         type: String,
         unique: true,
-        required: true
+        required: true,
     },
     password: {
         type: String,
-        required: true
+        required: function () {
+            return !this.isGoogleAuthenticated;
+        },
+    },
+    isGoogleAuthenticated: {
+        type: Boolean,
+        default: false,
+    },
+    isCertified: {
+        type: Boolean,
+        default: false,
     },
     avatar: {
         type: String,
-        default: '',
-        required: true
+        default: "",
+        required: true,
     },
     bio: {
         type: String,
-        default: ''
+        default: "",
     },
-    friends: [
+    socialLinks: {
+        facebook: { type: String, default: "" },
+        instagram: { type: String, default: "" },
+        github: { type: String, default: "" },
+        linkedIn: { type: String, default: "" },
+        x: { type: String, default: "" },
+        portfolio: { type: String, default: "" },
+    },
+    credits: {
+        type: Number,
+        default: 1000,
+    },
+    prompts: [
         {
             type: mongoose_1.default.Schema.Types.ObjectId,
-            ref: 'User'
-        }
+            ref: "Prompt",
+        },
     ],
-    friendRequests: [
+    purchasedPrompts: [
         {
             type: mongoose_1.default.Schema.Types.ObjectId,
-            ref: 'User'
-        }
+            ref: "Prompt",
+        },
     ],
-    online: {
-        type: Boolean,
-        default: false
+    bookmarks: [
+        {
+            type: mongoose_1.default.Schema.Types.ObjectId,
+            ref: "Prompt",
+        },
+    ],
+    address: {
+        street: { type: String, default: "" },
+        city: { type: String, default: "" },
+        state: { type: String, default: "" },
+        postalCode: { type: String, default: "" },
+        country: { type: String, default: "" },
     },
-    lastSeen: {
-        type: Date,
-        default: Date.now
+    phone: {
+        type: String,
+    },
+    countryCode: {
+        type: String,
     },
     refreshToken: {
         type: String,
     },
-    socketId: String,
 }, { timestamps: true });
-//hash password before save 
 userSchema.pre("save", async function (next) {
     const user = this;
     if (!user.isModified("password"))
-        next();
+        return next();
     user.password = await bcrypt_1.default.hash(user.password, 10);
     next();
 });
-// compare password
 userSchema.methods.isPasswordCorrect = async function (password) {
     const user = this;
     return await bcrypt_1.default.compare(password, user.password);
 };
-//generate assess token
 userSchema.methods.generateAccessToken = function () {
-    const expiresIn = parseInt(process.env.JWT_ACCESS_TOKEN_EXPIRY, 10);
+    const expiresIn = (process.env.JWT_ACCESS_TOKEN_EXPIRY ||
+        "1h"); // e.g., '1h', '10d'
+    const options = { expiresIn };
     return jsonwebtoken_1.default.sign({
         _id: this._id,
-        userName: this.userName,
-        email: this.email
-    }, process.env.JWT_ACCESS_TOKEN_SECRET, {
-        expiresIn: expiresIn
-    });
+        email: this.email,
+    }, process.env.JWT_ACCESS_TOKEN_SECRET, options);
 };
-//generate refresh token
 userSchema.methods.generateRefreshToken = function () {
-    const expiresIn = parseInt(process.env.JWT_REFRESH_TOKEN_EXPIRY, 10);
+    const expiresIn = (process.env.JWT_REFRESH_TOKEN_EXPIRY ||
+        "7d"); // e.g., '1h', '10d' // default 7d
+    const options = { expiresIn };
     return jsonwebtoken_1.default.sign({
         _id: this._id,
-    }, process.env.JWT_REFRESH_TOKEN_SECRET, {
-        expiresIn: expiresIn
-    });
+    }, process.env.JWT_REFRESH_TOKEN_SECRET, options // Ensure algorithm is specified
+    );
 };
-exports.User = mongoose_1.default.model('User', userSchema);
+exports.User = mongoose_1.default.model("User", userSchema);

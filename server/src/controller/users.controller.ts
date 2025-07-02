@@ -247,7 +247,7 @@ const logoutUser = asyncHandler(
       .json(new ApiResponse(200, {}, "User logged out successfully"));
   }
 );
-
+// Controller for profile update
 const updateProfileController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
   if (!userId) throw new ApiError(401, "Unauthorized");
@@ -315,6 +315,52 @@ const updateProfileController = asyncHandler(async (req: Request, res: Response)
     .status(200)
     .json(new ApiResponse(200, updatedUser, "Profile updated successfully"));
 });
+// Controller for public profile info
+const getUserProfileController = asyncHandler(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+
+  if (!userId) throw new ApiError(400, "User ID is required");
+
+  const user = await User.findById(userId)
+    .select("name email avatar bio socialLinks address countryCode phone isCertified createdAt prompts")
+    .lean() as { 
+      _id: any; 
+      name: string; 
+      email: string; 
+      avatar?: string; 
+      bio?: string; 
+      socialLinks?: any; 
+      address?: any; 
+      countryCode?: string; 
+      phone?: string; 
+      isCertified?: boolean; 
+      createdAt?: Date; 
+      prompts?: any[]; 
+    };
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  const promptCount = user.prompts?.length || 0;
+
+  const publicProfile = {
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    avatar: user.avatar,
+    bio: user.bio,
+    socialLinks: user.socialLinks,
+    location: user.address,
+    phone: `${user.countryCode}${user.phone}`,
+    isCertified: user.isCertified,
+    joinedAt: user.createdAt,
+    promptCount,
+  };
+
+  res.status(200).json(
+    new ApiResponse(200, { profile: publicProfile }, "User profile fetched successfully")
+  );
+});
+
 
 
 
@@ -324,5 +370,6 @@ export {
   googleOAuthCallbackController,
   loginUserController,
   logoutUser,
-  updateProfileController
+  updateProfileController,
+  getUserProfileController
 };

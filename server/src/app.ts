@@ -37,11 +37,14 @@ export const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
 });
 
+// set trust proxy
+app.set("trust proxy", 1);
 // Parse JSON and URL-encoded bodies for routes NOT expecting multipart/form-data
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
+// Parse cookies
 app.use(cookieParser());
+// Serve static files
 app.use(express.static("public"));
 
 // Use custom logger middleware early
