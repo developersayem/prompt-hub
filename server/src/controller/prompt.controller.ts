@@ -6,10 +6,11 @@ import type { UploadApiResponse } from "cloudinary";
 import { uploadOnCloudinary } from "../utils/cloudinary";
 import { Prompt } from "../models/prompts.model";
 import { User } from "../models/users.model";
-import mongoose, { Types } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 import { Like } from "../models/like.model"; // adjust the path
 import { Comment } from "../models/comments.model";
 import { populateRepliesRecursively } from "../utils/populateRepliesRecursively";
+import { PurchaseHistory } from "../models/purchaseHistory.model";
 
 // Controller for show all prompts
 const getAllPromptsController = asyncHandler(async (req: Request, res: Response) => {
@@ -510,6 +511,86 @@ const deletePromptController = asyncHandler(async (req: Request, res: Response) 
   res.status(200).json(new ApiResponse(200, {}, "Prompt deleted successfully"));
 });
 
+//controller for buy prompt
+const buyPromptController = asyncHandler(async (req: Request, res: Response) => {
+  const promptId = req.params.id;
+  const userId = (req as any).user?._id;
+
+  if (!userId) throw new ApiError(401, "Unauthorized");
+  if (!promptId) throw new ApiError(400, "Prompt ID is required");
+
+  const prompt = await Prompt.findById(promptId);
+  if (!prompt) throw new ApiError(404, "Prompt not found");
+
+  if (String(prompt.creator) === String(userId)) {
+    throw new ApiError(403, "You cannot buy your own prompt");
+  }
+
+  if (prompt.paymentStatus === "free") {
+    throw new ApiError(400, "This prompt is free");
+  }
+
+  if (prompt.purchasedBy.includes(userId)) {
+    throw new ApiError(400, "You have already purchased this prompt");
+  }
+
+  const price = prompt.price ?? 0;
+  const buyer = await User.findById(userId);
+  const creator = await User.findById(prompt.creator);
+
+  if (!buyer || !creator) throw new ApiError(404, "User not found");
+
+  if (buyer.credits < price) {
+    throw new ApiError(400, "Insufficient credits");
+  }
+
+  // Deduct from buyer
+  buyer.credits -= price;
+  await buyer.save();
+
+  // Add to creator
+  creator.credits += price;
+  await creator.save();
+
+  // Update prompt
+  prompt.purchasedBy.push(userId);
+  await prompt.save();
+
+  // Store purchase history
+  await PurchaseHistory.create({
+    buyer: buyer._id,
+    prompt: prompt._id,
+    seller: creator._id,
+    amount: price,
+    paymentMethod: "credits",
+  });
+  // updated buyer purchasedPrompts
+  buyer.purchasedPrompts.push(prompt._id as Schema.Types.ObjectId);
+  await buyer.save();
+
+  return res.status(200).json(
+  new ApiResponse(
+    200,
+    { updatedCredits: buyer.credits }, // ✅ send updated buyer credits
+    "Prompt purchased successfully"
+  )
+);
+
+});
+
+// Controller for get my purchases
+const getMyPurchasesController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  const history = await PurchaseHistory.find({ buyer: userId })
+    .populate("prompt", "title price")
+    .populate("creator", "name email");
+
+  return res.status(200).json(new ApiResponse(200, history, "Purchase history fetched"));
+});
+
+
 export { 
   getAllPromptsController,
   createPromptController,
@@ -522,5 +603,7 @@ export {
   getMyPromptsController,
   getSinglePromptController,
   updatePromptController,
-  deletePromptController
+  deletePromptController,
+  buyPromptController,
+  getMyPurchasesController
 };

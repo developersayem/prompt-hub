@@ -1,8 +1,22 @@
 import { Router } from "express";
-
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import { createCommentController, createPromptController, deleteCommentController, deletePromptController, getAllPromptsController, getMyPromptsController, getSinglePromptController, likeCommentController, likePromptController, replyCommentController, updateCommentController, updatePromptController } from "../controller/prompt.controller";
+import {
+    buyPromptController,
+    createCommentController,
+    createPromptController,
+    deleteCommentController,
+    deletePromptController,
+    getAllPromptsController,
+    getMyPromptsController,
+    getMyPurchasesController,
+    getSinglePromptController,
+    likeCommentController,
+    likePromptController,
+    replyCommentController,
+    updateCommentController,
+    updatePromptController
+} from "../controller/prompt.controller";
 
 
 const router = Router()
@@ -36,6 +50,11 @@ router.get("/:id", verifyJWT, getSinglePromptController);
 router.put("/:id", verifyJWT, updatePromptController);
 // Route for delete prompt
 router.delete("/:id", verifyJWT, deletePromptController);
+// Route for buy prompt
+router.post("/:id/buy", verifyJWT, buyPromptController);
+// Route for get my purchases
+router.get("/purchase-history", verifyJWT, getMyPurchasesController);
+
 
 
 export default router
