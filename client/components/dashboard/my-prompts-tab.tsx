@@ -1,10 +1,11 @@
+"use client";
+
 import {
   Coins,
   Edit,
   Eye,
   Heart,
   MessageCircle,
-  MoreHorizontal,
   Plus,
   Trash2,
 } from "lucide-react";
@@ -18,18 +19,41 @@ import { toast } from "sonner";
 import { EditPromptModal } from "./components/prompt/EditPromptModal";
 import countAllComments from "@/utils/count-all-nested-comments";
 import Link from "next/link";
+import Image from "next/image";
+import Masonry from "react-masonry-css";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+
+const breakpointColumnsObj = {
+  default: 2,
+  700: 1,
+};
 
 const MyPromptsTab = ({ value }: { value: string }) => {
   const [myPrompts, setMyPrompts] = useState<IPrompt[]>([]);
-  console.log("myPrompts:", myPrompts);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<IPrompt | null>(null);
+  const [expandedPrompts, setExpandedPrompts] = useState<
+    Record<string, boolean>
+  >({});
+  const [expandedDescriptions, setExpandedDescriptions] = useState<
+    Record<string, boolean>
+  >({});
+
   const openEdit = (prompt: IPrompt) => {
     setSelectedPrompt(prompt);
     setIsEditOpen(true);
   };
 
-  // Function for handling fetch prompts
+  const toggleExpand = (id: string) => {
+    setExpandedPrompts((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+  const toggleDescription = (id: string) => {
+    setExpandedDescriptions((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
   const fetchPrompts = useCallback(async () => {
     try {
       const response = await fetch(
@@ -54,7 +78,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       toast.error("Failed to fetch prompts.");
     }
   }, []);
-  // Function for delete prompt
+
   const deletePrompt = async (prompt: IPrompt) => {
     try {
       const response = await fetch(
@@ -73,10 +97,6 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       const data = await response.json();
       toast.success(data.message || "Prompt deleted successfully");
 
-      // Option 1: Refetch all prompts
-      // await fetchPrompts();
-
-      // Option 2: Remove from state directly (faster UI update)
       setMyPrompts((prev) => prev.filter((p) => p._id !== prompt._id));
     } catch (error) {
       console.error("Error deleting prompt:", error);
@@ -84,14 +104,12 @@ const MyPromptsTab = ({ value }: { value: string }) => {
     }
   };
 
-  // fetch prompts from database
   useEffect(() => {
     fetchPrompts();
   }, [fetchPrompts]);
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
-      console.log(e.key);
       setIsEditOpen(false);
     }
   };
@@ -99,7 +117,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
   return (
     <TabsContent
       onKeyDown={handleKeyPress}
-      tabIndex={-1} // ✅ This makes the div focusable so it can receive keyboard events
+      tabIndex={-1}
       value={value}
       className="space-y-6"
     >
@@ -115,103 +133,179 @@ const MyPromptsTab = ({ value }: { value: string }) => {
         </div>
       </div>
 
-      <div className="grid gap-6">
-        {/* Empty State */}
-        {myPrompts.length === 0 && (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-8">
-                <p className="text-gray-500 mb-4">No prompts found.</p>
-                <Link href="/create">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create First Prompt
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-        {myPrompts.map((prompt) => (
-          <Card key={prompt._id}>
-            <CardContent className="pt-6">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <h3 className="text-lg font-semibold">{prompt.title}</h3>
-                    {/* <Badge
-                      variant={
-                        prompt.status === "published" ? "default" : "secondary"
-                      }
-                    >
-                      {prompt.status}
-                    </Badge> */}
-                    <Badge variant="outline">{prompt.category}</Badge>
-                    {prompt.isPaid === true ? (
-                      <Badge className="bg-green-100 text-green-800">
-                        <Coins className="h-3 w-3 mr-1" />
-                        {prompt.price}
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline">Free</Badge>
-                    )}
-                  </div>
+      {myPrompts.length === 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">No prompts found.</p>
+              <Link href="/create">
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Prompt
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-                  <div className="flex items-center space-x-6 text-sm text-gray-600">
-                    <div className="flex items-center space-x-1">
-                      <Eye className="h-4 w-4" />
-                      <span>{prompt.views}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Heart className="h-4 w-4" />
-                      <span>{prompt.likes.length}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <MessageCircle className="h-4 w-4" />
-                      <span> {countAllComments(prompt.comments)}</span>
-                    </div>
-                    {prompt.isPaid === true && (
-                      <div className="flex items-center space-x-1">
-                        <Coins className="h-4 w-4" />
-                        <span>{prompt?.price} earned</span>
-                      </div>
-                    )}
-                    <span>
-                      {new Intl.DateTimeFormat("en-GB", {
-                        day: "numeric",
-                        month: "short",
+      <Masonry
+        breakpointCols={breakpointColumnsObj}
+        className="flex gap-6"
+        columnClassName="flex flex-col gap-6"
+      >
+        {myPrompts.map((prompt) => (
+          <Card key={prompt._id} className="hover:shadow-lg transition-shadow">
+            <CardContent className="space-y-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center space-x-3">
+                  <Avatar>
+                    <AvatarImage
+                      src={prompt.creator.avatar || "/placeholder.svg"}
+                    />
+                    <AvatarFallback>
+                      {prompt.creator.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold">
+                      {prompt.creator?.name ?? "Unknown"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {new Intl.DateTimeFormat("en-US", {
                         year: "numeric",
+                        month: "short",
+                        day: "numeric",
                       }).format(new Date(prompt.createdAt))}
-                    </span>
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center gap-2 capitalize">
+                  <Badge variant="secondary">{prompt.category}</Badge>
+                  {prompt.paymentStatus === "paid" ? (
+                    <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
+                      <Coins className="w-3 h-3" />
+                      {prompt.paymentStatus}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline">Free</Badge>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xl font-semibold mb-1 capitalize">
+                  {prompt.title}
+                </h3>
+                <div className="text-gray-600 text-sm whitespace-pre-wrap capitalize">
+                  {expandedDescriptions[prompt._id]
+                    ? prompt.description
+                    : prompt.description.length > 150
+                    ? `${prompt.description.slice(0, 150)}...`
+                    : prompt.description}
+                  {prompt.description.length > 150 && (
+                    <button
+                      onClick={() => toggleDescription(prompt._id)}
+                      className="text-white hover:underline ml-1"
+                    >
+                      {expandedDescriptions[prompt._id]
+                        ? "See less"
+                        : "See more"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                {prompt.resultType === "image" ? (
+                  <Image
+                    width={500}
+                    height={500}
+                    src={prompt.resultContent || "/placeholder.svg"}
+                    alt="Preview"
+                    className="w-full rounded-lg"
+                  />
+                ) : prompt.resultType === "video" ? (
+                  <video
+                    controls
+                    preload="metadata"
+                    className="w-full h-auto max-h-[500px] rounded-xl bg-black"
+                  >
+                    <source src={prompt.resultContent || ""} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                ) : (
+                  <div>
+                    <p className="text-sm whitespace-pre-wrap text-black capitalize">
+                      {expandedPrompts[prompt._id]
+                        ? prompt.resultContent
+                        : prompt.resultContent.length > 200
+                        ? `${prompt.resultContent.slice(0, 200)}...`
+                        : prompt.resultContent}
+                    </p>
+                    {prompt.resultContent.length > 200 && (
+                      <button
+                        onClick={() => toggleExpand(prompt._id)}
+                        className="text-blue-500 hover:underline mt-2 text-sm"
+                      >
+                        {expandedPrompts[prompt._id] ? "See less" : "See more"}
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {prompt.tags.map((tag, index) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    #{tag}
+                  </Badge>
+                ))}
+              </div>
+
+              <div className="flex justify-between items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-1">
+                    <Eye className="w-4 h-4" />
+                    {prompt.views}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Heart className="w-4 h-4" />
+                    {prompt.likes.length}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <MessageCircle className="w-4 h-4" />
+                    {countAllComments(prompt.comments)}
+                  </div>
+                </div>
+                <div className="space-x-2">
                   <Button
                     onClick={() => openEdit(prompt)}
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
                   >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-
-                  <Button variant="ghost" size="sm">
-                    <MoreHorizontal className="h-4 w-4" />
+                    <Edit className="w-4 h-4 mr-1" />
+                    Edit
                   </Button>
                   <Button
                     onClick={() => deletePrompt(prompt)}
-                    variant="ghost"
+                    variant="destructive"
                     size="sm"
-                    className="text-red-600"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="w-4 h-4 mr-1" />
+                    Delete
                   </Button>
                 </div>
               </div>
             </CardContent>
           </Card>
         ))}
-      </div>
+      </Masonry>
+
       {isEditOpen && selectedPrompt && (
         <EditPromptModal
           prompt={selectedPrompt}

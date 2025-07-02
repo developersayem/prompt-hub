@@ -11,7 +11,7 @@ export interface IPrompt {
   resultContent: string;
   aiModel: string;
   price: number;
-  isPaid: boolean;
+  paymentStatus: "free" | "paid";
   creator: {
     _id: string;
     name: string;

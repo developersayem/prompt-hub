@@ -23,7 +23,6 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Upload, X, Send, Coins, Save } from "lucide-react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -34,7 +33,6 @@ export default function CreatePromptModal({
   open: boolean;
   onClose: () => void;
 }) {
-  const router = useRouter();
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -44,7 +42,7 @@ export default function CreatePromptModal({
     resultType: "text",
     resultContent: "",
     tags: [] as string[],
-    isPaid: false,
+    isPaid: "free", // <-- change from boolean to "free" | "paid"
     price: "",
   });
 
@@ -53,6 +51,10 @@ export default function CreatePromptModal({
 
   const handleAddTag = () => {
     const trimmed = currentTag.trim();
+    if (formData.tags.length >= 10) {
+      toast.error("Maximum 10 tags allowed");
+      return;
+    }
     if (trimmed && !formData.tags.includes(trimmed)) {
       setFormData({ ...formData, tags: [...formData.tags, trimmed] });
       setCurrentTag("");
@@ -105,7 +107,6 @@ export default function CreatePromptModal({
 
       toast.success("Prompt created successfully");
       onClose();
-      router.push("/feed");
     } catch (err: unknown) {
       if (err instanceof Error) {
         toast.error(err.message);
@@ -122,25 +123,27 @@ export default function CreatePromptModal({
           <div className="flex justify-baseline items-center space-x-2">
             <DialogTitle>Create Prompt</DialogTitle>
             <Select
-              value={formData.isPaid ? "paid" : "free"}
+              value={formData.isPaid}
               onValueChange={(value) =>
-                setFormData({ ...formData, isPaid: value === "paid" })
+                setFormData({ ...formData, isPaid: value as "free" | "paid" })
               }
             >
               <SelectTrigger
                 size="xs"
                 className={cn(
                   "text-white border-0",
-                  formData.isPaid
+                  formData.isPaid === "paid"
                     ? "bg-blue-900 hover:bg-yellow-500"
                     : "bg-green-900 hover:bg-green-500"
                 )}
               >
-                <Coins className="" />
+                <Coins />
                 <SelectValue
                   placeholder="Select"
                   className={cn(
-                    formData.isPaid ? "text-yellow-900" : "text-green-900"
+                    formData.isPaid === "paid"
+                      ? "text-yellow-900"
+                      : "text-green-900"
                   )}
                 />
               </SelectTrigger>
@@ -352,14 +355,15 @@ export default function CreatePromptModal({
                 <Input
                   type="number"
                   className="pl-10"
-                  min="0.99"
+                  min="1"
                   step="0.01"
                   placeholder="Enter credits"
                   value={formData.price}
                   onChange={(e) =>
                     setFormData({ ...formData, price: e.target.value })
                   }
-                  required
+                  required={formData.isPaid === "paid"}
+                  disabled={formData.isPaid === "free"}
                 />
               </div>
             </div>
