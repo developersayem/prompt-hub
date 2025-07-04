@@ -194,8 +194,8 @@ export function EditProfileModal({ user, onClose }: EditProfileModalProps) {
           </div>
 
           {/* Phone with Country Code */}
-          <div className="w-full flex gap-2 ">
-            <div className="space-y-2">
+          <div className="w-full grid grid-cols-10 gap-2 ">
+            <div className="space-y-2 col-span-2">
               <Label htmlFor="countryCode">Country Code</Label>
               <Select
                 value={formData.countryCode}
@@ -203,7 +203,7 @@ export function EditProfileModal({ user, onClose }: EditProfileModalProps) {
                   handleInputChange("countryCode", value)
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="bg-accent">
                   <SelectValue placeholder="Code" />
                 </SelectTrigger>
                 <SelectContent>
@@ -216,7 +216,7 @@ export function EditProfileModal({ user, onClose }: EditProfileModalProps) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="col-span-2 space-y-2 w-full">
+            <div className="space-y-2 w-full col-span-8">
               <Label htmlFor="phone">Phone Number</Label>
               <Input
                 id="phone"
