@@ -449,7 +449,6 @@ const getSinglePromptController = asyncHandler(async (req: Request, res: Respons
   }
 );
 
-// Controller for update prompt
 const updatePromptController = asyncHandler(async (req: Request, res: Response) => {
   const promptId = req.params.id;
   const userId = (req as any).user?._id;
@@ -457,9 +456,17 @@ const updatePromptController = asyncHandler(async (req: Request, res: Response) 
     title,
     description,
     category,
-    paymentStatus, // string: "free" | "paid"
+    aiModel,
+    promptText,
+    resultType,
+    resultContent,
+    paymentStatus,
     price,
+    tags,
   } = req.body;
+   if (!req.body) {
+    throw new ApiError(400, "Request body is missing. Did you forget to use multer middleware?");
+  }
 
   if (!promptId) throw new ApiError(400, "Prompt ID is required");
 
@@ -474,10 +481,23 @@ const updatePromptController = asyncHandler(async (req: Request, res: Response) 
   if (title) prompt.title = title;
   if (description) prompt.description = description;
   if (category) prompt.category = category;
+  if (aiModel) prompt.aiModel = aiModel;
+  if (promptText) prompt.promptText = promptText;
+  if (resultType) prompt.resultType = resultType;
+  if (resultContent) prompt.resultContent = resultContent;
+
+  if (tags) {
+    prompt.tags = Array.isArray(tags) ? tags : [tags]; // Handles both single and multi tags
+  }
 
   if (paymentStatus === "free" || paymentStatus === "paid") {
     prompt.paymentStatus = paymentStatus;
     prompt.price = paymentStatus === "paid" ? price : undefined;
+  }
+
+  // Handle file upload if exists (Multer middleware must be used)
+  if (req.file) {
+    prompt.resultContent = req.file.path; // or filename, URL, etc.
   }
 
   const updatedPrompt = await prompt.save();
@@ -486,6 +506,7 @@ const updatePromptController = asyncHandler(async (req: Request, res: Response) 
     new ApiResponse(200, { prompt: updatedPrompt }, "Prompt updated successfully")
   );
 });
+
 
 // Controller for delete prompts
 const deletePromptController = asyncHandler(async (req: Request, res: Response) => {

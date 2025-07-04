@@ -47,7 +47,9 @@ router.get("/my-prompts", verifyJWT, getMyPromptsController)
 // Route for get single
 router.get("/:id", verifyJWT, getSinglePromptController);
 // Route for update prompt
-router.put("/:id", verifyJWT, updatePromptController);
+router.put("/:id", 
+    upload.fields([{ name: "promptContent", maxCount: 1 }]),
+    verifyJWT, updatePromptController);
 // Route for delete prompt
 router.delete("/:id", verifyJWT, deletePromptController);
 // Route for buy prompt
