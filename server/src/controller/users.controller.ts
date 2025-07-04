@@ -91,6 +91,7 @@ const userRegistrationController = asyncHandler(
 
     // Generate email verification code
     const verificationCode = generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
     try {
       // Create user in DB
@@ -101,6 +102,7 @@ const userRegistrationController = asyncHandler(
         avatar: avatar?.secure_url,
         isVerified: false,
         verificationCode,
+        verificationCodeExpires:expiresAt
       });
 
       // Send verification email
@@ -358,19 +360,32 @@ const verifyUserController = asyncHandler(async (req: Request, res: Response) =>
   if (!user) throw new ApiError(404, "User not found");
 
   if (user.isVerified) {
-    return res.status(400).json(new ApiResponse(400, {}, "User already verified"));
+    return res
+      .status(400)
+      .json(new ApiResponse(400, {}, "User already verified"));
   }
 
-  if (user.verificationCode !== code) {
+  const now = new Date();
+
+  if (!user.verificationCode || user.verificationCode !== code) {
     throw new ApiError(400, "Invalid verification code");
+  }
+
+  if (!user.verificationCodeExpires || user.verificationCodeExpires < now) {
+    throw new ApiError(400, "Verification code has expired");
   }
 
   user.isVerified = true;
   user.verificationCode = "";
+  user.verificationCodeExpires = null;
+
   await user.save();
 
-  res.status(200).json(new ApiResponse(200, {}, "Email verified successfully"));
+  res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Email verified successfully"));
 });
+
 // Controller for resend verification code
 const resendVerificationCodeController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -392,9 +407,12 @@ const resendVerificationCodeController = asyncHandler(
 
     // Generate new verification code
     const newCode = generateVerificationCode(); // e.g., '238491'
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
     // Save the new code
     user.verificationCode = newCode;
+    user.verificationCodeExpires = expiresAt;
+
     await user.save({ validateBeforeSave: false });
 
     // Send the code via email

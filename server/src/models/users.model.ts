@@ -25,8 +25,9 @@ export interface IUser extends Document {
   password: string;
   avatar?: string;
   bio?: string;
-  isVerified:boolean
-  verificationCode: string,
+  isVerified: boolean;
+  verificationCode: string;
+  verificationCodeExpires: Date | null;
   socialLinks?: ISocialLinks;
   credits: number;
   isGoogleAuthenticated?: boolean;
@@ -78,13 +79,17 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: "",
     },
-    isVerified:{
+    isVerified: {
       type: Boolean,
-      default:false
+      default: false,
     },
-    verificationCode:{
+    verificationCode: {
       type: String,
-      default:""
+      default: "",
+    },
+    verificationCodeExpires: {
+      type: Date,
+      default: null,
     },
     socialLinks: {
       facebook: { type: String, default: "" },
