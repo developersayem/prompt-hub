@@ -77,63 +77,64 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
     resultContent: rawResultContent,
     aiModel,
     price,
-    isPaid,
+    paymentStatus, // ⬅ updated from isPaid
   } = req.body;
 
   // Get the user ID from the authenticated request
   const userId = (req as any).user?._id;
-  if (!userId) throw new ApiError(401, "Unauthorized"); // If user is not authenticated
+  if (!userId) throw new ApiError(401, "Unauthorized");
 
-  // Validate required fields (some are optional like description and price)
-  if (!title || !category || !promptText || !resultType || !aiModel || typeof isPaid === "undefined") {
+  // Validate required fields
+  if (
+    !title ||
+    !category ||
+    !promptText ||
+    !resultType ||
+    !aiModel ||
+    typeof paymentStatus === "undefined"
+  ) {
     throw new ApiError(400, "Missing required fields");
   }
 
-  // Normalize tags: if tags come as comma-separated strings, split and trim them
-  const normalizedTags =
-    Array.isArray(tags)
-      ? tags.flatMap((tag: string) => tag.split(",").map((t) => t.trim()))
-      : [];
+  // Validate paymentStatus value
+  if (!["free", "paid"].includes(paymentStatus)) {
+    throw new ApiError(400, "Invalid paymentStatus value");
+  }
 
-  // Final content to be saved in DB (URL for media, or text)
+  // Normalize tags
+  const normalizedTags = Array.isArray(tags)
+    ? tags.flatMap((tag: string) => tag.split(",").map((t) => t.trim()))
+    : [];
+
+  // Handle resultContent
   let finalResultContent = "";
 
-  // Handle resultType === "text"
   if (resultType === "text") {
     if (!rawResultContent) {
       throw new ApiError(400, "Text result content is required");
     }
     finalResultContent = rawResultContent;
-  }
-
-  // Handle resultType === "image" or "video"
-  else if (resultType === "image" || resultType === "video") {
-    // File should come from field name: "promptContent"
+  } else if (resultType === "image" || resultType === "video") {
     const file = (req.files as any)?.promptContent?.[0];
-
     if (!file?.path) {
       throw new ApiError(400, "Media file is required for image/video prompt");
     }
 
-    // Upload to Cloudinary
     try {
-    let uploaded: UploadApiResponse | null = await uploadOnCloudinary(file.path);
-    if (!uploaded) {
-    throw new ApiError(500, "Failed to upload media to Cloudinary");
-}
-      finalResultContent = uploaded.secure_url; // Save the media URL
+      const uploaded: UploadApiResponse | null = await uploadOnCloudinary(file.path);
+      if (!uploaded) {
+        throw new ApiError(500, "Failed to upload media to Cloudinary");
+      }
+      finalResultContent = uploaded.secure_url;
     } catch (error) {
       console.error("Cloudinary upload failed:", error);
       throw new ApiError(500, "Failed to upload media");
     }
-  }
-
-  // Catch unknown result types
-  else {
+  } else {
     throw new ApiError(400, "Invalid result type");
   }
 
-  // Create the new Prompt document in the database
+  // Create the prompt
   const newPrompt = await Prompt.create({
     title,
     description,
@@ -143,34 +144,29 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
     resultType,
     resultContent: finalResultContent,
     aiModel,
-    price: isPaid ? Number(price) || 0 : 0, // If not paid, price is 0
-    isPaid: Boolean(isPaid),
+    price: paymentStatus === "paid" ? Number(price) || 0 : 0,
+    isPaid: paymentStatus === "paid",
     creator: userId,
-    likes: [], // Empty by default
-    comments: [], // Empty by default
-    buyers: [], // Empty by default
+    likes: [],
+    comments: [],
+    buyers: [],
   });
 
   if (!newPrompt) {
     throw new ApiError(500, "Failed to create prompt");
   }
 
-  //now that prompt is created, add it to the user's prompts
+  // Update user with new prompt
   const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(404, "User not found");
   }
-  user.prompts.push(newPrompt._id as mongoose.Schema.Types.ObjectId);
+  user.prompts.push(newPrompt._id as Schema.Types.ObjectId);
   await user.save();
 
-  // Send response to client
-  res.status(201).json(
-    new ApiResponse(
-      201,
-      { data: newPrompt },
-      "Prompt created successfully"
-    )
-  );
+  res
+    .status(201)
+    .json(new ApiResponse(201, { data: newPrompt }, "Prompt created successfully"));
 });
 
 // Controller to handle like/unlike
