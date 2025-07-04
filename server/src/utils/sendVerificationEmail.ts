@@ -3,15 +3,17 @@ import dotenv from "dotenv"
 
 //end config
 dotenv.config({})
-
 export const sendVerificationEmail = async (to: string, code: string) => {
   const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,           // e.g., mail.yourdomain.com
-    port: parseInt(process.env.SMTP_PORT!), // e.g., 587
-    secure: false, // false for 587 (TLS), true for 465 (SSL)
+    host: process.env.SMTP_HOST,         // mail.shopxet.com
+    port: 465,                            // SSL port
+    secure: true,                         // <- this MUST be true for port 465
     auth: {
-      user: process.env.SMTP_USER, // e.g., noreply@yourdomain.com
+      user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
+    },
+    tls: {
+      rejectUnauthorized: false, // optional, helps with self-signed certs
     },
   });
 

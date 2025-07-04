@@ -398,7 +398,12 @@ const resendVerificationCodeController = asyncHandler(
     await user.save({ validateBeforeSave: false });
 
     // Send the code via email
-    await sendVerificationEmail(email, newCode);
+    try {
+  await sendVerificationEmail(email, newCode);
+} catch (error) {
+  console.error("Email send failed:", error);
+  throw new ApiError(500, "Failed to send verification email");
+}
 
     res
       .status(200)
