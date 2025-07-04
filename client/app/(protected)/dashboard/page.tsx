@@ -31,6 +31,7 @@ import AnalyticsTab from "@/components/dashboard/analytics-tab";
 import ProfileTab from "@/components/dashboard/profile-tab";
 import SettingsTab from "@/components/dashboard/settings-tab";
 import CreatePromptModal from "@/components/shared/create-prompt-modal";
+// import { mutate } from "swr";
 
 // Mock data
 const statsData = [
@@ -118,6 +119,9 @@ export default function DashboardPage() {
               <CreatePromptModal
                 open={openCreateModal}
                 onClose={() => setOpenCreateModal(false)}
+                onSuccess={() => {
+                  // mutate("/api/prompt"); // ✅ Refresh feed
+                }}
               />
               <ThemeToggle />
               <UserNav />

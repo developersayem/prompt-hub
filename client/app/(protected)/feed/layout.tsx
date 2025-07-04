@@ -10,6 +10,7 @@ import { useState } from "react";
 import RightSidebar from "@/components/feed/right-sidebar";
 import LeftSidebar from "@/components/feed/left-sidebar";
 import CreatePromptModal from "@/components/shared/create-prompt-modal";
+import { usePrompts } from "@/hooks/usePrompts";
 
 interface FeedLayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,10 @@ interface FeedLayoutProps {
 export default function FeedLayout({ children }: FeedLayoutProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [openCreateModal, setOpenCreateModal] = useState(false);
+  const filters = { resultType: "all" };
+  const selectedCategory = "all";
+
+  const { key, mutate } = usePrompts(filters, selectedCategory); // ⬅ You must call this
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
@@ -52,6 +57,7 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
               <CreatePromptModal
                 open={openCreateModal}
                 onClose={() => setOpenCreateModal(false)}
+                onSuccess={() => mutate(key)} // ✅ Properly refetch
               />
               <ThemeToggle />
               <UserNav />

@@ -29,9 +29,11 @@ import { cn } from "@/lib/utils";
 export default function CreatePromptModal({
   open,
   onClose,
+  onSuccess,
 }: {
   open: boolean;
   onClose: () => void;
+  onSuccess?: () => void; // optional
 }) {
   const [formData, setFormData] = useState({
     title: "",
@@ -42,7 +44,7 @@ export default function CreatePromptModal({
     resultType: "text",
     resultContent: "",
     tags: [] as string[],
-    isPaid: "free", // <-- change from boolean to "free" | "paid"
+    paymentStatus: "free",
     price: "",
   });
 
@@ -80,15 +82,31 @@ export default function CreatePromptModal({
       return;
     }
 
+    // Create and map fields correctly
     const data = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      if (Array.isArray(value)) {
-        value.forEach((v) => data.append("tags", v));
-      } else {
-        data.append(key, value.toString());
-      }
-    });
-    if (uploadedFile) data.append("promptContent", uploadedFile);
+
+    // Append known fields manually with correct keys for backend
+    data.append("title", formData.title);
+    data.append("description", formData.description);
+    data.append("category", formData.category);
+    data.append("aiModel", formData.aiModel);
+    data.append("promptText", formData.promptText);
+    data.append("resultType", formData.resultType);
+    data.append("resultContent", formData.resultContent);
+
+    // 💡 Properly map paymentStatus
+    data.append("paymentStatus", formData.paymentStatus);
+    if (formData.paymentStatus === "paid") {
+      data.append("price", formData.price);
+    }
+
+    // Tags (array)
+    formData.tags.forEach((tag) => data.append("tags", tag));
+
+    // Upload file if needed
+    if (uploadedFile) {
+      data.append("promptContent", uploadedFile);
+    }
 
     try {
       const res = await fetch(
@@ -107,6 +125,8 @@ export default function CreatePromptModal({
 
       toast.success("Prompt created successfully");
       onClose();
+      // ✅ Revalidate prompt list after creation
+      if (onSuccess) onSuccess();
     } catch (err: unknown) {
       if (err instanceof Error) {
         toast.error(err.message);
@@ -123,16 +143,19 @@ export default function CreatePromptModal({
           <div className="flex justify-baseline items-center space-x-2">
             <DialogTitle>Create Prompt</DialogTitle>
             <Select
-              value={formData.isPaid}
+              value={formData.paymentStatus}
               onValueChange={(value) =>
-                setFormData({ ...formData, isPaid: value as "free" | "paid" })
+                setFormData({
+                  ...formData,
+                  paymentStatus: value as "free" | "paid",
+                })
               }
             >
               <SelectTrigger
                 size="xs"
                 className={cn(
                   "text-white border-0",
-                  formData.isPaid === "paid"
+                  formData.paymentStatus === "paid"
                     ? "bg-blue-900 hover:bg-yellow-500"
                     : "bg-green-900 hover:bg-green-500"
                 )}
@@ -141,7 +164,7 @@ export default function CreatePromptModal({
                 <SelectValue
                   placeholder="Select"
                   className={cn(
-                    formData.isPaid === "paid"
+                    formData.paymentStatus === "paid"
                       ? "text-yellow-900"
                       : "text-green-900"
                   )}
@@ -362,8 +385,8 @@ export default function CreatePromptModal({
                   onChange={(e) =>
                     setFormData({ ...formData, price: e.target.value })
                   }
-                  required={formData.isPaid === "paid"}
-                  disabled={formData.isPaid === "free"}
+                  required={formData.paymentStatus === "paid"}
+                  disabled={formData.paymentStatus === "free"}
                 />
               </div>
             </div>

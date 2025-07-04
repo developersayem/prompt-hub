@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,7 +34,6 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import Image from "next/image";
 import { toast } from "sonner";
-import { useCallback } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { CommentThread } from "@/components/feed/CommentThread";
 import { IPrompt } from "@/types/prompts.type";
@@ -53,14 +52,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { usePrompts } from "@/hooks/usePrompts";
 
 export default function FeedPage() {
   const { user, updateUser } = useAuth();
-  // Initialize prompts as an empty array to prevent the map error
-  const [prompts, setPrompts] = useState<IPrompt[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showFiltersModal, setShowFiltersModal] = useState(false);
   const [filters, setFilters] = useState({
@@ -74,7 +69,7 @@ export default function FeedPage() {
   const [selectedPrompt, setSelectedPrompt] = useState<IPrompt | null>(null);
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [newComment, setNewComment] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingPublicProfile, setIsLoadingPublicProfile] = useState(false);
   const [showPublicProfile, setShowPublicProfile] = useState(false);
   const [publicUserData, setPublicUserData] = useState<IPublicUser>();
   const [expandedPrompts, setExpandedPrompts] = useState<
@@ -83,6 +78,11 @@ export default function FeedPage() {
   const [expandedDescriptions, setExpandedDescriptions] = useState<
     Record<string, boolean>
   >({});
+
+  const { prompts, isLoading, error, mutate } = usePrompts(
+    filters,
+    selectedCategory
+  );
 
   const toggleExpand = (id: string) => {
     setExpandedPrompts((prev) => ({
@@ -163,55 +163,6 @@ export default function FeedPage() {
       .filter(Boolean) as IComment[];
   };
 
-  // Function for handling fetch prompts
-  const fetchPrompts = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const queryParams = new URLSearchParams();
-
-      if (selectedCategory !== "all") {
-        queryParams.append("category", selectedCategory);
-      }
-
-      if (filters.resultType !== "all") {
-        queryParams.append("searchString", filters.resultType);
-      }
-
-      // If price range starts above 0, assume paid prompts
-      // if (filters.priceRange[0] > 0) {
-      //   queryParams.append("isPaid", "true");
-      // }
-
-      const response = await fetch(
-        `${
-          process.env.NEXT_PUBLIC_BACKEND_URL
-        }/api/v1/prompt?${queryParams.toString()}`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const promptsData = Array.isArray(data.data.data) ? data.data.data : [];
-      setPrompts(promptsData);
-    } catch (error) {
-      console.error("Error fetching prompts:", error);
-      setError("Failed to fetch prompts. Please try again.");
-      setPrompts([]);
-      toast.error("Failed to fetch prompts.");
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedCategory, filters]);
-
   //Function for handling like
   const handleLikePrompt = async (promptId: string) => {
     try {
@@ -228,7 +179,7 @@ export default function FeedPage() {
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || "Failed to like prompt");
 
-      const updatedPrompts = prompts.map((prompt) =>
+      const updatedPrompts = prompts.map((prompt: IPrompt) =>
         prompt._id === promptId
           ? {
               ...prompt,
@@ -239,11 +190,13 @@ export default function FeedPage() {
           : prompt
       );
 
-      setPrompts(updatedPrompts);
+      mutate(updatedPrompts, false); // Optimistic UI update
 
       // 🔥 ALSO update the selectedPrompt if it's the one being liked
       if (selectedPrompt && selectedPrompt._id === promptId) {
-        const updatedPrompt = updatedPrompts.find((p) => p._id === promptId);
+        const updatedPrompt = updatedPrompts.find(
+          (p: IPrompt) => p._id === promptId
+        );
         if (updatedPrompt) {
           setSelectedPrompt(updatedPrompt);
         }
@@ -274,7 +227,7 @@ export default function FeedPage() {
       console.log(result);
 
       // Update UI optimistically or re-fetch prompts
-      const updatedPrompts = prompts.map((prompt) =>
+      const updatedPrompts = prompts.map((prompt: IPrompt) =>
         prompt._id === promptId
           ? {
               ...prompt,
@@ -292,7 +245,8 @@ export default function FeedPage() {
             }
           : prompt
       );
-      setPrompts(updatedPrompts);
+      mutate(updatedPrompts, false); // Optimistic update
+
       setNewComment((prev) => ({ ...prev, [promptId]: "" }));
     } catch (err) {
       console.error("Error posting comment:", err);
@@ -317,13 +271,13 @@ export default function FeedPage() {
       if (!res.ok) throw new Error(result.message);
 
       // Optimistically update comment in UI
-      const updatedPrompts = prompts.map((prompt) => ({
+      const updatedPrompts = prompts.map((prompt: IPrompt) => ({
         ...prompt,
         comments: prompt.comments.map((comment) =>
           comment._id === commentId ? { ...comment, text: newText } : comment
         ),
       }));
-      setPrompts(updatedPrompts);
+      mutate(updatedPrompts, false);
     } catch (err) {
       console.error("Error updating comment:", err);
       toast.error("Failed to update comment");
@@ -344,12 +298,11 @@ export default function FeedPage() {
       if (!res.ok) throw new Error("Failed to delete");
 
       // Recursively remove the comment from all prompts
-      const updatedPrompts = prompts.map((prompt) => ({
+      const updatedPrompts = prompts.map((prompt: IPrompt) => ({
         ...prompt,
         comments: removeCommentRecursive(prompt.comments, commentId),
       }));
-
-      setPrompts(updatedPrompts);
+      mutate(updatedPrompts, false);
     } catch (err) {
       console.log(err);
       toast.error("Failed to delete comment");
@@ -372,7 +325,7 @@ export default function FeedPage() {
       );
 
       if (res.ok) {
-        const updatedPrompts = prompts.map((prompt) => ({
+        const updatedPrompts = prompts.map((prompt: IPrompt) => ({
           ...prompt,
           comments: updateCommentLikeRecursively(
             prompt.comments,
@@ -380,7 +333,7 @@ export default function FeedPage() {
             user?._id as string
           ),
         }));
-        setPrompts(updatedPrompts);
+        mutate(updatedPrompts, false);
       }
     } catch (err) {
       console.error(err);
@@ -418,7 +371,7 @@ export default function FeedPage() {
       const result = await res.json();
 
       // Update state: find the prompt, then find the comment, then add the new reply
-      const updatedPrompts = prompts.map((prompt) =>
+      const updatedPrompts = prompts.map((prompt: IPrompt) =>
         prompt._id === promptId
           ? {
               ...prompt,
@@ -430,18 +383,12 @@ export default function FeedPage() {
             }
           : prompt
       );
-
-      setPrompts(updatedPrompts);
+      mutate(updatedPrompts, false);
     } catch (err) {
       console.error(err);
       toast.error("Something went wrong");
     }
   };
-
-  // fetch prompts from database
-  useEffect(() => {
-    fetchPrompts();
-  }, [fetchPrompts]);
 
   const handleFilterChange = (
     key: string,
@@ -538,7 +485,7 @@ export default function FeedPage() {
     console.log(userId);
 
     try {
-      setIsLoading(true);
+      setIsLoadingPublicProfile(true);
       setShowPublicProfile(true);
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/profile/basic/${userId}`,
@@ -550,7 +497,7 @@ export default function FeedPage() {
       const data = await response.json();
       console.log(data.data.profile);
       setPublicUserData(data.data.profile);
-      setIsLoading(false);
+      setIsLoadingPublicProfile(false);
     } catch (error) {
       console.error("Error copying prompt", error);
     }
@@ -823,7 +770,7 @@ export default function FeedPage() {
             </Card>
 
             {/* Loading State */}
-            {loading && (
+            {isLoading && (
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex justify-center items-center py-8">
@@ -839,15 +786,19 @@ export default function FeedPage() {
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-center py-8">
-                    <p className="text-red-500 mb-4">{error}</p>
-                    <Button onClick={fetchPrompts}>Try Again</Button>
+                    <p className="text-red-500 mb-4">
+                      {typeof error === "string"
+                        ? error
+                        : error?.message || "Something went wrong"}
+                    </p>
+                    <Button onClick={() => mutate()}>Try Again</Button>
                   </div>
                 </CardContent>
               </Card>
             )}
 
             {/* Empty State */}
-            {!loading && !error && prompts.length === 0 && (
+            {!isLoading && !error && prompts.length === 0 && (
               <Card>
                 <CardContent className="pt-6">
                   <div className="text-center py-8">
@@ -868,15 +819,15 @@ export default function FeedPage() {
                 user={publicUserData}
                 open={showPublicProfile}
                 onOpenChange={setShowPublicProfile}
-                isLoading={isLoading}
+                isLoading={isLoadingPublicProfile}
               />
             )}
 
             {/* Prompt Cards */}
-            {!loading &&
+            {!isLoading &&
               !error &&
               prompts.length > 0 &&
-              prompts.map((prompt) => (
+              prompts.map((prompt: IPrompt) => (
                 <Card
                   key={prompt._id}
                   className="hover:shadow-lg transition-shadow"
