@@ -16,12 +16,23 @@ import { Card, CardContent } from "../ui/card";
 import { useCallback, useEffect, useState } from "react";
 import { IPrompt } from "@/types/prompts.type";
 import { toast } from "sonner";
-import { EditPromptModal } from "./components/prompt/EditPromptModal";
 import countAllComments from "@/utils/count-all-nested-comments";
 import Link from "next/link";
 import Image from "next/image";
 import Masonry from "react-masonry-css";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import EditPromptModal from "./EditPromptModal";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
 
 const breakpointColumnsObj = {
   default: 2,
@@ -291,14 +302,44 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                     <Edit className="w-4 h-4 mr-1" />
                     Edit
                   </Button>
-                  <Button
-                    onClick={() => deletePrompt(prompt)}
-                    variant="destructive"
-                    size="sm"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete
-                  </Button>
+
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Delete
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently
+                          delete your prompt.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel
+                          onClick={() => {
+                            toast.error("Action cancelled");
+                          }}
+                        >
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => {
+                            deletePrompt(prompt);
+                          }}
+                          className="bg-red-500 text-white border border-red-500 hover:border hover:bg-transparent hover:text-red-500 transition-colors ease-in-out duration-500"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </CardContent>
@@ -308,9 +349,10 @@ const MyPromptsTab = ({ value }: { value: string }) => {
 
       {isEditOpen && selectedPrompt && (
         <EditPromptModal
+          open={isEditOpen}
           prompt={selectedPrompt}
           onClose={() => setIsEditOpen(false)}
-          fetchPrompts={fetchPrompts}
+          onSuccess={fetchPrompts} // to refresh after successful update
         />
       )}
     </TabsContent>

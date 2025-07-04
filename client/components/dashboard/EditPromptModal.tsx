@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,47 +8,42 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
+import { toast } from "sonner";
+import Image from "next/image";
+import { Upload, X, Coins, Send } from "lucide-react";
+import { IPrompt } from "@/types/prompts.type";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, X, Send, Coins, Save } from "lucide-react";
-import { toast } from "sonner";
-import Image from "next/image";
-import { cn } from "@/lib/utils";
+} from "../ui/select";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Textarea } from "../ui/textarea";
+import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { Button } from "../ui/button";
 
-export default function CreatePromptModal({
+export default function EditPromptModal({
   open,
   onClose,
+  prompt,
   onSuccess,
 }: {
   open: boolean;
   onClose: () => void;
-  onSuccess?: () => void; // optional
+  prompt: IPrompt;
+  onSuccess: () => void;
 }) {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    category: "",
-    aiModel: "",
-    promptText: "",
-    resultType: "text",
-    resultContent: "",
-    tags: [] as string[],
-    paymentStatus: "free",
-    price: "",
-  });
-
+  const [formData, setFormData] = useState<IPrompt>(prompt);
   const [currentTag, setCurrentTag] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    setFormData(prompt);
+  }, [prompt]);
 
   const handleAddTag = () => {
     const trimmed = currentTag.trim();
@@ -77,15 +71,8 @@ export default function CreatePromptModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.resultType !== "text" && !uploadedFile) {
-      toast.error("Please upload a file for image or video prompts.");
-      return;
-    }
 
-    // Create and map fields correctly
     const data = new FormData();
-
-    // Append known fields manually with correct keys for backend
     data.append("title", formData.title);
     data.append("description", formData.description);
     data.append("category", formData.category);
@@ -93,55 +80,45 @@ export default function CreatePromptModal({
     data.append("promptText", formData.promptText);
     data.append("resultType", formData.resultType);
     data.append("resultContent", formData.resultContent);
-
-    // 💡 Properly map paymentStatus
     data.append("paymentStatus", formData.paymentStatus);
     if (formData.paymentStatus === "paid") {
-      data.append("price", formData.price);
+      data.append("price", String(formData.price));
     }
-
-    // Tags (array)
     formData.tags.forEach((tag) => data.append("tags", tag));
-
-    // Upload file if needed
     if (uploadedFile) {
       data.append("promptContent", uploadedFile);
     }
 
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/create`,
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/${prompt._id}`,
         {
-          method: "POST",
+          method: "PUT",
           body: data,
           credentials: "include",
         }
       );
 
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || "Failed to create prompt");
+      if (!response.ok) {
+        const result = await response.json();
+        throw new Error(result.message || "Failed to update prompt");
       }
 
-      toast.success("Prompt created successfully");
+      toast.success("Prompt updated successfully");
+      onSuccess();
       onClose();
-      // ✅ Revalidate prompt list after creation
-      if (onSuccess) onSuccess();
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        toast.error(err.message);
-      } else {
-        toast.error("An unexpected error occurred.");
-      }
+    } catch {
+      toast.error("Update failed");
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-screen overflow-y-auto">
-        <DialogHeader className="w-full justify-evenly">
-          <div className="flex justify-baseline items-center space-x-2">
-            <DialogTitle>Create Prompt</DialogTitle>
+        <DialogHeader>
+          <div className="flex justify-start items-center gap-2">
+            <DialogTitle>Edit Prompt</DialogTitle>
+
             <Select
               value={formData.paymentStatus}
               onValueChange={(value) =>
@@ -153,24 +130,15 @@ export default function CreatePromptModal({
             >
               <SelectTrigger
                 size="xs"
-                className={cn(
-                  "text-white border-0",
+                className={
                   formData.paymentStatus === "paid"
                     ? "bg-blue-900 hover:bg-yellow-500"
                     : "bg-green-900 hover:bg-green-500"
-                )}
+                }
               >
-                <Coins />
-                <SelectValue
-                  placeholder="Select"
-                  className={cn(
-                    formData.paymentStatus === "paid"
-                      ? "text-yellow-900"
-                      : "text-green-900"
-                  )}
-                />
+                <Coins className="mr-1" />
+                <SelectValue />
               </SelectTrigger>
-
               <SelectContent>
                 <SelectItem value="free">Free</SelectItem>
                 <SelectItem value="paid">Paid</SelectItem>
@@ -178,13 +146,11 @@ export default function CreatePromptModal({
             </Select>
           </div>
           <DialogDescription>
-            Fill in the details and preview will appear inside the upload
-            section.
+            Update the prompt information and preview content if needed.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-2">
-          {/* TITLE / DESC / PROMPT */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="space-y-2">
@@ -219,7 +185,8 @@ export default function CreatePromptModal({
                   required
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Category</Label>
                   <Select
@@ -259,14 +226,16 @@ export default function CreatePromptModal({
               </div>
             </div>
 
-            {/* RESULT TYPE / CATEGORY / FILE */}
             <div className="space-y-6">
               <div className="space-y-2">
                 <Label>Result Type *</Label>
                 <RadioGroup
                   value={formData.resultType}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, resultType: value })
+                    setFormData({
+                      ...formData,
+                      resultType: value as "text" | "image" | "video",
+                    })
                   }
                   className="flex gap-4"
                 >
@@ -341,7 +310,6 @@ export default function CreatePromptModal({
           </div>
 
           <div className="flex justify-between items-center gap-6">
-            {/* TAGS */}
             <div className="w-full">
               <Label>Tags</Label>
               <div className="flex gap-2 mt-2">
@@ -357,7 +325,7 @@ export default function CreatePromptModal({
                 </Button>
               </div>
             </div>
-            {/* MONETIZE */}
+
             <div className="w-full mt-4">
               <div className="relative">
                 <Coins className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -369,7 +337,7 @@ export default function CreatePromptModal({
                   placeholder="Enter credits"
                   value={formData.price}
                   onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
+                    setFormData({ ...formData, price: Number(e.target.value) })
                   }
                   required={formData.paymentStatus === "paid"}
                   disabled={formData.paymentStatus === "free"}
@@ -392,15 +360,13 @@ export default function CreatePromptModal({
             ))}
           </div>
 
-          {/* ACTION BUTTONS */}
           <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline">
-              <Save className="h-4 w-4 mr-2" />
-              Save Draft
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
             </Button>
             <Button type="submit">
               <Send className="h-4 w-4 mr-2" />
-              Publish Prompt
+              Save Changes
             </Button>
           </div>
         </form>
