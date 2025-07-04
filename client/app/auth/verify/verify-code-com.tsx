@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   InputOTP,
   InputOTPGroup,
@@ -30,6 +30,7 @@ import {
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp";
 
 export default function VerifyCodeCom() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const searchParamsEmail = searchParams.get("email");
   const [step, setStep] = useState<"email" | "code" | "success">("email");
@@ -49,8 +50,20 @@ export default function VerifyCodeCom() {
   }, [step, remainingTime]);
   useEffect(() => {
     const stepFromUrl = searchParams.get("step");
-    if (stepFromUrl === "code") setStep("code");
-  }, [searchParams]);
+    if (stepFromUrl === "code") {
+      setStep("code");
+      // Remove query params after navigating to "code" step
+      router.replace("/auth/verify");
+    }
+  }, [searchParams, router]);
+  useEffect(() => {
+    if (step === "success") {
+      const timer = setTimeout(() => {
+        router.push("/auth/login");
+      }, 3000); // 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [step, router]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,6 +96,8 @@ export default function VerifyCodeCom() {
 
       toast.success("Verification code sent to your email");
       setStep("code");
+      // Clean URL again after success
+      router.replace("/auth/verify");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
@@ -128,6 +143,8 @@ export default function VerifyCodeCom() {
 
       toast.success("Code verified successfully");
       setStep("success");
+      // Clean URL again after success
+      router.replace("/auth/verify");
     } catch (err: unknown) {
       if (err instanceof Error) {
         setError(err.message);
