@@ -149,6 +149,7 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
     throw new ApiError(500, "Something went wrong during Google login");
   }
 };
+// Controller for login user
 const loginUserController = asyncHandler(
   async (req: Request, res: Response) => {
     const { email, password } = req.body;
@@ -191,7 +192,7 @@ const loginUserController = asyncHandler(
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: false,
+      sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
     };
 
     // Send response with tokens set in cookies and user data in JSON

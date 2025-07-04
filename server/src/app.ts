@@ -6,6 +6,7 @@ import { loggerMiddleware } from "./middlewares/loggerMiddleware";
 import passport from "passport";
 import session from "express-session";
 import "./config/passport"; // import passport config
+import {errorHandler} from "./middlewares/error.middlewares"
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use(cookieParser());
 // Serve static files
 app.use(express.static("public"));
 
+
 // Use custom logger middleware early
 app.use(loggerMiddleware);
 
@@ -79,4 +81,8 @@ app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/prompt", promptRoutes);
 app.use("/api/v1/stats", statsRoutes)
 
+
+
+// custom error middlewares
+app.use(errorHandler)
 export { app };
