@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,6 @@ import { Label } from "@/components/ui/label";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import GoogleLoginButton from "../shared/google-login-button";
 import Link from "next/link";
 
@@ -25,6 +25,7 @@ export function LoginForm({
 }: React.ComponentProps<"div">) {
   const { login } = useAuth();
   const router = useRouter();
+
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -37,17 +38,39 @@ export function LoginForm({
       [name]: value,
     }));
   };
+  function isErrorWithStatus(
+    error: unknown
+  ): error is { status: number; message: string } {
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "status" in error &&
+      typeof (error as { status?: unknown }).status === "number"
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Prevent page reload
+    e.preventDefault();
+
     try {
-      const { email, password } = formData;
-      await login(email, password);
+      await login(formData.email, formData.password);
       toast.success("Login successful!");
       router.push("/feed");
-    } catch (error) {
-      toast.error("Login failed");
-      console.log("Login error:", error);
+    } catch (error: unknown) {
+      if (isErrorWithStatus(error)) {
+        const { status, message } = error;
+
+        if (status === 401 && message.toLowerCase().includes("verify")) {
+          router.push("/auth/resend-code?email=" + formData.email);
+          return;
+        } else {
+          toast.error(message);
+        }
+      } else if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Login failed");
+      }
     }
   };
 
@@ -58,7 +81,7 @@ export function LoginForm({
           <div className="flex items-center justify-center space-x-3 mb-6">
             <div className="relative">
               <Sparkles className="h-10 w-10 text-blue-600" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-pulse"></div>
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-pulse" />
             </div>
             <div>
               <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -86,6 +109,7 @@ export function LoginForm({
                   required
                 />
               </div>
+
               <div className="grid gap-3">
                 <div className="flex items-center">
                   <Label htmlFor="password">Password</Label>
@@ -107,21 +131,23 @@ export function LoginForm({
                   required
                 />
               </div>
+
               <div className="flex flex-col gap-3">
                 <Button type="submit" className="w-full">
                   Login
                 </Button>
                 <GoogleLoginButton />
               </div>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/auth/signup"
-                className="underline underline-offset-4"
-              >
-                Sign up
-              </Link>
+
+              <div className="mt-4 text-center text-sm">
+                Don&apos;t have an account?{" "}
+                <Link
+                  href="/auth/signup"
+                  className="underline underline-offset-4"
+                >
+                  Sign up
+                </Link>
+              </div>
             </div>
           </form>
         </CardContent>

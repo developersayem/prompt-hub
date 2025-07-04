@@ -9,6 +9,15 @@ interface Tokens {
   refreshToken?: string;
 }
 
+interface LoginResponse {
+  data: {
+    user: IUser;
+    accessToken?: string;
+    refreshToken?: string;
+  };
+  message: string;
+}
+
 interface AuthState {
   user: IUser | null;
   tokens: Tokens | null; // We won't store tokens here, but keep for typing
@@ -102,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     dispatch({ type: "SET_LOADING", payload: false });
   }, []);
 
-  // login function to handle user login
+  //User login function to handle user login
   // It accepts email and password, sends a POST request to the backend,
   const login = async (email: string, password: string) => {
     dispatch({ type: "LOGIN_START" });
@@ -113,18 +122,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password }),
-          credentials: "include", // important to include cookies in request
+          credentials: "include",
         }
       );
 
-      if (!res.ok) throw new Error("Login failed");
-      const data = await res.json();
+      // Check if response content-type is JSON
+      const contentType = res.headers.get("content-type");
+      let data: LoginResponse | null = null;
 
-      // Only save user data; tokens are sent as httpOnly cookies by backend
+      if (contentType && contentType.includes("application/json")) {
+        data = (await res.json()) as LoginResponse;
+      } else {
+        // If not JSON, try to get text to log
+        const text = await res.text();
+        console.error("Response is not JSON:", text);
+        throw new Error(
+          `Server responded with non-JSON data and status ${res.status}`
+        );
+      }
+
+      if (!res.ok) {
+        const error = new Error(data.message || "Login failed") as Error & {
+          status?: number;
+        };
+        error.status = res.status;
+        throw error;
+      }
+
       const user = data.data.user;
 
       localStorage.setItem("user", JSON.stringify(user));
-      router.push("/feed");
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
@@ -132,7 +159,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // register function to handle user registration
+  // User register function to handle user registration
   // It accepts a RegisterData object which includes name, email, password, and an optional
   const register = async (data: RegisterData) => {
     dispatch({ type: "LOGIN_START" });
@@ -165,6 +192,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  // User logout Function
   const logout = async () => {
     try {
       await fetch(
