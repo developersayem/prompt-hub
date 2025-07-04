@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { userRegistrationController, googleOAuthCallbackController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController } from "../controller/users.controller";
+import passport from "passport";
+import { userRegistrationController, googleOAuthCallbackController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController } from "../controller/users.controller";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import passport from "passport";
 
 
 
@@ -29,6 +29,10 @@ router.get(
   passport.authenticate("google", { failureRedirect: "/auth/login" }),
   googleOAuthCallbackController
 );
+// Route for verify user
+router.post("/verify", verifyUserController);
+// Route for resend verification code 
+router.post("/resend", resendVerificationCodeController);
 
 // Route for login
 router.route("/login").post(

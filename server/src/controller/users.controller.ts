@@ -9,6 +9,8 @@ import {
 } from "../utils/cloudinary";
 import { ApiResponse } from "../utils/ApiResponse";
 import type { UploadApiResponse } from "cloudinary";
+import { sendVerificationEmail } from "../utils/sendVerificationEmail";
+import { generateVerificationCode } from "../utils/generateVerificationCode";
 
 interface TokenResponse {
   accessToken: string;
@@ -44,7 +46,6 @@ const generateAccessTokenAndRefreshToken = async (
     throw new ApiError(500, "Something went wrong while generating tokens");
   }
 };
-
 //get user data 
 const userController = asyncHandler(async (req: Request, res: Response) => {
   console.log(req)
@@ -53,90 +54,75 @@ const userController = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(200).json(new ApiResponse(200, { user }, "User fetched successfully"));
 })
-
 //controller for user registration
 const userRegistrationController = asyncHandler(
   async (req: Request, res: Response) => {
-    //get info from request body
     const { name, email, password } = req.body;
 
-    //validate the input
-    if ([name, email, password].some((field) => field.trim() === ""))
+    if ([name, email, password].some((field) => field.trim() === "")) {
       throw new ApiError(400, "All fields are required");
+    }
 
-    //check if user already exists & throw error if exists
-    if (!email.includes("@")) throw new ApiError(400, "Invalid email address");
-    const existingUser = await User.findOne({ email: email });
-    if (existingUser) throw new ApiError(400, "User already exist");
+    if (!email.includes("@")) {
+      throw new ApiError(400, "Invalid email address");
+    }
 
-    //get the avatar from the request
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      throw new ApiError(400, "User already exists");
+    }
+
     const avatarLocalPath = (
       req.files as { [fieldname: string]: Express.Multer.File[] }
-    )?.avatar[0].path;
-    if (!avatarLocalPath) throw new ApiError(400, "Avatar is required");
+    )?.avatar?.[0]?.path;
 
-    //upload the avatar to cloudinary
-    let avatar: UploadApiResponse | null;
+    if (!avatarLocalPath) {
+      throw new ApiError(400, "Avatar is required");
+    }
+
+    let avatar: UploadApiResponse | null = null;
+
     try {
       avatar = await uploadOnCloudinary(avatarLocalPath);
-      console.log("Uploaded avatar", avatar);
     } catch (error) {
-      console.error("Error uploading avatar to Cloudinary:", error);
+      console.error("Cloudinary upload failed:", error);
       throw new ApiError(500, "Failed to upload avatar");
     }
 
+    // Generate email verification code
+    const verificationCode = generateVerificationCode();
+
     try {
-      //create a new user
+      // Create user in DB
       const user = await User.create({
         name,
         email,
         password,
-        avatar: avatar?.url,
+        avatar: avatar?.secure_url,
+        isVerified: false,
+        verificationCode,
       });
 
-      // check if user created
-      const createUser = await User.findById(user._id).select(
-        "-password -refreshToken"
+      // Send verification email
+      await sendVerificationEmail(email, verificationCode);
+
+      return res.status(201).json(
+        new ApiResponse(
+          201,
+          {
+            email: user.email,
+            message: "Account created. Please verify your email.",
+          },
+          "Verification code sent to your email"
+        )
       );
-      if (!createUser) throw new ApiError(500, "User not created");
-
-      // Generate tokens
-      const { accessToken, refreshToken } =
-        await generateAccessTokenAndRefreshToken(createUser._id as string);
-
-      // Cookie options
-      const cookieOptions = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: false, // crucial for cross-origin cookie usage
-      };
-
-      //send response
-      return res
-        .status(201)
-        .cookie("accessToken", accessToken, cookieOptions)
-        .cookie("refreshToken", refreshToken, cookieOptions)
-        .json(
-          new ApiResponse(
-            201,
-            {
-              user: createUser,
-              accessToken, // include access token in response body
-            },
-            "User created successfully"
-          )
-        );
     } catch (error) {
-      console.log("Error creating user", error);
+      console.error("Error creating user:", error);
       if (avatar) await deleteFromCloudinary(avatar.public_id);
-      throw new ApiError(
-        500,
-        "something went wrong when creating user and deleted avatar from cloudinary"
-      );
+      throw new ApiError(500, "Failed to create user");
     }
   }
 );
-
 // Controller for Google OAuth callback
 const googleOAuthCallbackController = async (req: Request, res: Response) => {
   const user = req.user as any;
@@ -163,8 +149,6 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
     throw new ApiError(500, "Something went wrong during Google login");
   }
 };
-
-// Controller for user login
 const loginUserController = asyncHandler(
   async (req: Request, res: Response) => {
     const { email, password } = req.body;
@@ -176,7 +160,6 @@ const loginUserController = asyncHandler(
 
     // Find user by email
     const user = await User.findOne({ email });
-
     if (!user) {
       throw new ApiError(404, "User not found");
     }
@@ -185,6 +168,11 @@ const loginUserController = asyncHandler(
     const isPasswordCorrect = await user.isPasswordCorrect(password);
     if (!isPasswordCorrect) {
       throw new ApiError(401, "Password is incorrect");
+    }
+
+    // ❗ Check if user is verified
+    if (!user.isVerified) {
+      throw new ApiError(401, "Please verify your email before logging in.");
     }
 
     // Generate tokens
@@ -224,7 +212,6 @@ const loginUserController = asyncHandler(
       );
   }
 );
-
 // Controller for user login out
 const logoutUser = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
@@ -360,6 +347,70 @@ const getUserProfileController = asyncHandler(async (req: Request, res: Response
     new ApiResponse(200, { profile: publicProfile }, "User profile fetched successfully")
   );
 });
+// Controller for verify user 
+const verifyUserController = asyncHandler(async (req: Request, res: Response) => {
+  const { email, code } = req.body;
+
+  if (!email || !code) throw new ApiError(400, "Email and code required");
+
+  const user = await User.findOne({ email });
+  if (!user) throw new ApiError(404, "User not found");
+
+  if (user.isVerified) {
+    return res.status(400).json(new ApiResponse(400, {}, "User already verified"));
+  }
+
+  if (user.verificationCode !== code) {
+    throw new ApiError(400, "Invalid verification code");
+  }
+
+  user.isVerified = true;
+  user.verificationCode = "";
+  await user.save();
+
+  res.status(200).json(new ApiResponse(200, {}, "Email verified successfully"));
+});
+// Controller for resend verification code
+const resendVerificationCodeController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    // Validate input
+    if (!email) throw new ApiError(400, "Email is required");
+
+    // Find the user
+    const user = await User.findOne({ email });
+    if (!user) throw new ApiError(404, "User not found");
+
+    // Check if already verified
+    if (user.isVerified) {
+      return res
+        .status(400)
+        .json(new ApiResponse(400, {}, "User is already verified"));
+    }
+
+    // Generate new verification code
+    const newCode = generateVerificationCode(); // e.g., '238491'
+
+    // Save the new code
+    user.verificationCode = newCode;
+    await user.save({ validateBeforeSave: false });
+
+    // Send the code via email
+    await sendVerificationEmail(email, newCode);
+
+    res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          {},
+          "New verification code sent to your email"
+        )
+      );
+  }
+);
+
 
 
 
@@ -371,5 +422,7 @@ export {
   loginUserController,
   logoutUser,
   updateProfileController,
-  getUserProfileController
+  getUserProfileController,
+  verifyUserController,
+  resendVerificationCodeController
 };
