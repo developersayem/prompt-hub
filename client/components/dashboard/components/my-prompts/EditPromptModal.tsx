@@ -19,12 +19,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import { Textarea } from "../ui/textarea";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { Button } from "../ui/button";
+} from "../../../ui/select";
+import { Label } from "../../../ui/label";
+import { Input } from "../../../ui/input";
+import { Textarea } from "../../../ui/textarea";
+import { RadioGroup, RadioGroupItem } from "../../../ui/radio-group";
+import { Button } from "../../../ui/button";
 
 export default function EditPromptModal({
   open,

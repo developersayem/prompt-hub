@@ -21,7 +21,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Masonry from "react-masonry-css";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import EditPromptModal from "./EditPromptModal";
+import EditPromptModal from "./components/my-prompts/EditPromptModal";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -305,7 +305,11 @@ const MyPromptsTab = ({ value }: { value: string }) => {
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="destructive" size="sm">
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="bg-red-500 text-white border border-red-500 hover:border hover:bg-transparent hover:text-red-500 transition-colors ease-in-out duration-500"
+                      >
                         <Trash2 className="w-4 h-4 mr-1" />
                         Delete
                       </Button>
