@@ -507,11 +507,10 @@ const updatePromptController = asyncHandler(async (req: Request, res: Response) 
   );
 });
 
-
 // Controller for delete prompts
 const deletePromptController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
- const promptId = req.params.id;
+  const promptId = req.params.id;
 
   if (!userId) throw new ApiError(401, "Unauthorized");
   if (!promptId) throw new ApiError(400, "Prompt ID is required");
@@ -523,10 +522,45 @@ const deletePromptController = asyncHandler(async (req: Request, res: Response) 
     throw new ApiError(403, "You are not authorized to delete this prompt");
   }
 
+  // 1. Delete likes on this prompt
+  await Like.deleteMany({ prompt: prompt._id });
+
+  // 2. Delete comments and replies (nested)
+  const deleteCommentsRecursively = async (commentIds: Types.ObjectId[]) => {
+    for (const commentId of commentIds) {
+      const comment = await Comment.findById(commentId);
+      if (comment) {
+        // Recursively delete replies
+        await deleteCommentsRecursively(comment.replies);
+
+        // Delete likes on the comment
+        await Like.deleteMany({ comment: comment._id });
+
+        // Delete the comment
+        await comment.deleteOne();
+      }
+    }
+  };
+
+  // Get top-level comments for this prompt
+  const topLevelComments = await Comment.find({
+    prompt: prompt._id,
+    parentComment: null,
+  });
+
+  const topLevelCommentIds = topLevelComments.map((c) => c._id);
+
+  // Delete all nested comments
+  await deleteCommentsRecursively(topLevelCommentIds);
+
+  // 3. Delete the prompt itself
   await prompt.deleteOne();
 
-  res.status(200).json(new ApiResponse(200, {}, "Prompt deleted successfully"));
+  res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Prompt deleted successfully"));
 });
+
 
 //controller for buy prompt
 const buyPromptController = asyncHandler(async (req: Request, res: Response) => {
