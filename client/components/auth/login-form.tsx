@@ -61,7 +61,7 @@ export function LoginForm({
         const { status, message } = error;
 
         if (status === 401 && message.toLowerCase().includes("verify")) {
-          router.push("/auth/resend-code?email=" + formData.email);
+          router.push("/auth/verify?email=" + formData.email);
           return;
         } else {
           toast.error(message);

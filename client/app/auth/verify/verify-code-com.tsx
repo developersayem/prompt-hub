@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/input-otp";
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp";
 
-export default function ResetPasswordPage() {
+export default function VerifyCodeCom() {
   const searchParams = useSearchParams();
   const searchParamsEmail = searchParams.get("email");
   const [step, setStep] = useState<"email" | "code" | "success">("email");
@@ -47,6 +47,10 @@ export default function ResetPasswordPage() {
       return () => clearInterval(interval);
     }
   }, [step, remainingTime]);
+  useEffect(() => {
+    const stepFromUrl = searchParams.get("step");
+    if (stepFromUrl === "code") setStep("code");
+  }, [searchParams]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -18,9 +18,11 @@ import { Sparkles, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth-context";
 import GoogleLoginButton from "../shared/google-login-button";
+import { useRouter } from "next/navigation";
 
 export function RegisterForm() {
   const { register } = useAuth();
+  const router = useRouter();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -80,7 +82,7 @@ export function RegisterForm() {
 
       toast.success("Registration successful!");
       // optionally redirect here e.g.
-      // router.push('/dashboard')
+      router.push(`/auth/verify?step=code&email=${email}`);
     } catch (err) {
       setError("Registration failed. Please try again.");
       toast.error("Registration failed");
