@@ -32,7 +32,7 @@ export default function GoogleSuccessPage() {
         console.log("userData:", data.data.user);
 
         // redirect to dashboard
-        router.push("/profile");
+        router.push("/feed");
       } catch (err) {
         console.error("Google login fetch error", err);
         router.push("/login?error=google_fetch_failed");
