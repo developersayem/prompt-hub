@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { Types } from "mongoose";
 import asyncHandler from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
-import { User } from "../models/users.model";
+import { IUser, User } from "../models/users.model";
 import {
   deleteFromCloudinary,
   uploadOnCloudinary,
@@ -129,30 +129,40 @@ const userRegistrationController = asyncHandler(
 );
 // Controller for Google OAuth callback
 const googleOAuthCallbackController = async (req: Request, res: Response) => {
-  const user = req.user as any;
+  const user = req.user as IUser;
 
   if (!user) {
     return res.redirect("/auth/login?error=No user found");
   }
 
   try {
-    const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id);
+    // ✅ Step 1: Check if isVerified is false
+    if (!user.isVerified) {
+      user.isVerified = true;
+      await user.save({ validateBeforeSave: false });
+    }
+
+    // ✅ Step 2: Issue tokens
+    const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id as string);
 
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: false,
+      path: "/",
     };
 
+    // ✅ Step 3: Set cookies and redirect
     res
       .cookie("accessToken", accessToken, cookieOptions)
       .cookie("refreshToken", refreshToken, cookieOptions)
-      .redirect(`${process.env.FRONTEND_URL}/auth/google/success`); // change this to frontend dashboard route
+      .redirect(`${process.env.FRONTEND_URL}/auth/google/success`);
   } catch (error) {
     console.error("Google login error:", error);
     throw new ApiError(500, "Something went wrong during Google login");
   }
 };
+
 // Controller for login user
 const loginUserController = asyncHandler(
   async (req: Request, res: Response) => {
