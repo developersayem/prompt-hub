@@ -3,6 +3,7 @@ import passport from "passport";
 import { userRegistrationController, googleOAuthCallbackController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController } from "../controller/users.controller";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
+import { resendCodeLimiter } from "../middlewares/ratelimit.middlewares";
 
 
 
@@ -31,9 +32,8 @@ router.get(
 );
 // Route for verify user
 router.post("/verify", verifyUserController);
-// Route for resend verification code 
-router.post("/resend", resendVerificationCodeController);
-
+// Route for resend verification code
+router.post("/resend", resendCodeLimiter, resendVerificationCodeController);
 // Route for login
 router.route("/login").post(
     loginUserController

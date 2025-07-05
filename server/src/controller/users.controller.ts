@@ -11,6 +11,8 @@ import { ApiResponse } from "../utils/ApiResponse";
 import type { UploadApiResponse } from "cloudinary";
 import { sendVerificationEmail } from "../utils/sendVerificationEmail";
 import { generateVerificationCode } from "../utils/generateVerificationCode";
+import { RESEND_VERIFICATION_CODE_INTERVAL_MINUTES } from "../constants";
+import { CODE_EXPIRES_MINUTES } from "../constants";
 
 interface TokenResponse {
   accessToken: string;
@@ -385,43 +387,54 @@ const verifyUserController = asyncHandler(async (req: Request, res: Response) =>
     .status(200)
     .json(new ApiResponse(200, {}, "Email verified successfully"));
 });
-
 // Controller for resend verification code
 const resendVerificationCodeController = asyncHandler(
   async (req: Request, res: Response) => {
     const { email } = req.body;
 
-    // Validate input
     if (!email) throw new ApiError(400, "Email is required");
 
-    // Find the user
     const user = await User.findOne({ email });
     if (!user) throw new ApiError(404, "User not found");
 
-    // Check if already verified
     if (user.isVerified) {
       return res
         .status(400)
         .json(new ApiResponse(400, {}, "User is already verified"));
     }
 
-    // Generate new verification code
-    const newCode = generateVerificationCode(); // e.g., '238491'
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+    // ⏱️ Check resend rate limit
+    const now = new Date();
+    const lastSent = user.lastVerificationSentAt;
+    const minutesSinceLast = lastSent
+      ? (now.getTime() - new Date(lastSent).getTime()) / 1000 / 60
+      : Infinity;
 
-    // Save the new code
+    if (minutesSinceLast < RESEND_VERIFICATION_CODE_INTERVAL_MINUTES) {
+      const wait = Math.ceil(CODE_EXPIRES_MINUTES - minutesSinceLast);
+      throw new ApiError(
+        429,
+        `Please wait ${wait} more minute(s) before requesting again.`
+      );
+    }
+
+    // 🔐 Generate and store new code
+    const newCode = generateVerificationCode(); // e.g., 6-digit string
+    const expiresAt = new Date(Date.now() + CODE_EXPIRES_MINUTES * 60 * 1000);
+
     user.verificationCode = newCode;
     user.verificationCodeExpires = expiresAt;
+    user.lastVerificationSentAt = now;
 
     await user.save({ validateBeforeSave: false });
 
-    // Send the code via email
+    // 📧 Send email
     try {
-  await sendVerificationEmail(email, newCode);
-} catch (error) {
-  console.error("Email send failed:", error);
-  throw new ApiError(500, "Failed to send verification email");
-}
+      await sendVerificationEmail(email, newCode);
+    } catch (error) {
+      console.error("Email send failed:", error);
+      throw new ApiError(500, "Failed to send verification email");
+    }
 
     res
       .status(200)
@@ -434,7 +447,6 @@ const resendVerificationCodeController = asyncHandler(
       );
   }
 );
-
 
 
 
