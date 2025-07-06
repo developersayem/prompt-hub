@@ -563,116 +563,107 @@ const verifyOTPController = asyncHandler(async (req: Request, res: Response) => 
     .status(200)
     .json(new ApiResponse(200, {}, "Verification successful"));
 });
-// POST /api/v1/users/resend-2fa
-const send2FACodeController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { email } = req.body;
+// Controller for resend-2fa
+const send2FACodeController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
 
-    if (!email) throw new ApiError(400, "Email is required");
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, "User not found");
 
-    const user = await User.findOne({  });
-    if (!user || !user.isTwoFactorEnabled) {
-      throw new ApiError(404, "User not found or 2FA not enabled");
-    }
+  // if (!user || !user.isTwoFactorEnabled) {
+  //   throw new ApiError(404, "User not found or 2FA is not enabled");
+  // }
 
-    const now = new Date();
-    const waitTime = 60 * 1000; // 1 minute
-    if (
-      user.twoFactorCodeExpires &&
-      user.twoFactorCodeExpires.getTime() - now.getTime() > 9 * 60 * 1000
-    ) {
-      throw new ApiError(429, "Please wait before resending the code");
-    }
+  const now = new Date();
+  // const waitTime = 60 * 1000; // 1 minute
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    user.twoFactorCode = code;
-    user.twoFactorCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
-    await user.save();
-
-    await sendTwoFactorCodeEmail(email, code);
-
-    res.status(200).json(new ApiResponse(200, {}, "New 2FA code sent"));
+  if (
+    user.twoFactorCodeExpires &&
+    user.twoFactorCodeExpires.getTime() - now.getTime() > 9 * 60 * 1000
+  ) {
+    throw new ApiError(429, "Please wait before requesting a new code");
   }
-);
+
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  user.twoFactorCode = code;
+  user.twoFactorCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // valid for 10 mins
+  await user.save({ validateBeforeSave: false });
+
+  await sendTwoFactorCodeEmail(user.email, code);
+
+  return res.status(200).json(new ApiResponse(200, {}, "2FA code sent to email"));
+});
 // Controller for verify-2fa
-const verifyTwoFactorCodeController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { email, code } = req.body;
-
-    if (!email || !code) {
-      throw new ApiError(400, "Email and 2FA code are required");
-    }
-
-    const user = await User.findOne({ email });
-    if (!user || !user.twoFactorCode || !user.twoFactorCodeExpires) {
-      throw new ApiError(400, "Invalid or expired 2FA code");
-    }
-
-    if (user.twoFactorCode !== code) {
-      throw new ApiError(401, "Incorrect 2FA code");
-    }
-
-    if (user.twoFactorCodeExpires < new Date()) {
-      throw new ApiError(401, "2FA code has expired");
-    }
-
-    // Clear 2FA fields
-    user.twoFactorCode = "";
-    user.twoFactorCodeExpires = null;
-    await user.save();
-
-    // Generate tokens
-    const { accessToken, refreshToken } =
-      await generateAccessTokenAndRefreshToken(user._id as string);
-
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
-    if (!loggedInUser) throw new ApiError(404, "User not found");
-
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as
-        | "none"
-        | "lax",
-    };
-
-    return res
-      .status(200)
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .json(
-        new ApiResponse(
-          200,
-          {
-            user: loggedInUser,
-            accessToken,
-            refreshToken,
-          },
-          "2FA verified, login successful"
-        )
-      );
+const verifyTwoFactorCodeController = asyncHandler(async (req: Request, res: Response) => {
+  const { code } = req.body;
+  if (!code || code.length !== 6) {
+    throw new ApiError(400, "2FA code must be a 6-digit number");
   }
-);
+
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, "User not found");
+
+  if (!user.twoFactorCode || !user.twoFactorCodeExpires) {
+    throw new ApiError(400, "No 2FA code set or it has expired");
+  }
+
+  if (user.twoFactorCode !== code) {
+    throw new ApiError(401, "Invalid 2FA code");
+  }
+
+  if (user.twoFactorCodeExpires < new Date()) {
+    throw new ApiError(401, "2FA code has expired");
+  }
+
+  // Clear code after verification
+  user.twoFactorCode = "";
+  user.twoFactorCodeExpires = null;
+  await user.save({ validateBeforeSave: false });
+
+  const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id as string);
+
+  const freshUser = await User.findById(user._id).select("-password -refreshToken");
+  if (!freshUser) throw new ApiError(404, "User not found");
+
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" as "none" : "lax" as "lax",
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(200, { user: freshUser, accessToken, refreshToken }, "2FA verified successfully")
+    );
+});
+
 // Controller for toggle-2fa
-const toggleTwoFactorAuthController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { email, enable } = req.body;
+const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Response) => {
+  const { enable } = req.body;
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
 
-    if (!email || typeof enable !== "boolean") {
-      throw new ApiError(400, "Email and enable flag are required");
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) throw new ApiError(404, "User not found");
-
-    user.isTwoFactorEnabled = enable;
-    await user.save();
-
-    res
-      .status(200)
-      .json(new ApiResponse(200, {}, `2FA ${enable ? "enabled" : "disabled"}`));
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, "User not found");
+  if (!user) throw new ApiError(401, "Unauthorized");
+  if (typeof enable !== "boolean") {
+    throw new ApiError(400, "Enable flag (boolean) is required");
   }
-);
+
+  user.isTwoFactorEnabled = enable;
+  await user.save({ validateBeforeSave: false });
+
+  return res.status(200).json(
+    new ApiResponse(200, { isTwoFactorEnabled: enable }, `2FA ${enable ? "enabled" : "disabled"}`)
+  );
+});
 
 
 

@@ -45,11 +45,11 @@ router.route("/login").post(loginUserController);
 // Route for logout
 router.route("/logout").post(verifyJWT, logoutUser);
 // Route for send 2FA code
-router.post("/send-2fa", sendCodeLimiter, send2FACodeController);
+router.post("/send-2fa", sendCodeLimiter, verifyJWT, send2FACodeController);
 // Route for verify 2FA code
-router.post("/verify-2fa", sendCodeLimiter, verifyTwoFactorCodeController);
+router.post("/verify-2fa", sendCodeLimiter, verifyJWT, verifyTwoFactorCodeController);
 // Route for toggle 2FA
-router.post("/toggle-2fa", sendCodeLimiter, toggleTwoFactorAuthController);
+router.post("/toggle-2fa", sendCodeLimiter, verifyJWT, toggleTwoFactorAuthController);
 
 // Route for update profile
 router.route("/profile").put(
