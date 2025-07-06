@@ -18,12 +18,19 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.WEBUZO_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+          # Show key info for debugging
+          ls -l ~/.ssh
+          head -5 ~/.ssh/id_rsa
+
+      - name: Test SSH connection
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} "echo 'SSH Connection successful'"
 
       - name: Deploy backend
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} << EOF
-            cd /home/${{ secrets.WEBUZO_USER }}/public_html/api
-            git pull origin main
-            npm install --production
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} << EOF
+            cd /home/${{ secrets.WEBUZO_USER }}/public_html/api || exit 1
+            git pull origin main || exit 1
+            npm install --production || exit 1
             pm2 restart api || pm2 start dist/app.js --name api
           EOF
