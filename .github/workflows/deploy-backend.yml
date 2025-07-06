@@ -19,11 +19,11 @@ jobs:
           node-version: '18'
 
       - name: Install dependencies
-        working-directory: prompt-hub
+        working-directory: prompt-hub/server
         run: npm install
 
       - name: Build app
-        working-directory: prompt-hub
+        working-directory: prompt-hub/server
         run: tsc
 
       - name: Install sshpass
