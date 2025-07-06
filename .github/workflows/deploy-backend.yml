@@ -18,13 +18,9 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.WEBUZO_SSH_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          # Show key info for debugging
-          ls -l ~/.ssh
-          head -5 ~/.ssh/id_rsa
 
       - name: Test SSH connection
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} "echo 'SSH Connection successful'"
+        run: ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} "echo 'SSH Connection successful'"
 
       - name: Deploy backend
         run: |
