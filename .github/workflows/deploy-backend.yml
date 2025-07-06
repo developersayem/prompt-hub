@@ -1,33 +1,21 @@
-name: Build and Deploy Backend to Webuzo
-
-on:
-  push:
-    branches:
-      - main
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: Install dependencies locally
+      - name: Install dependencies (local)
         working-directory: server
         run: npm install
 
-      - name: Build app locally (optional)
+      - name: Build app (local)
         working-directory: server
         run: npm run build
-
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
 
       - name: Deploy to server using password auth
         env:
@@ -35,8 +23,7 @@ jobs:
         run: |
           sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} << EOF
             cd /home/${{ secrets.WEBUZO_USER }}/public_html/prompt-hub/server || exit 1
-            git pull origin main || echo "Git pull failed, maybe no git repo"
+            git pull origin main || exit 1
             npm install --production || exit 1
-            npm run build || exit 1
             pm2 restart api || pm2 start dist/app.js --name api || exit 1
           EOF
