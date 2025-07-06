@@ -18,12 +18,12 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Install dependencies
-        working-directory: prompt-hub/server
+      - name: Install dependencies locally
+        working-directory: server
         run: npm install
 
-      - name: Build app
-        working-directory: prompt-hub/server
+      - name: Build app locally (optional)
+        working-directory: server
         run: tsc
 
       - name: Install sshpass
@@ -37,5 +37,6 @@ jobs:
             cd /home/${{ secrets.WEBUZO_USER }}/public_html/api || exit 1
             git pull origin main || exit 1
             npm install --production || exit 1
+            npm run build || exit 1        # build on server
             pm2 restart api || pm2 start dist/app.js --name api || exit 1
           EOF
