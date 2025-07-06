@@ -490,6 +490,44 @@ const changePasswordController = asyncHandler(
     res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
   }
 );
+//Controller for reset password
+// Reset password controller
+const resetPasswordController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { password, confirmPassword, email } = req.body;
+
+    // Validate input
+    if (!email || !password || !confirmPassword) {
+      throw new ApiError(400, "Email, password, and confirm password are required");
+    }
+
+    if (password !== confirmPassword) {
+      throw new ApiError(400, "Passwords do not match");
+    }
+
+    if (password.length < 6) {
+      throw new ApiError(400, "Password must be at least 6 characters long");
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) throw new ApiError(404, "User not found");
+
+    // Prevent reset for Google-authenticated users
+    if (user.isGoogleAuthenticated) {
+      throw new ApiError(400, "Google-authenticated users cannot reset password manually");
+    }
+
+    // Update password
+    user.password = password;
+    await user.save();
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, {}, "Password reset successfully"));
+  }
+);
+
 // Controller for verifying OTP (generic, reusable)
 const verifyOTPController = asyncHandler(async (req: Request, res: Response) => {
   const { email, code } = req.body;
@@ -533,5 +571,6 @@ export {
   verifyUserController,
   resendVerificationCodeController,
   changePasswordController,
+  resetPasswordController,
   verifyOTPController
 };

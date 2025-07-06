@@ -1,6 +1,6 @@
 import { Router } from "express";
 import passport from "passport";
-import { userRegistrationController, googleOAuthCallbackController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController } from "../controller/users.controller";
+import { userRegistrationController, googleOAuthCallbackController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController } from "../controller/users.controller";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
 import { resendCodeLimiter } from "../middlewares/ratelimit.middlewares";
@@ -37,6 +37,8 @@ router.post("/verify", verifyUserController);
 router.post("/resend", resendCodeLimiter, resendVerificationCodeController);
 // Route for change password
 router.post("/change-password", changePasswordController);
+// Route for reset password
+router.post("/reset-password", resetPasswordController);
 // Route for login
 router.route("/login").post(loginUserController);
 // Route for logout
