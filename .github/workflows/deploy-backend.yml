@@ -1,13 +1,22 @@
+name: Build and Deploy Backend to Webuzo
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: '22'
 
       - name: Install dependencies (local)
         working-directory: server
@@ -17,7 +26,10 @@ jobs:
         working-directory: server
         run: npm run build
 
-      - name: Deploy to server using password auth
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Deploy to Webuzo server using password auth
         env:
           SSH_PASSWORD: ${{ secrets.WEBUZO_SSH_PASSWORD }}
         run: |
