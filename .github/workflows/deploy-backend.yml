@@ -24,20 +24,19 @@ jobs:
 
       - name: Build app locally (optional)
         working-directory: server
-        run: tsc
+        run: npx tsc
 
       - name: Install sshpass
         run: sudo apt-get update && sudo apt-get install -y sshpass
 
       - name: Deploy to server using password auth
-  env:
-    SSH_PASSWORD: ${{ secrets.WEBUZO_SSH_PASSWORD }}
-  run: |
-    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} << EOF
-      cd /home/${{ secrets.WEBUZO_USER }}/public_html/prompt-hub/server || exit 1
-      git pull origin main || echo "Git pull failed, maybe no git repo"
-      npm install --production || exit 1
-      npm run build || exit 1
-      pm2 restart api || pm2 start dist/app.js --name api || exit 1
-    EOF
-
+        env:
+          SSH_PASSWORD: ${{ secrets.WEBUZO_SSH_PASSWORD }}
+        run: |
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} << EOF
+            cd /home/${{ secrets.WEBUZO_USER }}/public_html/prompt-hub/server || exit 1
+            git pull origin main || echo "Git pull failed, maybe no git repo"
+            npm install --production || exit 1
+            npm run build || exit 1
+            pm2 restart api || pm2 start dist/app.js --name api || exit 1
+          EOF
