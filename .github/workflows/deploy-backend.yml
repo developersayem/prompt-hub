@@ -1,0 +1,30 @@
+name: Deploy Backend to Webuzo
+
+on:
+  push:
+    branches:
+      - main   # or your default branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.WEBUZO_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.WEBUZO_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy backend to Webuzo server
+        run: |
+          ssh ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} << 'EOF'
+            cd /home/${{ secrets.WEBUZO_USER }}/backend
+            git pull origin main
+            npm install --production
+            pm2 restart backend || pm2 start dist/app.js --name backend
+          EOF
