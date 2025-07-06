@@ -162,7 +162,6 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
     throw new ApiError(500, "Something went wrong during Google login");
   }
 };
-
 // Controller for login user
 const loginUserController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -400,18 +399,18 @@ const verifyUserController = asyncHandler(async (req: Request, res: Response) =>
 // Controller for resend verification code
 const resendVerificationCodeController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { email } = req.body;
+    const { email,action = "verify" } = req.body;
 
     if (!email) throw new ApiError(400, "Email is required");
 
     const user = await User.findOne({ email });
     if (!user) throw new ApiError(404, "User not found");
 
-    if (user.isVerified) {
-      return res
-        .status(400)
-        .json(new ApiResponse(400, {}, "User is already verified"));
-    }
+    if (action === "verify" && user.isVerified) {
+  return res
+    .status(400)
+    .json(new ApiResponse(400, {}, "User is already verified"));
+}
 
     // ⏱️ Check resend rate limit
     const now = new Date();
@@ -457,7 +456,69 @@ const resendVerificationCodeController = asyncHandler(
       );
   }
 );
+// Controller for change password
+const changePasswordController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email, oldPassword, newPassword } = req.body;
 
+    // Validate input
+    if (!email || !oldPassword || !newPassword) {
+      throw new ApiError(400, "Email, old password, and new password are required");
+    }
+
+    if (newPassword.length < 6) {
+      throw new ApiError(400, "New password must be at least 6 characters long");
+    }
+
+    // Find user
+    const user = await User.findOne({ email });
+    if (!user) throw new ApiError(404, "User not found");
+
+    // Prevent changing password for Google-authenticated users
+    if (user.isGoogleAuthenticated) {
+      throw new ApiError(400, "Google-authenticated users cannot change password manually");
+    }
+
+    // Verify old password
+    const isMatch = await user.isPasswordCorrect(oldPassword);
+    if (!isMatch) throw new ApiError(400, "Old password is incorrect");
+
+    // Update password
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
+  }
+);
+// Controller for verifying OTP (generic, reusable)
+const verifyOTPController = asyncHandler(async (req: Request, res: Response) => {
+  const { email, code } = req.body;
+
+  if (!email || !code) throw new ApiError(400, "Email and code required");
+
+  const user = await User.findOne({ email });
+  if (!user) throw new ApiError(404, "User not found");
+
+  const now = new Date();
+
+  if (!user.verificationCode || user.verificationCode !== code) {
+    throw new ApiError(400, "Invalid verification code");
+  }
+
+  if (!user.verificationCodeExpires || user.verificationCodeExpires < now) {
+    throw new ApiError(400, "Verification code has expired");
+  }
+
+  // ✅ Just clear code after success
+  user.verificationCode = "";
+  user.verificationCodeExpires = null;
+  user.lastVerificationSentAt = null;
+  await user.save();
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, {}, "Verification successful"));
+});
 
 
 
@@ -470,5 +531,7 @@ export {
   updateProfileController,
   getUserProfileController,
   verifyUserController,
-  resendVerificationCodeController
+  resendVerificationCodeController,
+  changePasswordController,
+  verifyOTPController
 };

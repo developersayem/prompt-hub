@@ -1,6 +1,6 @@
 import { Router } from "express";
 import passport from "passport";
-import { userRegistrationController, googleOAuthCallbackController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController } from "../controller/users.controller";
+import { userRegistrationController, googleOAuthCallbackController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController } from "../controller/users.controller";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
 import { resendCodeLimiter } from "../middlewares/ratelimit.middlewares";
@@ -32,20 +32,24 @@ router.get(
 );
 // Route for verify user
 router.post("/verify", verifyUserController);
+
 // Route for resend verification code
 router.post("/resend", resendCodeLimiter, resendVerificationCodeController);
+// Route for change password
+router.post("/change-password", changePasswordController);
 // Route for login
-router.route("/login").post(
-    loginUserController
-)
+router.route("/login").post(loginUserController);
 // Route for logout
-router.route("/logout").post(verifyJWT, logoutUser)
+router.route("/logout").post(verifyJWT, logoutUser);
+// Route for verify OTP
+router.post("/verify-otp", resendCodeLimiter, verifyOTPController);
 
 // Route for update profile
 router.route("/profile").put(
     upload.fields([{ name: "avatar", maxCount: 1 }]),
     verifyJWT,
-    updateProfileController)
+    updateProfileController
+);
 
 // Route for public profile info
 router.get("/profile/basic/:userId", getUserProfileController);
