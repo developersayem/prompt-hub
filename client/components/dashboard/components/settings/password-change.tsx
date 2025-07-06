@@ -13,9 +13,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
 
 export function ChangePasswordComponent() {
   const { user } = useAuth();
+  const router = useRouter();
 
   const [step, setStep] = useState<"initial" | "password" | "otp" | "success">(
     "initial"
@@ -42,6 +44,15 @@ export function ChangePasswordComponent() {
       return () => clearInterval(interval);
     }
   }, [step, remainingTime]);
+
+  useEffect(() => {
+    if (step === "success") {
+      const timer = setTimeout(() => {
+        router.push("/auth/login");
+      }, 3000); // 3 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [step, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

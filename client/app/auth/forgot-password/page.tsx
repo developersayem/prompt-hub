@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,6 +24,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp";
 
 export default function ResetPasswordPage() {
   const [step, setStep] = useState<"email" | "code" | "password" | "success">(
@@ -39,6 +46,7 @@ export default function ResetPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [remainingTime, setRemainingTime] = useState(600); // 10 minutes
 
   const getPasswordStrength = (password: string) => {
     let strength = 0;
@@ -51,16 +59,44 @@ export default function ResetPasswordPage() {
 
   const passwordStrength = getPasswordStrength(formData.password);
 
+  useEffect(() => {
+    if (step === "code" && remainingTime > 0) {
+      const interval = setInterval(() => {
+        setRemainingTime((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [step, remainingTime]);
+
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    // Simulate sending code
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/resend`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email,
+            action: "forget-password",
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to send OTP");
+
+      setRemainingTime(600);
       setStep("code");
-    }, 1000);
+      toast.success("Verification code sent to your email");
+    } catch (error) {
+      toast.error((error as Error).message || "Failed to send OTP");
+    } finally {
+      setIsLoading(false); // ✅ Fix here
+    }
   };
 
   const handleCodeVerify = async (e: React.FormEvent) => {
@@ -68,15 +104,30 @@ export default function ResetPasswordPage() {
     setIsLoading(true);
     setError("");
 
-    // Simulate code verification
-    setTimeout(() => {
-      if (code === "123456") {
-        setStep("password");
-      } else {
-        setError("Invalid verification code");
+    try {
+      const verifyRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/verify-otp`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email, code: code }),
+        }
+      );
+
+      const verifyData = await verifyRes.json();
+      if (verifyRes.status === 429) {
+        throw new Error("Too many requests. Please try again later.");
       }
-      setIsLoading(false);
-    }, 1000);
+      if (!verifyRes.ok) throw new Error(verifyData.message || "Invalid OTP");
+
+      toast.success("OTP verified successfully");
+      setStep("password");
+      setIsLoading(false); // ✅ Fix here
+    } catch (error) {
+      toast.error((error as Error).message || "Verification failed");
+    } finally {
+      setIsLoading(false); // ✅ Also ensure reset here
+    }
   };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -94,10 +145,32 @@ export default function ResetPasswordPage() {
     }
 
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      console.log(formData);
+      const changeRes = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/reset-password`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email,
+            password: formData.password,
+            confirmPassword: formData.confirmPassword,
+          }),
+        }
+      );
+
+      const changeData = await changeRes.json();
+      if (!changeRes.ok)
+        throw new Error(changeData.message || "Failed to change password");
+
+      toast.success("Password changed successfully");
       setStep("success");
-    }, 1000);
+    } catch (error) {
+      toast.error((error as Error).message || "Failed to change password");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderForm = () => {
@@ -129,16 +202,27 @@ export default function ResetPasswordPage() {
     if (step === "code") {
       return (
         <form onSubmit={handleCodeVerify} className="space-y-5">
+          <p className="text-sm text-center text-red-500">
+            Code expires in: {Math.floor(remainingTime / 60)}:
+            {String(remainingTime % 60).padStart(2, "0")}
+          </p>
           <div className="space-y-2">
             <Label htmlFor="code">Enter the verification code</Label>
-            <Input
-              id="code"
-              type="text"
-              placeholder="123456"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              required
-            />
+            <InputOTP
+              maxLength={6}
+              pattern={REGEXP_ONLY_DIGITS_AND_CHARS}
+              onChange={(value) => setCode(value)}
+              className="w-full"
+            >
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
           </div>
           <Button type="submit" className="w-full h-11" disabled={isLoading}>
             {isLoading ? "Verifying..." : "Verify Code"}
