@@ -24,7 +24,7 @@ jobs:
 
       - name: Build app locally (optional)
         working-directory: server
-        run: npx tsc
+        run: npm run build
 
       - name: Install sshpass
         run: sudo apt-get update && sudo apt-get install -y sshpass
