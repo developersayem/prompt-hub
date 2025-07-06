@@ -16,13 +16,15 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'   # or your project's node version
+          node-version: '18'
 
       - name: Install dependencies
+        working-directory: prompt-hub
         run: npm install
 
       - name: Build app
-        run: npm run build   # or whatever your build command is
+        working-directory: prompt-hub
+        run: tsc
 
       - name: Install sshpass
         run: sudo apt-get update && sudo apt-get install -y sshpass
