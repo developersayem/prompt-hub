@@ -9,10 +9,12 @@ import {
 } from "../utils/cloudinary";
 import { ApiResponse } from "../utils/ApiResponse";
 import type { UploadApiResponse } from "cloudinary";
-import { sendVerificationEmail } from "../utils/sendVerificationEmail";
+import { sendVerificationEmail } from "../utils/emails/sendVerificationEmail";
 import { generateVerificationCode } from "../utils/generateVerificationCode";
 import { RESEND_VERIFICATION_CODE_INTERVAL_MINUTES } from "../constants";
 import { CODE_EXPIRES_MINUTES } from "../constants";
+import { sendTwoFactorCodeEmail } from "../utils/emails/sendTwoFactorCodeEmail";
+import crypto from "crypto";
 
 interface TokenResponse {
   accessToken: string;
@@ -167,48 +169,54 @@ const loginUserController = asyncHandler(
   async (req: Request, res: Response) => {
     const { email, password } = req.body;
 
-    // Validate required fields
     if (!email || !password) {
       throw new ApiError(400, "All fields are required");
     }
 
-    // Find user by email
     const user = await User.findOne({ email });
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
+    if (!user) throw new ApiError(404, "User not found");
 
-    // Check password correctness
     const isPasswordCorrect = await user.isPasswordCorrect(password);
-    if (!isPasswordCorrect) {
-      throw new ApiError(401, "Password is incorrect");
-    }
+    if (!isPasswordCorrect) throw new ApiError(401, "Password is incorrect");
 
-    // ❗ Check if user is verified
     if (!user.isVerified) {
       throw new ApiError(401, "Please verify your email before logging in.");
     }
 
-    // Generate tokens
+    // ✅ If 2FA is enabled
+    if (user.isTwoFactorEnabled) {
+      const twoFactorCode = crypto.randomInt(100000, 999999).toString();
+      const twoFactorExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      user.twoFactorCode = twoFactorCode;
+      user.twoFactorCodeExpires = twoFactorExpires;
+      await user.save();
+
+      await sendTwoFactorCodeEmail(user.email, twoFactorCode);
+
+      return res.status(200).json(
+        new ApiResponse(200, {
+          requiresTwoFactor: true,
+          message: "2FA code sent to your email",
+        })
+      );
+    }
+
+    // ✅ If no 2FA, proceed to issue tokens
     const { accessToken, refreshToken } =
       await generateAccessTokenAndRefreshToken(user._id as string);
 
-    // Get user data excluding sensitive fields
-    const loggedInUser = await User.findById(user._id).select(
-      "-password -refreshToken"
-    );
-    if (!loggedInUser) {
-      throw new ApiError(404, "User not found");
-    }
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+    if (!loggedInUser) throw new ApiError(404, "User not found");
 
-    // Cookie options
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as "none" | "lax",
+      sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as
+        | "none"
+        | "lax",
     };
 
-    // Send response with tokens set in cookies and user data in JSON
     return res
       .status(200)
       .cookie("accessToken", accessToken, cookieOptions)
@@ -491,7 +499,6 @@ const changePasswordController = asyncHandler(
   }
 );
 //Controller for reset password
-// Reset password controller
 const resetPasswordController = asyncHandler(
   async (req: Request, res: Response) => {
     const { password, confirmPassword, email } = req.body;
@@ -527,7 +534,6 @@ const resetPasswordController = asyncHandler(
       .json(new ApiResponse(200, {}, "Password reset successfully"));
   }
 );
-
 // Controller for verifying OTP (generic, reusable)
 const verifyOTPController = asyncHandler(async (req: Request, res: Response) => {
   const { email, code } = req.body;
@@ -557,6 +563,118 @@ const verifyOTPController = asyncHandler(async (req: Request, res: Response) => 
     .status(200)
     .json(new ApiResponse(200, {}, "Verification successful"));
 });
+// POST /api/v1/users/resend-2fa
+const send2FACodeController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    if (!email) throw new ApiError(400, "Email is required");
+
+    const user = await User.findOne({  });
+    if (!user || !user.isTwoFactorEnabled) {
+      throw new ApiError(404, "User not found or 2FA not enabled");
+    }
+
+    const now = new Date();
+    const waitTime = 60 * 1000; // 1 minute
+    if (
+      user.twoFactorCodeExpires &&
+      user.twoFactorCodeExpires.getTime() - now.getTime() > 9 * 60 * 1000
+    ) {
+      throw new ApiError(429, "Please wait before resending the code");
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    user.twoFactorCode = code;
+    user.twoFactorCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
+    await user.save();
+
+    await sendTwoFactorCodeEmail(email, code);
+
+    res.status(200).json(new ApiResponse(200, {}, "New 2FA code sent"));
+  }
+);
+// Controller for verify-2fa
+const verifyTwoFactorCodeController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      throw new ApiError(400, "Email and 2FA code are required");
+    }
+
+    const user = await User.findOne({ email });
+    if (!user || !user.twoFactorCode || !user.twoFactorCodeExpires) {
+      throw new ApiError(400, "Invalid or expired 2FA code");
+    }
+
+    if (user.twoFactorCode !== code) {
+      throw new ApiError(401, "Incorrect 2FA code");
+    }
+
+    if (user.twoFactorCodeExpires < new Date()) {
+      throw new ApiError(401, "2FA code has expired");
+    }
+
+    // Clear 2FA fields
+    user.twoFactorCode = "";
+    user.twoFactorCodeExpires = null;
+    await user.save();
+
+    // Generate tokens
+    const { accessToken, refreshToken } =
+      await generateAccessTokenAndRefreshToken(user._id as string);
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+    if (!loggedInUser) throw new ApiError(404, "User not found");
+
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as
+        | "none"
+        | "lax",
+    };
+
+    return res
+      .status(200)
+      .cookie("accessToken", accessToken, cookieOptions)
+      .cookie("refreshToken", refreshToken, cookieOptions)
+      .json(
+        new ApiResponse(
+          200,
+          {
+            user: loggedInUser,
+            accessToken,
+            refreshToken,
+          },
+          "2FA verified, login successful"
+        )
+      );
+  }
+);
+// Controller for toggle-2fa
+const toggleTwoFactorAuthController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { email, enable } = req.body;
+
+    if (!email || typeof enable !== "boolean") {
+      throw new ApiError(400, "Email and enable flag are required");
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) throw new ApiError(404, "User not found");
+
+    user.isTwoFactorEnabled = enable;
+    await user.save();
+
+    res
+      .status(200)
+      .json(new ApiResponse(200, {}, `2FA ${enable ? "enabled" : "disabled"}`));
+  }
+);
+
+
 
 
 
@@ -572,5 +690,8 @@ export {
   resendVerificationCodeController,
   changePasswordController,
   resetPasswordController,
-  verifyOTPController
+  verifyOTPController,
+  send2FACodeController,
+  verifyTwoFactorCodeController,
+  toggleTwoFactorAuthController
 };

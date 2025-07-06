@@ -40,6 +40,9 @@ export interface IUser extends Document {
   phone: string;
   countryCode: string;
   refreshToken: string;
+  isTwoFactorEnabled: boolean;
+  twoFactorCode: string;
+  twoFactorCodeExpires: Date | null;
 
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): string;
@@ -92,6 +95,9 @@ const userSchema = new Schema<IUser>(
       type: Date,
       default: null,
     },
+    isTwoFactorEnabled: { type: Boolean, default: false },
+    twoFactorCode: { type: String },
+    twoFactorCodeExpires: { type: Date },
     lastVerificationSentAt: { type: Date, default: null },
     socialLinks: {
       facebook: { type: String, default: "" },

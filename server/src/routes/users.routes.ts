@@ -1,9 +1,9 @@
 import { Router } from "express";
 import passport from "passport";
-import { userRegistrationController, googleOAuthCallbackController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController } from "../controller/users.controller";
+import { userRegistrationController, googleOAuthCallbackController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController, verifyTwoFactorCodeController, toggleTwoFactorAuthController, send2FACodeController } from "../controller/users.controller";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import { resendCodeLimiter } from "../middlewares/ratelimit.middlewares";
+import { sendCodeLimiter } from "../middlewares/ratelimit.middlewares";
 
 
 
@@ -32,9 +32,10 @@ router.get(
 );
 // Route for verify user
 router.post("/verify", verifyUserController);
-
 // Route for resend verification code
-router.post("/resend", resendCodeLimiter, resendVerificationCodeController);
+router.post("/resend", sendCodeLimiter, resendVerificationCodeController);
+// Route for verify OTP
+router.post("/verify-otp", sendCodeLimiter, verifyOTPController);
 // Route for change password
 router.post("/change-password", changePasswordController);
 // Route for reset password
@@ -43,8 +44,12 @@ router.post("/reset-password", resetPasswordController);
 router.route("/login").post(loginUserController);
 // Route for logout
 router.route("/logout").post(verifyJWT, logoutUser);
-// Route for verify OTP
-router.post("/verify-otp", resendCodeLimiter, verifyOTPController);
+// Route for send 2FA code
+router.post("/send-2fa", sendCodeLimiter, send2FACodeController);
+// Route for verify 2FA code
+router.post("/verify-2fa", sendCodeLimiter, verifyTwoFactorCodeController);
+// Route for toggle 2FA
+router.post("/toggle-2fa", sendCodeLimiter, toggleTwoFactorAuthController);
 
 // Route for update profile
 router.route("/profile").put(
@@ -52,7 +57,6 @@ router.route("/profile").put(
     verifyJWT,
     updateProfileController
 );
-
 // Route for public profile info
 router.get("/profile/basic/:userId", getUserProfileController);
 
