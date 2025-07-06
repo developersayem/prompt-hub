@@ -23,7 +23,7 @@ jobs:
       - name: Deploy backend to Webuzo server
         run: |
           ssh ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} << 'EOF'
-            cd /home/${{ secrets.WEBUZO_USER }}/backend
+            cd /home/${{ secrets.WEBUZO_USER }}/public_html/api
             git pull origin main
             npm install --production
             pm2 restart backend || pm2 start dist/app.js --name backend
