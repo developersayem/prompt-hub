@@ -26,9 +26,6 @@ jobs:
         working-directory: server
         run: npm run build
 
-      - name: Install sshpass
-        run: sudo apt-get update && sudo apt-get install -y sshpass
-
       - name: Deploy to Webuzo server using password auth
         env:
           SSH_PASSWORD: ${{ secrets.WEBUZO_SSH_PASSWORD }}
