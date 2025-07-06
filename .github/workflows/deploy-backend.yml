@@ -3,7 +3,7 @@ name: Deploy Backend to Webuzo
 on:
   push:
     branches:
-      - main  # Your branch name
+      - main  # Change if your branch is different
 
 jobs:
   deploy:
@@ -12,9 +12,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Debug SSH Target
-        run: echo "Connecting to ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }}"
 
       - name: Setup SSH key
         run: |
