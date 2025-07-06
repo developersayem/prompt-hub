@@ -18,21 +18,29 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install dependencies (local)
+      - name: Install dependencies
         working-directory: server
         run: npm install
 
-      - name: Build app (local)
+      - name: Build app
         working-directory: server
-        run: npm run build
+        run: npx tsc
 
-      - name: Deploy to Webuzo server using password auth
+      - name: Install sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
+
+      - name: Deploy to server using password auth
         env:
           SSH_PASSWORD: ${{ secrets.WEBUZO_SSH_PASSWORD }}
         run: |
-          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} << EOF
+          sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no ${{ secrets.WEBUZO_USER }}@${{ secrets.WEBUZO_HOST }} << 'EOF'
             cd /home/${{ secrets.WEBUZO_USER }}/public_html/prompt-hub/server || exit 1
-            git pull origin main || exit 1
+            git pull origin main || echo "Git pull failed"
             npm install --production || exit 1
+            npm run build || exit 1
+            if ! command -v pm2 &> /dev/null; then
+              echo "pm2 not found. Installing globally..."
+              npm install -g pm2
+            fi
             pm2 restart api || pm2 start dist/app.js --name api || exit 1
           EOF
