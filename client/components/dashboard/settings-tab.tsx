@@ -28,6 +28,7 @@ import { Input } from "../ui/input";
 import { Switch } from "../ui/switch";
 
 import { ChangePasswordComponent } from "./components/settings/password-change";
+import { TwoFactorAuthentication } from "./components/settings/two-factor-authentication";
 
 const SettingsTab = ({ value }: { value: string }) => {
   const { user } = useAuth();
@@ -46,10 +47,6 @@ const SettingsTab = ({ value }: { value: string }) => {
       ...prev,
       [key]: value,
     }));
-  };
-
-  const handleSaveSettings = () => {
-    console.log("Saving settings:", settings);
   };
 
   const handleExportData = () => {
@@ -120,21 +117,7 @@ const SettingsTab = ({ value }: { value: string }) => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>Two-Factor Authentication</Label>
-                    <p className="text-sm text-gray-600">
-                      Add an extra layer of security to your account
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.twoFactorAuth}
-                    onCheckedChange={(checked) =>
-                      handleSettingChange("twoFactorAuth", checked)
-                    }
-                  />
-                </div>
-
+                <TwoFactorAuthentication />
                 <Separator />
 
                 {/* Password Change Flow */}
@@ -269,14 +252,6 @@ const SettingsTab = ({ value }: { value: string }) => {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Save Actions */}
-            <div className="flex gap-2 pt-4">
-              <Button onClick={handleSaveSettings} className="flex-1">
-                Save Settings
-              </Button>
-              <Button variant="outline">Cancel</Button>
-            </div>
           </CardContent>
         </Card>
       </div>

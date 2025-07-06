@@ -18,6 +18,9 @@ export interface IUser {
   credits: number;
   isGoogleAuthenticated?: boolean;
   isCertified?: boolean;
+  isVerified: boolean;
+  verificationCodeExpires: Date | null;
+  lastVerificationSentAt: Date | null;
   prompt: [];
   purchasedPrompts: [];
   bookmarks: [];
@@ -33,4 +36,8 @@ export interface IUser {
   phone: string;
   countryCode: string;
   updatedAt: string;
+  isTwoFactorEnabled: boolean;
+  twoFactorCode: string;
+  twoFactorCodeExpires: Date | null;
+
 }
