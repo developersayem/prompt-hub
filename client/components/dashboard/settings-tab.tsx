@@ -1,3 +1,5 @@
+"use client";
+
 import { TabsContent } from "../ui/tabs";
 import {
   Card,
@@ -12,7 +14,6 @@ import {
   Bell,
   Download,
   Globe,
-  Key,
   Mail,
   Shield,
   Smartphone,
@@ -26,8 +27,11 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Switch } from "../ui/switch";
 
+import { ChangePasswordComponent } from "./components/settings/password-change";
+
 const SettingsTab = ({ value }: { value: string }) => {
   const { user } = useAuth();
+
   const [settings, setSettings] = useState({
     emailNotifications: true,
     pushNotifications: false,
@@ -80,11 +84,11 @@ const SettingsTab = ({ value }: { value: string }) => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
+                  <div className="space-y-2">
                     <Label>Email Address</Label>
                     <Input value={user?.email} disabled />
                   </div>
-                  <div>
+                  <div className="space-y-4">
                     <Label>Account Status</Label>
                     <div className="flex gap-2 mt-2">
                       <Badge
@@ -133,38 +137,13 @@ const SettingsTab = ({ value }: { value: string }) => {
 
                 <Separator />
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>Profile Visibility</Label>
-                    <p className="text-sm text-gray-600">
-                      Control who can see your profile
-                    </p>
-                  </div>
-                  <select
-                    className="border rounded px-3 py-1"
-                    value={settings.profileVisibility}
-                    onChange={(e) =>
-                      handleSettingChange("profileVisibility", e.target.value)
-                    }
-                  >
-                    <option value="public">Public</option>
-                    <option value="private">Private</option>
-                    <option value="friends">Friends Only</option>
-                  </select>
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start">
-                    <Key className="w-4 h-4 mr-2" />
-                    Change Password
-                  </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Smartphone className="w-4 h-4 mr-2" />
-                    Manage Connected Devices
-                  </Button>
-                </div>
+                {/* Password Change Flow */}
+                <ChangePasswordComponent />
+                {/* Manage Connected Devices button */}
+                <Button variant="outline" className="w-full justify-start">
+                  <Smartphone className="w-4 h-4 mr-2" />
+                  Manage Connected Devices
+                </Button>
               </CardContent>
             </Card>
 
