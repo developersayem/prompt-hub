@@ -35,7 +35,7 @@ export default function GoogleSuccessPage() {
         router.push("/feed");
       } catch (err) {
         console.error("Google login fetch error", err);
-        router.push("/login?error=google_fetch_failed");
+        router.push("/auth/login?error=google");
       }
     }
 

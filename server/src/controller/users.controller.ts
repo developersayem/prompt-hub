@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { Types } from "mongoose";
+import { cookieOptions } from "../utils/cookieOptions";
 import asyncHandler from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { IUser, User } from "../models/users.model";
@@ -147,13 +148,6 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
     // Generate tokens
     const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id as string);
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "none" as "none" : "lax" as "lax",
-      path: "/",
-    };
-
     // Set cookies
     res
       .cookie("accessToken", accessToken, cookieOptions)
@@ -161,7 +155,6 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
       .redirect(`${process.env.FRONTEND_URL}/auth/google/success`);
   } catch (error) {
     console.error("Google OAuth callback error:", error);
-
     return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_fetch_failed`);
   }
 };
@@ -210,13 +203,6 @@ const loginUserController = asyncHandler(
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
     if (!loggedInUser) throw new ApiError(404, "User not found");
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: (process.env.NODE_ENV === "production" ? "none" : "lax") as
-        | "none"
-        | "lax",
-    };
 
     return res
       .status(200)
@@ -630,11 +616,6 @@ const verifyTwoFactorCodeController = asyncHandler(async (req: Request, res: Res
   const freshUser = await User.findById(user._id).select("-password -refreshToken");
   if (!freshUser) throw new ApiError(404, "User not found");
 
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "none" as "none" : "lax" as "lax",
-  };
 
   return res
     .status(200)
