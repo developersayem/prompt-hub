@@ -30,8 +30,13 @@ jobs:
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
 
-            echo "📂 Going to repo root..."
+            echo "📂 Navigating to backend folder..."
             cd ~/public_html/prompt-hub
+
+            if [ ! -d .git ]; then
+              echo "❌ Not a git repo. Please clone or init the repo first."
+              exit 1
+            fi
 
             echo "📦 Pulling latest code..."
             git pull origin main
