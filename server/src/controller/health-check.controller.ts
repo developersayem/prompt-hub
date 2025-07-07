@@ -3,7 +3,7 @@ import asyncHandler from "../utils/asyncHandler";
 import os from "os";
 import type { Request, Response } from "express";
 
-
+// Controller for health check
 const healthCheckController = asyncHandler(async (req: Request, res: Response) => {
     res
     .status(200)
@@ -13,7 +13,6 @@ const healthCheckController = asyncHandler(async (req: Request, res: Response) =
         "Health check Passed"
     ))
 });
-
 // Controller for get full server status
 const getServerStatus = asyncHandler(async (req: Request, res: Response) => {
   const uptimeSeconds = process.uptime();
@@ -49,8 +48,19 @@ const getServerStatus = asyncHandler(async (req: Request, res: Response) => {
     "Server is running"
   ));
 });
+// Controller for get server ping
+const getServerPing = asyncHandler(async (req: Request, res: Response) => {
+  const start = Date.now();
+  res.status(200).json(new ApiResponse(
+    200,
+    "Pong",
+    `Ping: ${Date.now() - start}ms`
+  ));
+});
+
 
 export { 
     healthCheckController,
-    getServerStatus
+    getServerStatus,
+    getServerPing
 };
