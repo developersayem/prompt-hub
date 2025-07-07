@@ -1,0 +1,56 @@
+name: Deploy Backend on Push
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'server/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧾 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🔐 Setup SSH Agent
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🚀 Deploy backend via SSH
+        run: |
+                - name: 🚀 Deploy backend via SSH
+        run: |
+          ssh -o StrictHostKeyChecking=no shopxetc@161.248.189.80 << 'EOF'
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
+
+            echo "📂 Navigating to backend folder..."
+            cd ~/public_html/prompt-hub
+
+            if [ ! -d .git ]; then
+              echo "❌ Not a git repo. Please clone or init the repo first."
+              exit 1
+            fi
+
+            echo "📦 Pulling latest code..."
+            git pull origin main
+
+            echo "📂 Navigating to backend folder..."
+            cd server
+
+            echo "📥 Installing dependencies with pnpm..."
+            pnpm install
+
+            echo "🔨 Building the project..."
+            pnpm run build
+
+            echo "🚀 Restarting PM2 app..."
+            pm2 restart prompt-hub-server || pm2 start dist/app.js --name prompt-hub-server
+          EOF
+          echo "✅ Deployment completed successfully!"
