@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { Types } from "mongoose";
-import { cookieOptions } from "../utils/cookieOptions";
+import { cookieOptions, getCookieOptions } from "../utils/cookieOptions";
 import asyncHandler from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import { IUser, User } from "../models/users.model";
@@ -150,8 +150,10 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
 
     // Set cookies
     res
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
+      .cookie("accessToken", accessToken, getCookieOptions()) // expires in 1 day (default)
+      .cookie("refreshToken", refreshToken, getCookieOptions({
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  }))
       .redirect(`${process.env.FRONTEND_URL}/auth/google/success`);
   } catch (error) {
     console.error("Google OAuth callback error:", error);
@@ -206,8 +208,10 @@ const loginUserController = asyncHandler(
 
     return res
       .status(200)
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
+      .cookie("accessToken", accessToken, getCookieOptions()) // expires in 1 day (default)
+      .cookie("refreshToken", refreshToken, getCookieOptions({
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  }))
       .json(
         new ApiResponse(
           200,
@@ -619,13 +623,14 @@ const verifyTwoFactorCodeController = asyncHandler(async (req: Request, res: Res
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, cookieOptions)
-    .cookie("refreshToken", refreshToken, cookieOptions)
+    .cookie("accessToken", accessToken, getCookieOptions()) // expires in 1 day (default)
+    .cookie("refreshToken", refreshToken, getCookieOptions({
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  }))
     .json(
       new ApiResponse(200, { user: freshUser, accessToken, refreshToken }, "2FA verified successfully")
     );
 });
-
 // Controller for toggle-2fa
 const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Response) => {
   const { enable } = req.body;
