@@ -24,7 +24,7 @@ jobs:
           export PATH="$HOME/.npm-global/bin:$PATH"
           source ~/.bashrc
 
-          cd ~/public_html/prompt-hub/server
+          cd ~/public_html/api
           git pull origin main
 
           pnpm install
