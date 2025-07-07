@@ -21,14 +21,27 @@ jobs:
       - name: Deploy to server via SSH
         run: |
           ssh -o StrictHostKeyChecking=no shopxetc@161.248.189.80 << 'EOF'
-          export PATH="$HOME/.npm-global/bin:$PATH"
-          source ~/.bashrc
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
 
           cd ~/public_html/api
+
+          if [ ! -d .git ]; then
+          echo "❌ Not a git repo. Please clone or init the repo first."
+          exit 1
+          fi
+
+          echo "✅ Pulling latest code..."
           git pull origin main
 
+          echo "📦 Installing dependencies..."
           pnpm install
-          pnpm build
 
+          echo "🔨 Building..."
+          pnpm run build
+
+          echo "🚀 Restarting PM2 app..."
           pm2 restart prompt-hub-server || pm2 start dist/app.js --name prompt-hub-server
           EOF
+
