@@ -7,7 +7,7 @@ const router = Router()
 
 router.route("/").get(healthCheckController)
 router.route("/server-status").get(getServerStatus)
-router.route("/ping").get(getServerPing)
+router.route("/ping-me").get(getServerPing)
 
 
 export default router
