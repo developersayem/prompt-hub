@@ -10,25 +10,28 @@ import {errorHandler} from "./middlewares/error.middlewares"
 const app = express();
 
 // Your frontend origin
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://prompt-hub.vercel.app",
-  "https://prompt-hub-six.vercel.app",
-];
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
+  .map(origin => origin.trim());
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  })
-);
+// ✅ CORS must come before any routes
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
+      .split(",")
+      .map(o => o.trim());
+
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS: " + origin));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+}));
+
+
 
 // Multer setup (memory storage, max 5MB file size)
 const storage = multer.memoryStorage();
