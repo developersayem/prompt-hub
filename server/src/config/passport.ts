@@ -33,6 +33,11 @@ passport.use(
     }
   )
 );
+passport.authenticate("google", {
+  failureRedirect: "/auth/login",
+  session: false, // ✅ important for JWT-based systems
+}),
+
 
 passport.serializeUser((user: any, done) => {
   done(null, user.id);

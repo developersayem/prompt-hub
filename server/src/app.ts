@@ -61,7 +61,8 @@ app.use(loggerMiddleware);
   })
 );
 app.use(passport.initialize());
-app.use(passport.session());
+app.use(passport.initialize());
+app.set("trust proxy", 1);
 
 
 
