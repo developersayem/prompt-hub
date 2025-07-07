@@ -134,34 +134,35 @@ const googleOAuthCallbackController = async (req: Request, res: Response) => {
   const user = req.user as IUser;
 
   if (!user) {
-    return res.redirect("/auth/login?error=No user found");
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=no_user_found`);
   }
 
   try {
-    // ✅ Step 1: Check if isVerified is false
+    // If email isn't verified, mark it verified now
     if (!user.isVerified) {
       user.isVerified = true;
       await user.save({ validateBeforeSave: false });
     }
 
-    // ✅ Step 2: Issue tokens
+    // Generate tokens
     const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id as string);
 
     const cookieOptions = {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: false,
+      sameSite: process.env.NODE_ENV === "production" ? "none" as "none" : "lax" as "lax",
       path: "/",
     };
 
-    // ✅ Step 3: Set cookies and redirect
+    // Set cookies
     res
       .cookie("accessToken", accessToken, cookieOptions)
       .cookie("refreshToken", refreshToken, cookieOptions)
       .redirect(`${process.env.FRONTEND_URL}/auth/google/success`);
   } catch (error) {
-    console.error("Google login error:", error);
-    throw new ApiError(500, "Something went wrong during Google login");
+    console.error("Google OAuth callback error:", error);
+
+    return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_fetch_failed`);
   }
 };
 // Controller for login user
