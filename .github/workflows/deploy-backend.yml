@@ -21,17 +21,14 @@ jobs:
       - name: Deploy to server via SSH
         run: |
           ssh -o StrictHostKeyChecking=no shopxetc@161.248.189.80 << 'EOF'
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+          export PATH="$HOME/.npm-global/bin:$PATH"
+          source ~/.bashrc
 
-            # Make sure node from nvm is in PATH
-            export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
+          cd ~/public_html/prompt-hub/server
+          git pull origin main
 
-            cd ~/public_html/prompt-hub/server
-            git pull origin main
+          pnpm install
+          pnpm build
 
-            pnpm install
-            pnpm build
-
-            pm2 restart all
+          pm2 restart prompt-hub-server || pm2 start dist/app.js --name prompt-hub-server
           EOF
