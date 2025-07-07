@@ -26,7 +26,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no shopxetc@161.248.189.80 << 'EOF'
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
+            export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$HOME/.local/share/pnpm:$PATH"
 
             echo "📂 Navigating to repo root..."
             cd ~/public_html/prompt-hub
@@ -51,6 +51,3 @@ jobs:
             echo "🚀 Restarting PM2 app..."
             pm2 restart prompt-hub-server || pm2 start dist/app.js --name prompt-hub-server
           EOF
-
-      - name: ✅ Confirm success
-        run: echo "✅ Deployment completed successfully!"
