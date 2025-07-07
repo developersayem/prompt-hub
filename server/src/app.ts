@@ -5,31 +5,30 @@ import multer from "multer";
 import { loggerMiddleware } from "./middlewares/loggerMiddleware";
 import passport from "passport";
 import session from "express-session";
-import "./config/passport"; // import passport config
 import {errorHandler} from "./middlewares/error.middlewares"
 
 const app = express();
 
-// Parse allowed origins from env variable (comma-separated URLs)
-const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || "";
-const allowedOrigins = allowedOriginsEnv
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
 // Your frontend origin
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-};
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://prompt-hub.vercel.app",
+  "https://prompt-hub-six.vercel.app",
+];
 
-app.use(cors(corsOptions));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
 
 // Multer setup (memory storage, max 5MB file size)
 const storage = multer.memoryStorage();
@@ -61,8 +60,7 @@ app.use(loggerMiddleware);
   })
 );
 app.use(passport.initialize());
-app.use(passport.initialize());
-app.set("trust proxy", 1);
+app.use(passport.session());
 
 
 
@@ -72,12 +70,8 @@ import userRoutes from "./routes/users.routes";
 import promptRoutes from "./routes/prompt.routes";
 import statsRoutes from "./routes/stats.routes"
 
-// Routes that don't use file upload parsing
+// Use routes
 app.use("/api/v1/health-check", healthCheckRoutes);
-
-// User routes (register route inside this should use multer middleware)
-// e.g., in users.routes.ts:
-// router.post("/register", upload.single("avatar"), yourRegisterHandler);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/prompt", promptRoutes);
 app.use("/api/v1/stats", statsRoutes)

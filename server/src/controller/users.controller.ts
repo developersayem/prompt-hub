@@ -130,36 +130,6 @@ const userRegistrationController = asyncHandler(
     }
   }
 );
-// Controller for Google OAuth callback
-const googleOAuthCallbackController = async (req: Request, res: Response) => {
-  const user = req.user as IUser;
-
-  if (!user) {
-    return res.redirect(`${process.env.FRONTEND_URL}/login?error=no_user_found`);
-  }
-
-  try {
-    // If email isn't verified, mark it verified now
-    if (!user.isVerified) {
-      user.isVerified = true;
-      await user.save({ validateBeforeSave: false });
-    }
-
-    // Generate tokens
-    const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id as string);
-
-    // Set cookies
-    res
-      .cookie("accessToken", accessToken, getCookieOptions()) // expires in 1 day (default)
-      .cookie("refreshToken", refreshToken, getCookieOptions({
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-  }))
-      .redirect(`${process.env.FRONTEND_URL}/auth/google/success`);
-  } catch (error) {
-    console.error("Google OAuth callback error:", error);
-    return res.redirect(`${process.env.FRONTEND_URL}/login?error=google_fetch_failed`);
-  }
-};
 // Controller for login user
 const loginUserController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -659,7 +629,6 @@ const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Res
 export { 
   userController,
   userRegistrationController,
-  googleOAuthCallbackController,
   loginUserController,
   logoutUser,
   updateProfileController,

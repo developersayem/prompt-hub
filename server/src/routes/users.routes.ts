@@ -1,6 +1,6 @@
 import { Router } from "express";
 import passport from "passport";
-import { userRegistrationController, googleOAuthCallbackController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController, verifyTwoFactorCodeController, toggleTwoFactorAuthController, send2FACodeController } from "../controller/users.controller";
+import { userRegistrationController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController, verifyTwoFactorCodeController, toggleTwoFactorAuthController, send2FACodeController } from "../controller/users.controller";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
 import { sendCodeLimiter } from "../middlewares/ratelimit.middlewares";
@@ -18,18 +18,6 @@ router.route("/register").post(
     upload.fields([{ name: "avatar", maxCount: 1 }]),
     userRegistrationController)
 
-// Route for start Google Auth
-router.get(
-  "/google",
-  passport.authenticate("google", { scope: ["profile", "email"] })
-);
-
-// Route for handle Google callback
-router.get(
-  "/google/callback",
-  passport.authenticate("google", { failureRedirect: "/auth/login" }),
-  googleOAuthCallbackController
-);
 // Route for verify user
 router.post("/verify", verifyUserController);
 // Route for resend verification code
