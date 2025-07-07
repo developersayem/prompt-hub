@@ -13,41 +13,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧾 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: 🔐 Setup SSH Agent
+      - name: Setup SSH Agent
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: 🚀 Deploy backend via SSH
+      - name: Deploy to server via SSH
         run: |
           ssh -o StrictHostKeyChecking=no shopxetc@161.248.189.80 << 'EOF'
+            export PNPM_HOME="$HOME/.local/share/pnpm"
+            export PATH="$PNPM_HOME:$PATH"
             export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-            export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$HOME/.local/share/pnpm:$PATH"
+            [ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
+            export PATH="\$NVM_DIR/versions/node/\$(nvm version)/bin:\$PATH"
 
-            echo "📂 Navigating to repo root..."
-            cd ~/public_html/prompt-hub
+            echo "📂 Moving to server folder"
+            cd ~/public_html/prompt-hub/server
 
-            if [ ! -d .git ]; then
-              echo "❌ Not a git repo. Please clone or init the repo first."
-              exit 1
-            fi
-
-            echo "📦 Pulling latest code..."
+            echo "📦 Pulling latest code"
             git pull origin main
 
-            echo "📂 Navigating to backend folder..."
-            cd server
-
-            echo "📥 Installing dependencies with pnpm..."
+            echo "📥 Installing deps"
             pnpm install
 
-            echo "🔨 Building the project..."
-            pnpm run build
+            echo "🔨 Building"
+            pnpm build
 
-            echo "🚀 Restarting PM2 app..."
+            echo "🚀 Restarting server"
             pm2 restart prompt-hub-server || pm2 start dist/app.js --name prompt-hub-server
           EOF
