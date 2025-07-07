@@ -24,17 +24,19 @@ jobs:
       - name: Deploy to server via SSH
         run: |
           ssh -o StrictHostKeyChecking=no shopxetc@161.248.189.80 << 'EOF'
-            export PNPM_HOME="$HOME/.local/share/pnpm"
-            export PATH="$PNPM_HOME:$PATH"
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "\$NVM_DIR/nvm.sh" ] && \. "\$NVM_DIR/nvm.sh"
-            export PATH="\$NVM_DIR/versions/node/\$(nvm version)/bin:\$PATH"
-
             echo "📂 Moving to server folder"
             cd ~/public_html/prompt-hub/server
 
+            echo "📦 Setting paths for local installs"
+            export PNPM_HOME="$HOME/.local/share/pnpm"
+            export PATH="$PNPM_HOME:$PATH"
+            export PATH="$HOME/.nvm/versions/node/$(nvm version)/bin:$PATH"
+            export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
+            export PATH="$HOME/.nvm:$PATH"
+            export PATH="$HOME/.nvm/versions/node/v$(nvm version)/bin:$PATH"
+
             echo "📦 Pulling latest code"
-            git pull origin main
+            /usr/bin/git pull origin main
 
             echo "📥 Installing deps"
             pnpm install
