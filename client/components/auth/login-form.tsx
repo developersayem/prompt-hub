@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,7 +23,6 @@ export function LoginForm({
   ...props
 }: React.ComponentProps<"div">) {
   const { login } = useAuth();
-  const router = useRouter();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -55,13 +53,13 @@ export function LoginForm({
     try {
       await login(formData.email, formData.password);
       toast.success("Login successful!");
-      router.push("/feed");
+      window.location.href = "/feed";
     } catch (error: unknown) {
       if (isErrorWithStatus(error)) {
         const { status, message } = error;
 
         if (status === 401 && message.toLowerCase().includes("verify")) {
-          router.push("/auth/verify?email=" + formData.email);
+          window.location.href = "/auth/verify?email=" + formData.email;
           return;
         } else {
           toast.error(message);
