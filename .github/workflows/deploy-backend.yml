@@ -23,14 +23,12 @@ jobs:
 
       - name: 🚀 Deploy backend via SSH
         run: |
-                - name: 🚀 Deploy backend via SSH
-        run: |
           ssh -o StrictHostKeyChecking=no shopxetc@161.248.189.80 << 'EOF'
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             export PATH="$NVM_DIR/versions/node/$(nvm version)/bin:$PATH"
 
-            echo "📂 Navigating to backend folder..."
+            echo "📂 Navigating to repo root..."
             cd ~/public_html/prompt-hub
 
             if [ ! -d .git ]; then
@@ -53,4 +51,6 @@ jobs:
             echo "🚀 Restarting PM2 app..."
             pm2 restart prompt-hub-server || pm2 start dist/app.js --name prompt-hub-server
           EOF
-          echo "✅ Deployment completed successfully!"
+
+      - name: ✅ Confirm success
+        run: echo "✅ Deployment completed successfully!"
