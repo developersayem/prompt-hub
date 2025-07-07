@@ -54,6 +54,3 @@ jobs:
             pm2 restart prompt-hub-server || pm2 start dist/app.js --name prompt-hub-server
           EOF
           echo "✅ Deployment completed successfully!"
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          NODE_ENV: production 
