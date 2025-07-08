@@ -11,8 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -20,8 +18,10 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
+  Area,
+  AreaChart,
 } from "recharts";
-import { DollarSign, Eye, Heart, TrendingUp, Plus } from "lucide-react";
+import { DollarSign, Eye, Heart, TrendingUp } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserNav } from "@/components/dashboard/components/profile/user-nav";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -30,7 +30,6 @@ import EarningsTab from "@/components/dashboard/earnings-tab";
 import AnalyticsTab from "@/components/dashboard/analytics-tab";
 import ProfileTab from "@/components/dashboard/profile-tab";
 import SettingsTab from "@/components/dashboard/settings-tab";
-import CreatePromptModal from "@/components/shared/create-prompt-modal";
 // import { mutate } from "swr";
 
 // Mock data
@@ -88,7 +87,6 @@ export default function DashboardPage() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab") || "overview";
   const [activeTab, setActiveTab] = useState(tabParam);
-  const [openCreateModal, setOpenCreateModal] = useState(false);
   const totalEarnings = myPrompts.reduce(
     (sum, prompt) => sum + prompt.earnings,
     0
@@ -99,30 +97,30 @@ export default function DashboardPage() {
     (p) => p.status === "published"
   ).length;
 
+  const handleBackToFeed = () => {
+    router.push("/feed");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-950">
       {/* Header */}
       <header className="bg-white dark:bg-neutral-950 border-b dark:border-gray-700 fixed top-0 w-full z-10 shadow-sm">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold">Dashboard</h1>
-              <p className="text-gray-600 dark:text-gray-400">
-                Manage your prompts and track performance
-              </p>
+            <div className="flex items-center space-x-4">
+              <div>
+                <h1 className="text-2xl font-bold flex items-center space-x-2">
+                  <span>Dashboard</span>
+                </h1>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Manage your prompts and track performance
+                </p>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button onClick={() => setOpenCreateModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Prompt
+              <Button onClick={() => handleBackToFeed()} variant="outline">
+                Back to Feed
               </Button>
-              <CreatePromptModal
-                open={openCreateModal}
-                onClose={() => setOpenCreateModal(false)}
-                onSuccess={() => {
-                  // mutate("/api/prompt"); // ✅ Refresh feed
-                }}
-              />
               <ThemeToggle />
               <UserNav />
             </div>
@@ -217,40 +215,105 @@ export default function DashboardPage() {
             </div>
 
             {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Earnings Overview</CardTitle>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <Card className="bg-neutral-50 dark:bg-neutral-900 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60 shadow-xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-semibold flex items-center">
+                    <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg mr-3">
+                      <DollarSign className="h-4 w-4 text-white" />
+                    </div>
+                    Earnings Overview
+                  </CardTitle>
+                  <CardDescription>
+                    Monthly earnings performance
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={statsData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="earnings" fill="#882EFB" />
-                    </BarChart>
+                  <ResponsiveContainer width="100%" height={320}>
+                    <AreaChart data={statsData}>
+                      <defs>
+                        <linearGradient
+                          id="earningsGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="#10b981"
+                            stopOpacity={0.3}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="#10b981"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                      <YAxis stroke="#64748b" fontSize={12} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgba(255, 255, 255, 0.95)",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="earnings"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        fill="url(#earningsGradient)"
+                      />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Views Trend</CardTitle>
+              <Card className="bg-neutral-50 dark:bg-neutral-900 backdrop-blur-sm border-slate-200/60 dark:border-slate-800/60 shadow-xl">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-lg font-semibold flex items-center">
+                    <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg mr-3">
+                      <Eye className="h-4 w-4 text-white" />
+                    </div>
+                    Views & Engagement
+                  </CardTitle>
+                  <CardDescription>
+                    Monthly views and engagement trends
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={320}>
                     <LineChart data={statsData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="name" stroke="#64748b" fontSize={12} />
+                      <YAxis stroke="#64748b" fontSize={12} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "rgba(255, 255, 255, 0.95)",
+                          border: "1px solid #e2e8f0",
+                          borderRadius: "8px",
+                          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                        }}
+                      />
                       <Line
                         type="monotone"
                         dataKey="views"
-                        stroke="#2B5BFC"
+                        stroke="#3b82f6"
+                        strokeWidth={3}
+                        dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="engagement"
+                        stroke="#8b5cf6"
                         strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={{ fill: "#8b5cf6", strokeWidth: 2, r: 3 }}
                       />
                     </LineChart>
                   </ResponsiveContainer>

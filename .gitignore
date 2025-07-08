@@ -6,6 +6,11 @@ node_modules/
 client/node_modules/
 client/.next/
 client/.env.local
+# Backend
+server/node_modules/
+server/dist/
+server/.env.local
+dist/
 
 # Logs
 logs
