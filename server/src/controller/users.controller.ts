@@ -163,6 +163,9 @@ const loginUserController = asyncHandler(
       return res.status(200).json(
         new ApiResponse(200, {
           requiresTwoFactor: true,
+          user: {
+            email:user.email
+          },
           message: "2FA code sent to your email",
         })
       );
@@ -555,15 +558,12 @@ const send2FACodeController = asyncHandler(async (req: Request, res: Response) =
 });
 // Controller for verify-2fa
 const verifyTwoFactorCodeController = asyncHandler(async (req: Request, res: Response) => {
-  const { code } = req.body;
+  const {email, code } = req.body;
   if (!code || code.length !== 6) {
     throw new ApiError(400, "2FA code must be a 6-digit number");
   }
 
-  const userId = (req as any).user?._id;
-  if (!userId) throw new ApiError(401, "Unauthorized");
-
-  const user = await User.findById(userId);
+  const user = await User.findOne({email});
   if (!user) throw new ApiError(404, "User not found");
 
   if (!user.twoFactorCode || !user.twoFactorCodeExpires) {

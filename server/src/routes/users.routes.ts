@@ -35,7 +35,7 @@ router.route("/logout").post(verifyJWT, logoutUser);
 // Route for send 2FA code
 router.post("/send-2fa", sendCodeLimiter, verifyJWT, send2FACodeController);
 // Route for verify 2FA code
-router.post("/verify-2fa", sendCodeLimiter, verifyJWT, verifyTwoFactorCodeController);
+router.post("/verify-2fa", sendCodeLimiter, verifyTwoFactorCodeController);
 // Route for toggle 2FA
 router.post("/toggle-2fa", sendCodeLimiter, verifyJWT, toggleTwoFactorAuthController);
 
