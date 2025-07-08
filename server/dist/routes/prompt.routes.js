@@ -26,7 +26,11 @@ router.get("/my-prompts", auth_middlewares_1.verifyJWT, prompt_controller_1.getM
 // Route for get single
 router.get("/:id", auth_middlewares_1.verifyJWT, prompt_controller_1.getSinglePromptController);
 // Route for update prompt
-router.put("/:id", auth_middlewares_1.verifyJWT, prompt_controller_1.updatePromptController);
+router.put("/:id", multer_middlewares_1.upload.fields([{ name: "promptContent", maxCount: 1 }]), auth_middlewares_1.verifyJWT, prompt_controller_1.updatePromptController);
 // Route for delete prompt
 router.delete("/:id", auth_middlewares_1.verifyJWT, prompt_controller_1.deletePromptController);
+// Route for buy prompt
+router.post("/:id/buy", auth_middlewares_1.verifyJWT, prompt_controller_1.buyPromptController);
+// Route for get my purchases
+router.get("/purchase-history", auth_middlewares_1.verifyJWT, prompt_controller_1.getMyPurchasesController);
 exports.default = router;

@@ -49,13 +49,18 @@ const promptSchema = new mongoose_1.Schema({
     resultContent: { type: String, required: true },
     aiModel: { type: String, required: true },
     price: { type: Number },
-    isPaid: { type: Boolean, required: true, default: false },
+    paymentStatus: {
+        type: String,
+        enum: ["free", "paid"],
+        required: true,
+        default: "free",
+    },
     creator: { type: mongoose_1.Schema.Types.ObjectId, ref: "User", required: true },
     likes: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Like" }],
     comments: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "Comment" }],
-    buyers: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "User" }],
     views: { type: Number, default: 0 },
     viewedBy: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "User" }],
-    viewedIPs: [{ type: String }]
+    viewedIPs: [{ type: String }],
+    purchasedBy: [{ type: mongoose_1.Schema.Types.ObjectId, ref: "User" }],
 }, { timestamps: true });
 exports.Prompt = mongoose_1.default.model("Prompt", promptSchema);

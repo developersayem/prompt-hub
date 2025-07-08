@@ -73,6 +73,22 @@ const userSchema = new mongoose_1.Schema({
         type: String,
         default: "",
     },
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+    verificationCode: {
+        type: String,
+        default: "",
+    },
+    verificationCodeExpires: {
+        type: Date,
+        default: null,
+    },
+    isTwoFactorEnabled: { type: Boolean, default: false },
+    twoFactorCode: { type: String },
+    twoFactorCodeExpires: { type: Date },
+    lastVerificationSentAt: { type: Date, default: null },
     socialLinks: {
         facebook: { type: String, default: "" },
         instagram: { type: String, default: "" },

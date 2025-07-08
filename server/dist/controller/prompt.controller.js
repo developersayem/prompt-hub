@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deletePromptController = exports.updatePromptController = exports.getSinglePromptController = exports.getMyPromptsController = exports.likeCommentController = exports.replyCommentController = exports.deleteCommentController = exports.updateCommentController = exports.createCommentController = exports.likePromptController = exports.createPromptController = exports.getAllPromptsController = void 0;
+exports.getMyPurchasesController = exports.buyPromptController = exports.deletePromptController = exports.updatePromptController = exports.getSinglePromptController = exports.getMyPromptsController = exports.likeCommentController = exports.replyCommentController = exports.deleteCommentController = exports.updateCommentController = exports.createCommentController = exports.likePromptController = exports.createPromptController = exports.getAllPromptsController = void 0;
 const ApiError_1 = require("../utils/ApiError");
 const ApiResponse_1 = require("../utils/ApiResponse");
 const asyncHandler_1 = __importDefault(require("../utils/asyncHandler"));
@@ -13,6 +13,7 @@ const users_model_1 = require("../models/users.model");
 const like_model_1 = require("../models/like.model"); // adjust the path
 const comments_model_1 = require("../models/comments.model");
 const populateRepliesRecursively_1 = require("../utils/populateRepliesRecursively");
+const purchaseHistory_model_1 = require("../models/purchaseHistory.model");
 // Controller for show all prompts
 const getAllPromptsController = (0, asyncHandler_1.default)(async (req, res) => {
     const { category, isPaid, searchString } = req.query;
@@ -62,53 +63,58 @@ exports.getAllPromptsController = getAllPromptsController;
 // Controller to handle prompt creation
 const createPromptController = (0, asyncHandler_1.default)(async (req, res) => {
     // Destructure fields from the request body
-    const { title, description, tags, category, promptText, resultType, resultContent: rawResultContent, aiModel, price, isPaid, } = req.body;
+    const { title, description, tags, category, promptText, resultType, resultContent: rawResultContent, aiModel, price, paymentStatus, // ⬅ updated from isPaid
+     } = req.body;
     // Get the user ID from the authenticated request
     const userId = req.user?._id;
     if (!userId)
-        throw new ApiError_1.ApiError(401, "Unauthorized"); // If user is not authenticated
-    // Validate required fields (some are optional like description and price)
-    if (!title || !category || !promptText || !resultType || !aiModel || typeof isPaid === "undefined") {
+        throw new ApiError_1.ApiError(401, "Unauthorized");
+    // Validate required fields
+    if (!title ||
+        !category ||
+        !promptText ||
+        !resultType ||
+        !aiModel ||
+        typeof paymentStatus === "undefined") {
         throw new ApiError_1.ApiError(400, "Missing required fields");
     }
-    // Normalize tags: if tags come as comma-separated strings, split and trim them
+    // Validate paymentStatus value
+    if (!["free", "paid"].includes(paymentStatus)) {
+        throw new ApiError_1.ApiError(400, "Invalid paymentStatus value");
+    }
+    // Normalize tags
     const normalizedTags = Array.isArray(tags)
         ? tags.flatMap((tag) => tag.split(",").map((t) => t.trim()))
         : [];
-    // Final content to be saved in DB (URL for media, or text)
+    // Handle resultContent
     let finalResultContent = "";
-    // Handle resultType === "text"
     if (resultType === "text") {
         if (!rawResultContent) {
             throw new ApiError_1.ApiError(400, "Text result content is required");
         }
         finalResultContent = rawResultContent;
     }
-    // Handle resultType === "image" or "video"
     else if (resultType === "image" || resultType === "video") {
-        // File should come from field name: "promptContent"
         const file = req.files?.promptContent?.[0];
         if (!file?.path) {
             throw new ApiError_1.ApiError(400, "Media file is required for image/video prompt");
         }
-        // Upload to Cloudinary
         try {
-            let uploaded = await (0, cloudinary_1.uploadOnCloudinary)(file.path);
+            const uploaded = await (0, cloudinary_1.uploadOnCloudinary)(file.path);
             if (!uploaded) {
                 throw new ApiError_1.ApiError(500, "Failed to upload media to Cloudinary");
             }
-            finalResultContent = uploaded.secure_url; // Save the media URL
+            finalResultContent = uploaded.secure_url;
         }
         catch (error) {
             console.error("Cloudinary upload failed:", error);
             throw new ApiError_1.ApiError(500, "Failed to upload media");
         }
     }
-    // Catch unknown result types
     else {
         throw new ApiError_1.ApiError(400, "Invalid result type");
     }
-    // Create the new Prompt document in the database
+    // Create the prompt
     const newPrompt = await prompts_model_1.Prompt.create({
         title,
         description,
@@ -118,25 +124,26 @@ const createPromptController = (0, asyncHandler_1.default)(async (req, res) => {
         resultType,
         resultContent: finalResultContent,
         aiModel,
-        price: isPaid ? Number(price) || 0 : 0, // If not paid, price is 0
-        isPaid: Boolean(isPaid),
+        price: paymentStatus === "paid" ? Number(price) || 0 : 0,
+        isPaid: paymentStatus === "paid",
         creator: userId,
-        likes: [], // Empty by default
-        comments: [], // Empty by default
-        buyers: [], // Empty by default
+        likes: [],
+        comments: [],
+        buyers: [],
     });
     if (!newPrompt) {
         throw new ApiError_1.ApiError(500, "Failed to create prompt");
     }
-    //now that prompt is created, add it to the user's prompts
+    // Update user with new prompt
     const user = await users_model_1.User.findById(userId);
     if (!user) {
         throw new ApiError_1.ApiError(404, "User not found");
     }
     user.prompts.push(newPrompt._id);
     await user.save();
-    // Send response to client
-    res.status(201).json(new ApiResponse_1.ApiResponse(201, { data: newPrompt }, "Prompt created successfully"));
+    res
+        .status(201)
+        .json(new ApiResponse_1.ApiResponse(201, { data: newPrompt }, "Prompt created successfully"));
 });
 exports.createPromptController = createPromptController;
 // Controller to handle like/unlike
@@ -370,11 +377,13 @@ const getSinglePromptController = (0, asyncHandler_1.default)(async (req, res) =
         .json(new ApiResponse_1.ApiResponse(200, { prompt }, "Prompt fetched successfully"));
 });
 exports.getSinglePromptController = getSinglePromptController;
-//Controller for update prompt
 const updatePromptController = (0, asyncHandler_1.default)(async (req, res) => {
     const promptId = req.params.id;
     const userId = req.user?._id;
-    const { title, description, category, isPaid, price } = req.body;
+    const { title, description, category, aiModel, promptText, resultType, resultContent, paymentStatus, price, tags, } = req.body;
+    if (!req.body) {
+        throw new ApiError_1.ApiError(400, "Request body is missing. Did you forget to use multer middleware?");
+    }
     if (!promptId)
         throw new ApiError_1.ApiError(400, "Prompt ID is required");
     const prompt = await prompts_model_1.Prompt.findById(promptId);
@@ -390,10 +399,25 @@ const updatePromptController = (0, asyncHandler_1.default)(async (req, res) => {
         prompt.description = description;
     if (category)
         prompt.category = category;
-    if (typeof isPaid === "boolean")
-        prompt.isPaid = isPaid;
-    if (isPaid && price !== undefined)
-        prompt.price = price;
+    if (aiModel)
+        prompt.aiModel = aiModel;
+    if (promptText)
+        prompt.promptText = promptText;
+    if (resultType)
+        prompt.resultType = resultType;
+    if (resultContent)
+        prompt.resultContent = resultContent;
+    if (tags) {
+        prompt.tags = Array.isArray(tags) ? tags : [tags]; // Handles both single and multi tags
+    }
+    if (paymentStatus === "free" || paymentStatus === "paid") {
+        prompt.paymentStatus = paymentStatus;
+        prompt.price = paymentStatus === "paid" ? price : undefined;
+    }
+    // Handle file upload if exists (Multer middleware must be used)
+    if (req.file) {
+        prompt.resultContent = req.file.path; // or filename, URL, etc.
+    }
     const updatedPrompt = await prompt.save();
     res.status(200).json(new ApiResponse_1.ApiResponse(200, { prompt: updatedPrompt }, "Prompt updated successfully"));
 });
@@ -412,7 +436,97 @@ const deletePromptController = (0, asyncHandler_1.default)(async (req, res) => {
     if (String(prompt.creator) !== String(userId)) {
         throw new ApiError_1.ApiError(403, "You are not authorized to delete this prompt");
     }
+    // 1. Delete likes on this prompt
+    await like_model_1.Like.deleteMany({ prompt: prompt._id });
+    // 2. Delete comments and replies (nested)
+    const deleteCommentsRecursively = async (commentIds) => {
+        for (const commentId of commentIds) {
+            const comment = await comments_model_1.Comment.findById(commentId);
+            if (comment) {
+                // Recursively delete replies
+                await deleteCommentsRecursively(comment.replies);
+                // Delete likes on the comment
+                await like_model_1.Like.deleteMany({ comment: comment._id });
+                // Delete the comment
+                await comment.deleteOne();
+            }
+        }
+    };
+    // Get top-level comments for this prompt
+    const topLevelComments = await comments_model_1.Comment.find({
+        prompt: prompt._id,
+        parentComment: null,
+    });
+    const topLevelCommentIds = topLevelComments.map((c) => c._id);
+    // Delete all nested comments
+    await deleteCommentsRecursively(topLevelCommentIds);
+    // 3. Delete the prompt itself
     await prompt.deleteOne();
-    res.status(200).json(new ApiResponse_1.ApiResponse(200, {}, "Prompt deleted successfully"));
+    res
+        .status(200)
+        .json(new ApiResponse_1.ApiResponse(200, {}, "Prompt deleted successfully"));
 });
 exports.deletePromptController = deletePromptController;
+//controller for buy prompt
+const buyPromptController = (0, asyncHandler_1.default)(async (req, res) => {
+    const promptId = req.params.id;
+    const userId = req.user?._id;
+    if (!userId)
+        throw new ApiError_1.ApiError(401, "Unauthorized");
+    if (!promptId)
+        throw new ApiError_1.ApiError(400, "Prompt ID is required");
+    const prompt = await prompts_model_1.Prompt.findById(promptId);
+    if (!prompt)
+        throw new ApiError_1.ApiError(404, "Prompt not found");
+    if (String(prompt.creator) === String(userId)) {
+        throw new ApiError_1.ApiError(403, "You cannot buy your own prompt");
+    }
+    if (prompt.paymentStatus === "free") {
+        throw new ApiError_1.ApiError(400, "This prompt is free");
+    }
+    if (prompt.purchasedBy.includes(userId)) {
+        throw new ApiError_1.ApiError(400, "You have already purchased this prompt");
+    }
+    const price = prompt.price ?? 0;
+    const buyer = await users_model_1.User.findById(userId);
+    const creator = await users_model_1.User.findById(prompt.creator);
+    if (!buyer || !creator)
+        throw new ApiError_1.ApiError(404, "User not found");
+    if (buyer.credits < price) {
+        throw new ApiError_1.ApiError(400, "Insufficient credits");
+    }
+    // Deduct from buyer
+    buyer.credits -= price;
+    await buyer.save();
+    // Add to creator
+    creator.credits += price;
+    await creator.save();
+    // Update prompt
+    prompt.purchasedBy.push(userId);
+    await prompt.save();
+    // Store purchase history
+    await purchaseHistory_model_1.PurchaseHistory.create({
+        buyer: buyer._id,
+        prompt: prompt._id,
+        seller: creator._id,
+        amount: price,
+        paymentMethod: "credits",
+    });
+    // updated buyer purchasedPrompts
+    buyer.purchasedPrompts.push(prompt._id);
+    await buyer.save();
+    return res.status(200).json(new ApiResponse_1.ApiResponse(200, { updatedCredits: buyer.credits }, // ✅ send updated buyer credits
+    "Prompt purchased successfully"));
+});
+exports.buyPromptController = buyPromptController;
+// Controller for get my purchases
+const getMyPurchasesController = (0, asyncHandler_1.default)(async (req, res) => {
+    const userId = req.user?._id;
+    if (!userId)
+        throw new ApiError_1.ApiError(401, "Unauthorized");
+    const history = await purchaseHistory_model_1.PurchaseHistory.find({ buyer: userId })
+        .populate("prompt", "title price")
+        .populate("creator", "name email");
+    return res.status(200).json(new ApiResponse_1.ApiResponse(200, history, "Purchase history fetched"));
+});
+exports.getMyPurchasesController = getMyPurchasesController;

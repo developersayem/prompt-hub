@@ -7,6 +7,9 @@ import { loggerMiddleware } from "./middlewares/loggerMiddleware";
 import passport from "passport";
 import session from "express-session";
 import {errorHandler} from "./middlewares/error.middlewares"
+import "./config/passport";
+
+
 
 const app = express();
 

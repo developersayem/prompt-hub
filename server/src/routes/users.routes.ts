@@ -16,7 +16,48 @@ router.get("/", verifyJWT, userController);
 // Route for register
 router.route("/register").post(
     upload.fields([{ name: "avatar", maxCount: 1 }]),
-    userRegistrationController)
+    userRegistrationController
+)
+// Start Google OAuth
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+// Callback URL after Google authentication
+router.get(
+  "/google/callback",
+  passport.authenticate("google", {
+    failureRedirect: `${process.env.FRONTEND_URL}/auth/login`,
+    session: false,
+  }),
+  async (req, res) => {
+    const user = req.user as any;
+
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    // Set cookie
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+    });
+
+    // Redirect to frontend
+    res.redirect(`${process.env.FRONTEND_URL}/auth/google/success`);
+  }
+);
+
+
 
 // Route for verify user
 router.post("/verify", verifyUserController);
