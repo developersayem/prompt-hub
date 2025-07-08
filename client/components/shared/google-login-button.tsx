@@ -4,9 +4,9 @@ import { Button } from "../ui/button";
 
 export default function GoogleLoginButton() {
   const handleGoogleLogin = () => {
-    window.location.href =
-      process.env.NEXT_PUBLIC_GOOGLE_LOGIN_URL || "/api/auth/google";
+    window.location.href = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/google`;
   };
+
   return (
     <Button
       onClick={handleGoogleLogin}

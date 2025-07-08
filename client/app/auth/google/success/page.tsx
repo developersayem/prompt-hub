@@ -1,46 +1,24 @@
 "use client";
-
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/auth-context";
 
-export default function GoogleSuccessPage() {
-  console.log("auth/google/success/page.tsx");
-  const { updateUser } = useAuth();
-  const router = useRouter();
-
+export default function GoogleAuthSuccess() {
   useEffect(() => {
-    async function fetchUser() {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users`,
-          {
-            method: "GET",
-            credentials: "include", // so cookies (tokens) are sent
-          }
-        );
+    const user = localStorage.getItem("user");
 
-        if (!res.ok) throw new Error("Failed to fetch user");
-
-        const data = await res.json();
-
-        // save user in localStorage
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-
-        // update AuthContext
-        updateUser(data.data.user);
-        console.log("userData:", data.data.user);
-
-        // redirect to dashboard
-        router.push("/feed");
-      } catch (err) {
-        console.error("Google login fetch error", err);
-        router.push("/auth/login?error=google");
-      }
+    if (!user) {
+      // fetch user if needed and store
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users`, {
+        credentials: "include",
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          localStorage.setItem("user", JSON.stringify(data.data.user));
+          window.location.href = "/feed";
+        });
+    } else {
+      window.location.href = "/auth/login";
     }
+  }, []);
 
-    fetchUser();
-  }, [router, updateUser]);
-
-  return <p className="text-center py-10">Signing you in with Google...</p>;
+  return <p>Logging you in with Google...</p>;
 }
