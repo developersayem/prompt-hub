@@ -53,7 +53,7 @@ export function LoginForm({
     try {
       await login(formData.email, formData.password);
       toast.success("Login successful!");
-      window.location.href = "/feed";
+      // window.location.href = "/feed";
     } catch (error: unknown) {
       if (isErrorWithStatus(error)) {
         const { status, message } = error;

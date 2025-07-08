@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 
 interface Tokens {
-  accessToken?: string; // Optional because tokens are stored in cookies
+  accessToken?: string;
   refreshToken?: string;
 }
 
 interface LoginResponse {
   data: {
     user: IUser;
+    requiresTwoFactor?: boolean;
     accessToken?: string;
     refreshToken?: string;
   };
@@ -20,7 +21,7 @@ interface LoginResponse {
 
 interface AuthState {
   user: IUser | null;
-  tokens: Tokens | null; // We won't store tokens here, but keep for typing
+  tokens: Tokens | null;
   isLoading: boolean;
   isAuthenticated: boolean;
 }
@@ -48,7 +49,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
       return {
         ...state,
         user: action.payload.user,
-        tokens: action.payload.tokens, // Will be null or undefined
+        tokens: action.payload.tokens,
         isLoading: false,
         isAuthenticated: true,
       };
@@ -90,29 +91,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [state, dispatch] = useReducer(authReducer, initialState);
   const router = useRouter();
 
+  // 👇 Initial user load
   useEffect(() => {
-    // Load user from localStorage (tokens are in cookies, so no localStorage for tokens)
-    const storedUser = localStorage.getItem("user");
+    const timer = setTimeout(() => {
+      const storedUser = localStorage.getItem("user");
 
-    if (storedUser) {
-      try {
-        const user = JSON.parse(storedUser);
-        dispatch({
-          type: "LOGIN_SUCCESS",
-          payload: {
-            user,
-            tokens: null, // tokens stored in cookies only
-          },
-        });
-      } catch {
-        localStorage.removeItem("user");
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          dispatch({
+            type: "LOGIN_SUCCESS",
+            payload: { user, tokens: null },
+          });
+        } catch {
+          localStorage.removeItem("user");
+          dispatch({ type: "LOGIN_FAILURE" });
+        }
+      } else {
+        dispatch({ type: "LOGIN_FAILURE" });
       }
-    }
-    dispatch({ type: "SET_LOADING", payload: false });
+    }, 50); // slight delay to ensure localStorage availability
+
+    return () => clearTimeout(timer);
   }, []);
 
-  //User login function to handle user login
-  // It accepts email and password, sends a POST request to the backend,
+  // 👇 Login function
   const login = async (email: string, password: string) => {
     dispatch({ type: "LOGIN_START" });
     try {
@@ -126,41 +129,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       );
 
-      // Check if response content-type is JSON
       const contentType = res.headers.get("content-type");
       let data: LoginResponse | null = null;
 
       if (contentType && contentType.includes("application/json")) {
         data = (await res.json()) as LoginResponse;
       } else {
-        // If not JSON, try to get text to log
-        const text = await res.text();
-        console.error("Response is not JSON:", text);
         throw new Error(
           `Server responded with non-JSON data and status ${res.status}`
         );
       }
 
       if (!res.ok) {
-        const error = new Error(data.message || "Login failed") as Error & {
-          status?: number;
-        };
-        error.status = res.status;
-        throw error;
+        throw new Error(data?.message || "Login failed");
+      }
+
+      const requiresTwoFactor = data.data.requiresTwoFactor;
+      if (requiresTwoFactor) {
+        window.location.href = `/auth/verify-2fa?email=${data.data.user.email}`;
+        return;
       }
 
       const user = data.data.user;
-
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
+      router.push("/feed");
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
     }
   };
 
-  // User register function to handle user registration
-  // It accepts a RegisterData object which includes name, email, password, and an optional
+  // 👇 Register function
   const register = async (data: RegisterData) => {
     dispatch({ type: "LOGIN_START" });
     try {
@@ -174,51 +174,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         {
           method: "POST",
           body: formData,
-          credentials: "include", // to accept cookies
+          credentials: "include",
         }
       );
 
       if (!res.ok) throw new Error("Registration failed");
-      const result = await res.json();
 
+      const result = await res.json();
       const user = result.data.user;
 
       localStorage.setItem("user", JSON.stringify(user));
-      router.push("/feed");
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
+      router.push("/feed");
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
     }
   };
 
-  // User logout Function
+  // 👇 Logout function
   const logout = async () => {
     try {
       await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/logout`,
         {
           method: "POST",
-          credentials: "include", // important to send cookies
+          credentials: "include",
         }
       );
 
       localStorage.removeItem("user");
-
       dispatch({ type: "LOGOUT" });
-
-      // Optional: redirect user to login page
       router.push("/auth/login");
     } catch (error) {
       console.error("Logout failed:", error);
     }
   };
-  const updateUser = (data: Partial<IUser>) => {
-    if (!state.user) return;
 
-    const updatedUser = { ...state.user, ...data };
-    localStorage.setItem("user", JSON.stringify(updatedUser));
-    dispatch({ type: "UPDATE_USER", payload: data });
+  // 👇 Update user info
+  const updateUser = (data: Partial<IUser>) => {
+    const current = state.user;
+    if (!current) {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser) as IUser;
+        const updatedUser = { ...parsed, ...data };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        dispatch({
+          type: "LOGIN_SUCCESS",
+          payload: { user: updatedUser, tokens: null },
+        });
+      }
+    } else {
+      const updatedUser = { ...current, ...data };
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      dispatch({ type: "UPDATE_USER", payload: data });
+    }
   };
 
   return (
