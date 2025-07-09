@@ -108,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         dispatch({ type: "LOGIN_FAILURE" });
       }
-    }, 50); // slight delay to ensure localStorage availability
+    }, 100); // slight delay to ensure localStorage availability
 
     return () => clearTimeout(timer);
   }, []);
@@ -183,6 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
+      await new Promise((resolve) => setTimeout(resolve, 200));
       window.location.href = "/feed";
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });

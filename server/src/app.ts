@@ -27,6 +27,9 @@ app.use(cors({
   credentials: true,
 }));
 
+app.set("trust proxy", 1); // ✅ Required when behind proxy (e.g. Webuzo/Nginx)
+
+
 
 // Multer setup (memory storage, max 5MB file size)
 const storage = multer.memoryStorage();
