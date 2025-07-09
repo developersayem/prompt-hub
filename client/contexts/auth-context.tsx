@@ -54,7 +54,13 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isAuthenticated: true,
       };
     case "LOGIN_FAILURE":
-      return { ...state, isLoading: false, isAuthenticated: false };
+      return {
+        ...state,
+        user: null,
+        tokens: null,
+        isLoading: false,
+        isAuthenticated: false,
+      };
     case "LOGOUT":
       return { ...initialState, isLoading: false };
     case "UPDATE_USER":
@@ -91,31 +97,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [state, dispatch] = useReducer(authReducer, initialState);
   const router = useRouter();
 
-  // 👇 Initial user load
+  // ✅ New: On app start, check session by calling /me endpoint
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const storedUser = localStorage.getItem("user");
-
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser);
-          dispatch({
-            type: "LOGIN_SUCCESS",
-            payload: { user, tokens: null },
-          });
-        } catch {
-          localStorage.removeItem("user");
-          dispatch({ type: "LOGIN_FAILURE" });
-        }
-      } else {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/me`,
+          {
+            credentials: "include",
+          }
+        );
+        if (!res.ok) throw new Error("Not authenticated");
+        const data = await res.json();
+        dispatch({
+          type: "LOGIN_SUCCESS",
+          payload: { user: data.data.user, tokens: null },
+        });
+        localStorage.setItem("user", JSON.stringify(data.data.user));
+      } catch {
+        localStorage.removeItem("user");
         dispatch({ type: "LOGIN_FAILURE" });
       }
-    }, 100); // slight delay to ensure localStorage availability
-
-    return () => clearTimeout(timer);
+    };
+    checkAuth();
   }, []);
 
-  // 👇 Login function
   const login = async (email: string, password: string) => {
     dispatch({ type: "LOGIN_START" });
     try {
@@ -144,8 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         throw new Error(data?.message || "Login failed");
       }
 
-      const requiresTwoFactor = data.data.requiresTwoFactor;
-      if (requiresTwoFactor) {
+      if (data.data.requiresTwoFactor) {
         router.push(`/auth/verify-2fa?email=${data.data.user.email}`);
         return;
       }
@@ -153,16 +158,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const user = data.data.user;
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
-      if (res.ok) {
-        router.push("/feed");
-      }
+
+      router.push("/feed");
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
     }
   };
 
-  // 👇 Register function
   const register = async (data: RegisterData) => {
     dispatch({ type: "LOGIN_START" });
     try {
@@ -187,17 +190,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      if (res.ok) {
-        router.push("/feed");
-      }
+
+      router.push("/feed");
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
     }
   };
 
-  // 👇 Logout function
   const logout = async () => {
     try {
       await fetch(
@@ -216,7 +216,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  // 👇 Update user info
   const updateUser = (data: Partial<IUser>) => {
     const current = state.user;
     if (!current) {
@@ -254,8 +253,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };

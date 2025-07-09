@@ -51,6 +51,20 @@ const generateAccessTokenAndRefreshToken = async (
     throw new ApiError(500, "Something went wrong while generating tokens");
   }
 };
+// Controller currently logged in user
+export const getMeController = asyncHandler(async (req: Request, res: Response) => {
+  // Assuming your authentication middleware sets req.userId
+   const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  const user = await User.findById(userId).select("-password -refreshToken");
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  res.json({ data: { user } });
+});
+
 //get user data 
 const userController = asyncHandler(async (req: Request, res: Response) => {
   console.log(req)
