@@ -13,13 +13,13 @@ export default function ProtectedLayout({
 
   useEffect(() => {
     // If not authenticated, redirect to login page
-    if (!isAuthenticated) {
-      window.location.href = "/auth/login";
-    }
+    // if (!isAuthenticated) {
+    //   window.location.href = "/auth/login";
+    // }
   }, [isAuthenticated, router]);
 
   if (isLoading) return <div>Loading...</div>;
-  if (!isAuthenticated) return null;
+  // if (!isAuthenticated) return null;
 
   return <>{children}</>;
 }
