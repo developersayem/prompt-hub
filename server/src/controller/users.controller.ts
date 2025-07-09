@@ -3,7 +3,7 @@ import { Types } from "mongoose";
 import { cookieOptions } from "../utils/cookieOptions";
 import asyncHandler from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
-import { IUser, User } from "../models/users.model";
+import {  User } from "../models/users.model";
 import {
   deleteFromCloudinary,
   uploadOnCloudinary,
@@ -52,7 +52,7 @@ const generateAccessTokenAndRefreshToken = async (
   }
 };
 // Controller currently logged in user
-export const getMeController = asyncHandler(async (req: Request, res: Response) => {
+const getMeController = asyncHandler(async (req: Request, res: Response) => {
   // Assuming your authentication middleware sets req.userId
    const userId = (req as any).user?._id;
   if (!userId) throw new ApiError(401, "Unauthorized");
@@ -638,6 +638,7 @@ const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Res
 
 export { 
   userController,
+  getMeController,
   userRegistrationController,
   loginUserController,
   logoutUser,

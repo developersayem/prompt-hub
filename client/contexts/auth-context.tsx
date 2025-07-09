@@ -97,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [state, dispatch] = useReducer(authReducer, initialState);
   const router = useRouter();
 
-  // ✅ New: On app start, check session by calling /me endpoint
+  // On app start, check session by calling /me endpoint
   useEffect(() => {
     const checkAuth = async () => {
       try {
