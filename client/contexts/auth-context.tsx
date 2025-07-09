@@ -1,6 +1,7 @@
 "use client";
 
 import { IUser } from "@/types/users.type";
+import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 
 interface Tokens {
@@ -88,6 +89,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const router = useRouter();
 
   // 👇 Initial user load
   useEffect(() => {
@@ -144,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const requiresTwoFactor = data.data.requiresTwoFactor;
       if (requiresTwoFactor) {
-        window.location.href = `/auth/verify-2fa?email=${data.data.user.email}`;
+        router.push(`/auth/verify-2fa?email=${data.data.user.email}`);
         return;
       }
 
@@ -154,7 +156,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // ✅ FIX: Add delay before redirect
       await new Promise((resolve) => setTimeout(resolve, 200));
-      window.location.href = "/feed";
+      router.push("/feed");
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
@@ -187,7 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
       await new Promise((resolve) => setTimeout(resolve, 200));
-      window.location.href = "/feed";
+      router.push("/feed");
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
@@ -207,7 +209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       localStorage.removeItem("user");
       dispatch({ type: "LOGOUT" });
-      window.location.href = "/auth/login";
+      router.push("/auth/login");
     } catch (error) {
       console.error("Logout failed:", error);
     }
