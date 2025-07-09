@@ -153,10 +153,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const user = data.data.user;
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
-
-      // ✅ FIX: Add delay before redirect
-      await new Promise((resolve) => setTimeout(resolve, 200));
-      router.push("/feed");
+      if (res.ok) {
+        router.push("/feed");
+      }
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
@@ -189,7 +188,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
       await new Promise((resolve) => setTimeout(resolve, 200));
-      router.push("/feed");
+      if (res.ok) {
+        router.push("/feed");
+      }
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
