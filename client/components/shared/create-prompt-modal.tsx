@@ -75,17 +75,18 @@ export default function CreatePromptModal({
     if (file) setUploadedFile(file);
   };
 
+  // ONLY CHANGED SECTION
+
+  // Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (formData.resultType !== "text" && !uploadedFile) {
       toast.error("Please upload a file for image or video prompts.");
       return;
     }
 
-    // Create and map fields correctly
     const data = new FormData();
-
-    // Append known fields manually with correct keys for backend
     data.append("title", formData.title);
     data.append("description", formData.description);
     data.append("category", formData.category);
@@ -93,17 +94,14 @@ export default function CreatePromptModal({
     data.append("promptText", formData.promptText);
     data.append("resultType", formData.resultType);
     data.append("resultContent", formData.resultContent);
-
-    // 💡 Properly map paymentStatus
     data.append("paymentStatus", formData.paymentStatus);
     if (formData.paymentStatus === "paid") {
       data.append("price", formData.price);
     }
 
-    // Tags (array)
-    formData.tags.forEach((tag) => data.append("tags", tag));
+    // ✅ FIX: send tags as JSON string
+    data.append("tags", JSON.stringify(formData.tags));
 
-    // Upload file if needed
     if (uploadedFile) {
       data.append("promptContent", uploadedFile);
     }
@@ -125,7 +123,6 @@ export default function CreatePromptModal({
 
       toast.success("Prompt created successfully");
       onClose();
-      // Revalidate prompt list after creation
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
       if (err instanceof Error) {
