@@ -1,7 +1,6 @@
 "use client";
 
 import { IUser } from "@/types/users.type";
-import { useRouter } from "next/navigation";
 import React, { createContext, useContext, useReducer, useEffect } from "react";
 
 interface Tokens {
@@ -89,7 +88,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
-  const router = useRouter();
 
   // 👇 Initial user load
   useEffect(() => {
@@ -153,7 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const user = data.data.user;
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
-      router.push("/feed");
+      window.location.href = "/feed";
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
@@ -185,7 +183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
-      router.push("/feed");
+      window.location.href = "/feed";
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
@@ -205,7 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       localStorage.removeItem("user");
       dispatch({ type: "LOGOUT" });
-      router.push("/auth/login");
+      window.location.href = "/auth/login";
     } catch (error) {
       console.error("Logout failed:", error);
     }

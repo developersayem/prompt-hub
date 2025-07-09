@@ -88,7 +88,8 @@ function Verify2FACom() {
       updateUser(data.data.user);
       localStorage.setItem("user", JSON.stringify(data.data.user)); // ✅ Ensure stored
       toast.success("Code verified successfully");
-      router.push("/feed"); // ✅ Redirect
+      // router.push("/feed"); // ✅ Redirect
+      window.location.href = "/feed"; // ✅ Redirect to feed page
     } catch (err: unknown) {
       if (err instanceof Error) {
         toast.error(err.message);
