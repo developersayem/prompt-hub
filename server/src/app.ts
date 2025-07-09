@@ -18,7 +18,13 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://app.shopxet.com",
+    origin: (origin, callback) => {
+      if (!origin || process.env.ALLOWED_ORIGINS?.split(",").includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
