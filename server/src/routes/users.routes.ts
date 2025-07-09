@@ -6,14 +6,12 @@ import { verifyJWT } from "../middlewares/auth.middlewares";
 import { sendCodeLimiter } from "../middlewares/ratelimit.middlewares";
 
 
-
-
 const router = Router()
 
 // Route for get users
 router.get("/", verifyJWT, userController);
+// Route for get current user
 router.get("/me", verifyJWT, getMeController);
-
 // Route for register
 router.route("/register").post(
     upload.fields([{ name: "avatar", maxCount: 1 }]),
@@ -21,7 +19,6 @@ router.route("/register").post(
 )
 // Start Google OAuth
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
-
 // Callback URL after Google authentication
 router.get(
   "/google/callback",
@@ -57,9 +54,6 @@ router.get(
     res.redirect(`${process.env.FRONTEND_URL}/auth/google/success`);
   }
 );
-
-
-
 // Route for verify user
 router.post("/verify", verifyUserController);
 // Route for resend verification code
@@ -80,7 +74,6 @@ router.post("/send-2fa", sendCodeLimiter, verifyJWT, send2FACodeController);
 router.post("/verify-2fa", sendCodeLimiter, verifyTwoFactorCodeController);
 // Route for toggle 2FA
 router.post("/toggle-2fa", sendCodeLimiter, verifyJWT, toggleTwoFactorAuthController);
-
 // Route for update profile
 router.route("/profile").put(
     upload.fields([{ name: "avatar", maxCount: 1 }]),
