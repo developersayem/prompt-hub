@@ -12,6 +12,8 @@ const ratelimit_middlewares_1 = require("../middlewares/ratelimit.middlewares");
 const router = (0, express_1.Router)();
 // Route for get users
 router.get("/", auth_middlewares_1.verifyJWT, users_controller_1.userController);
+// Route for get current user
+router.get("/me", auth_middlewares_1.verifyJWT, users_controller_1.getMeController);
 // Route for register
 router.route("/register").post(multer_middlewares_1.upload.fields([{ name: "avatar", maxCount: 1 }]), users_controller_1.userRegistrationController);
 // Start Google OAuth

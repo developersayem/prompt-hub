@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toggleTwoFactorAuthController = exports.verifyTwoFactorCodeController = exports.send2FACodeController = exports.verifyOTPController = exports.resetPasswordController = exports.changePasswordController = exports.resendVerificationCodeController = exports.verifyUserController = exports.getUserProfileController = exports.updateProfileController = exports.logoutUser = exports.loginUserController = exports.userRegistrationController = exports.userController = void 0;
+exports.toggleTwoFactorAuthController = exports.verifyTwoFactorCodeController = exports.send2FACodeController = exports.verifyOTPController = exports.resetPasswordController = exports.changePasswordController = exports.resendVerificationCodeController = exports.verifyUserController = exports.getUserProfileController = exports.updateProfileController = exports.logoutUser = exports.loginUserController = exports.userRegistrationController = exports.getMeController = exports.userController = void 0;
 const cookieOptions_1 = require("../utils/cookieOptions");
 const asyncHandler_1 = __importDefault(require("../utils/asyncHandler"));
 const ApiError_1 = require("../utils/ApiError");
@@ -36,6 +36,19 @@ const generateAccessTokenAndRefreshToken = async (userId) => {
         throw new ApiError_1.ApiError(500, "Something went wrong while generating tokens");
     }
 };
+// Controller currently logged in user
+const getMeController = (0, asyncHandler_1.default)(async (req, res) => {
+    // Assuming your authentication middleware sets req.userId
+    const userId = req.user?._id;
+    if (!userId)
+        throw new ApiError_1.ApiError(401, "Unauthorized");
+    const user = await users_model_1.User.findById(userId).select("-password -refreshToken");
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ data: { user } });
+});
+exports.getMeController = getMeController;
 //get user data 
 const userController = (0, asyncHandler_1.default)(async (req, res) => {
     console.log(req);

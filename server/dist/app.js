@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.app = exports.upload = void 0;
 const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const multer_1 = __importDefault(require("multer"));
 const loggerMiddleware_1 = require("./middlewares/loggerMiddleware");
@@ -15,24 +16,19 @@ require("./config/passport");
 const app = (0, express_1.default)();
 exports.app = app;
 // Your frontend origin
-const corsMiddleware = (req, res, next) => {
-    const allowedOrigins = (process.env.ALLOWED_ORIGINS || "")
-        .split(",")
-        .map((origin) => origin.trim());
-    const origin = req.headers.origin;
-    if (origin && allowedOrigins.includes(origin)) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-        res.setHeader("Access-Control-Allow-Credentials", "true");
-        res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-        res.setHeader("Access-Control-Allow-Headers", "Origin,Content-Type,Accept,Authorization");
-    }
-    if (req.method === "OPTIONS") {
-        res.sendStatus(204);
-        return;
-    }
-    next(); // Add this line to call the next middleware
-};
-app.use(corsMiddleware);
+// const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map(origin => origin.trim()) || [];
+app.use((0, cors_1.default)({
+    origin: (origin, callback) => {
+        if (!origin || process.env.ALLOWED_ORIGINS?.split(",").includes(origin)) {
+            callback(null, true);
+        }
+        else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true,
+}));
+app.set("trust proxy", 1); // ✅ Required when behind proxy (e.g. Webuzo/Nginx)
 // Multer setup (memory storage, max 5MB file size)
 const storage = multer_1.default.memoryStorage();
 exports.upload = (0, multer_1.default)({
