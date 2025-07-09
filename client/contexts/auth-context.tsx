@@ -97,29 +97,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [state, dispatch] = useReducer(authReducer, initialState);
   const router = useRouter();
 
-  // ✅ New: On app start, check session by calling /me endpoint
+  // TODO: in feature On app start, check session by calling /me endpoint
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/me`,
-          {
-            credentials: "include",
-          }
-        );
-        if (!res.ok) throw new Error("Not authenticated");
-        const data = await res.json();
-        dispatch({
-          type: "LOGIN_SUCCESS",
-          payload: { user: data.data.user, tokens: null },
-        });
-        localStorage.setItem("user", JSON.stringify(data.data.user));
-      } catch {
-        localStorage.removeItem("user");
-        dispatch({ type: "LOGIN_FAILURE" });
-      }
-    };
-    checkAuth();
+    // Check if user data exists in localStorage
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      const user = JSON.parse(storedUser);
+      dispatch({
+        type: "LOGIN_SUCCESS",
+        payload: { user, tokens: null },
+      });
+    } else {
+      // No user in localStorage, consider user as not logged in
+      dispatch({ type: "LOGIN_FAILURE" });
+    }
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -157,7 +148,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const user = data.data.user;
       localStorage.setItem("user", JSON.stringify(user));
-      dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
+      dispatch({
+        type: "LOGIN_SUCCESS",
+        payload: {
+          user,
+          tokens: data.data.accessToken
+            ? {
+                accessToken: data.data.accessToken,
+                refreshToken: data.data.refreshToken || undefined,
+              }
+            : null,
+        },
+      });
 
       router.push("/feed");
     } catch (err) {
