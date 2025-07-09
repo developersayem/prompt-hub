@@ -7,7 +7,7 @@ export const cookieOptions: CookieOptions = {
  httpOnly: true,
   secure: true,
   sameSite: "none",
-  domain: ".shopxet.com", // ✅ update this!
+  domain: "app.shopxet.com", // ✅ update this!
   path: "/",
   maxAge: 24 * 60 * 60 * 1000, // 1 day
 };
