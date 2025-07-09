@@ -14,18 +14,14 @@ import "./config/passport";
 const app = express();
 
 // Your frontend origin
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map(origin => origin.trim()) || [];
+// const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",").map(origin => origin.trim()) || [];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: "https://app.shopxet.com",
+    credentials: true,
+  })
+);
 
 app.set("trust proxy", 1); // ✅ Required when behind proxy (e.g. Webuzo/Nginx)
 
