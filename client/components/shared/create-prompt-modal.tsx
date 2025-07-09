@@ -125,7 +125,7 @@ export default function CreatePromptModal({
 
       toast.success("Prompt created successfully");
       onClose();
-      // ✅ Revalidate prompt list after creation
+      // Revalidate prompt list after creation
       if (onSuccess) onSuccess();
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -378,18 +378,19 @@ export default function CreatePromptModal({
             </div>
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
-            {formData.tags.map((tag) => (
-              <div
-                key={tag}
-                className="flex items-center gap-1 bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm"
-              >
-                <span>#{tag}</span>
-                <X
-                  className="h-3 w-3 cursor-pointer hover:text-red-500"
-                  onClick={() => handleRemoveTag(tag)}
-                />
-              </div>
-            ))}
+            {Array.isArray(formData.tags) &&
+              formData.tags.map((tag) => (
+                <div
+                  key={tag}
+                  className="flex items-center gap-1 bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm"
+                >
+                  <span>#{tag}</span>
+                  <X
+                    className="h-3 w-3 cursor-pointer hover:text-red-500"
+                    onClick={() => handleRemoveTag(tag)}
+                  />
+                </div>
+              ))}
           </div>
 
           {/* ACTION BUTTONS */}
