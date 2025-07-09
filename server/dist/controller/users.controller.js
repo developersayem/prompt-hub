@@ -163,14 +163,10 @@ exports.loginUserController = loginUserController;
 const logoutUser = (0, asyncHandler_1.default)(async (req, res) => {
     const authenticatedReq = req;
     await users_model_1.User.findByIdAndUpdate(authenticatedReq.user._id, { $set: { refreshToken: "" } }, { new: true });
-    const options = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-    };
     res
         .status(200)
-        .clearCookie("accessToken", options)
-        .clearCookie("refreshToken", options)
+        .clearCookie("accessToken", cookieOptions_1.cookieOptions)
+        .clearCookie("refreshToken", cookieOptions_1.cookieOptions)
         .json(new ApiResponse_1.ApiResponse(200, {}, "User logged out successfully"));
 });
 exports.logoutUser = logoutUser;
