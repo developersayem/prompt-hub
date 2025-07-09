@@ -12,10 +12,11 @@ export default function ProtectedLayout({
   const router = useRouter();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push("/auth/login");
+    // If not authenticated, redirect to login page
+    if (!isAuthenticated) {
+      window.location.href = "/auth/login";
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isAuthenticated, router]);
 
   if (isLoading) return <div>Loading...</div>;
   if (!isAuthenticated) return null;
