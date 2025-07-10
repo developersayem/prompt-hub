@@ -28,7 +28,11 @@ const getAllPromptsController = asyncHandler(async (req: Request, res: Response)
 
   const prompts = await Prompt.find(query)
     .sort({ createdAt: -1 })
-    .populate("creator", "-password -refreshToken")
+    .populate({
+    path: "creator",
+    select: "-password -refreshToken",
+    options: { strictPopulate: false },
+    })
     .populate({
       path: "comments",
       match: { parentComment: null },
