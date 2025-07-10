@@ -138,27 +138,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       let data: LoginResponse | null = null;
 
       if (contentType && contentType.includes("application/json")) {
-        data = (await res.json()) as LoginResponse;
+        data = await res.json();
       } else {
-        throw new Error(
-          `Server responded with non-JSON data and status ${res.status}`
-        );
+        throw {
+          status: res.status,
+          message: `Unexpected response format. Status: ${res.status}`,
+        };
       }
 
       if (!res.ok) {
-        throw new Error(data?.message || "Login failed");
+        throw {
+          status: res.status,
+          message: data?.message || "Login failed",
+        };
       }
 
-      if (data.data.requiresTwoFactor) {
+      if (data && data.data.requiresTwoFactor) {
         window.location.href = `/auth/verify-2fa?email=${data.data.user.email}`;
         return;
+      }
+
+      if (!data) {
+        throw new Error("Login response is null");
       }
 
       const user = data.data.user;
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
 
-      window.location.href = "/feed"; // Redirect to feed after login
+      window.location.href = "/feed";
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;

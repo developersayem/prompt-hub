@@ -36,16 +36,6 @@ export function LoginForm({
       [name]: value,
     }));
   };
-  function isErrorWithStatus(
-    error: unknown
-  ): error is { status: number; message: string } {
-    return (
-      typeof error === "object" &&
-      error !== null &&
-      "status" in error &&
-      typeof (error as { status?: unknown }).status === "number"
-    );
-  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -53,22 +43,18 @@ export function LoginForm({
     try {
       await login(formData.email, formData.password);
       toast.success("Login successful!");
-      // window.location.href = "/feed";
     } catch (error: unknown) {
-      if (isErrorWithStatus(error)) {
-        const { status, message } = error;
+      const status = (error as { status?: number })?.status;
+      const message =
+        (error as { message?: string })?.message || "Login failed";
 
-        if (status === 401 && message.toLowerCase().includes("verify")) {
-          window.location.href = "/auth/verify?email=" + formData.email;
-          return;
-        } else {
-          toast.error(message);
-        }
-      } else if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("Login failed");
+      if (status === 401 && message.toLowerCase().includes("verify")) {
+        toast.error("Please verify your email.");
+        window.location.href = "/auth/verify?email=" + formData.email;
+        return;
       }
+
+      toast.error(message);
     }
   };
 
