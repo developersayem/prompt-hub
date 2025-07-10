@@ -1,24 +1,20 @@
 "use client";
 import { useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function GoogleAuthSuccess() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
   useEffect(() => {
-    const user = localStorage.getItem("user");
-
-    if (!user) {
-      // fetch user if needed and store
-      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users`, {
-        credentials: "include",
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          localStorage.setItem("user", JSON.stringify(data.data.user));
-          window.location.href = "/feed";
-        });
-    } else {
-      window.location.href = "/auth/login";
+    if (!isLoading && isAuthenticated && pathname === "/auth/google/success") {
+      router.replace("/feed");
+    } else if (!isLoading && !isAuthenticated) {
+      router.replace("/auth/login");
     }
-  }, []);
+  }, [isAuthenticated, isLoading, pathname, router]);
 
-  return <p>Logging you in with Google...</p>;
+  return <p className="text-center">Logging you in with Google...</p>;
 }
