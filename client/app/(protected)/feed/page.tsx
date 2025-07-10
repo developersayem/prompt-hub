@@ -852,7 +852,7 @@ export default function FeedPage() {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-semibold">
+                          <p className="font-semibold capitalize">
                             {prompt?.creator?.name}
                           </p>
                           <p className="text-sm text-gray-500">
