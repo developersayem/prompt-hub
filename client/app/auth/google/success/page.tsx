@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
-import { toast } from "sonner";
 
 export default function GoogleAuthSuccess() {
   const router = useRouter();
@@ -21,14 +20,15 @@ export default function GoogleAuthSuccess() {
         const data = await res.json();
         localStorage.setItem("user", JSON.stringify(data.data.user));
 
-        // ✅ Manually update context
+        // Manually update context
         updateUser(data.data.user);
-        toast.success("Logged in successfully!");
 
         // router.replace("/feed");
+        window.location.href = "/feed";
       } catch (err) {
         console.error("Google login failed:", err);
         router.replace("/auth/login");
+        window.location.href = "/auth/login";
       }
     };
 
