@@ -2,6 +2,7 @@
 
 import { IUser } from "@/types/users.type";
 import React, { createContext, useContext, useReducer, useEffect } from "react";
+import { toast } from "sonner";
 
 interface Tokens {
   accessToken?: string;
@@ -186,10 +187,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const result = await res.json();
       const user = result.data.user;
 
+      toast.success("Registration successful!");
+      // optionally redirect here e.g.
+      window.location.href = "/auth/verify?step=code&email=" + user.email;
       localStorage.setItem("user", JSON.stringify(user));
       dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
-
-      window.location.href = "/feed"; // Redirect to feed after login
     } catch (err) {
       dispatch({ type: "LOGIN_FAILURE" });
       throw err;
