@@ -9,10 +9,13 @@ export default function GoogleAuthSuccess() {
   const pathname = usePathname();
 
   useEffect(() => {
+    console.log("Auth State →", { isAuthenticated, isLoading });
+
+    if (isLoading) return;
     if (!isLoading && isAuthenticated && pathname === "/auth/google/success") {
-      router.replace("/feed");
+      window.location.href = "/feed";
     } else if (!isLoading && !isAuthenticated) {
-      router.replace("/auth/login");
+      window.location.href = "/auth/login";
     }
   }, [isAuthenticated, isLoading, pathname, router]);
 
