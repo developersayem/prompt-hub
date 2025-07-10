@@ -36,7 +36,7 @@ jobs:
             export PATH="$HOME/.nvm/versions/node/v$(nvm version)/bin:$PATH"
 
             echo "📦 Pulling latest code"
-            /usr/bin/git pull origin main
+            /usr/bin/git fetch origin && /usr/bin/git reset --hard origin/main
 
             echo "📥 Installing deps"
             pnpm install
