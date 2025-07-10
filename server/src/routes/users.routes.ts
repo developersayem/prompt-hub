@@ -4,6 +4,7 @@ import { userRegistrationController, loginUserController, logoutUser, userContro
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
 import { sendCodeLimiter } from "../middlewares/ratelimit.middlewares";
+import { cookieOptions } from "../utils/cookieOptions";
 
 
 const router = Router()
@@ -36,19 +37,9 @@ router.get(
     await user.save();
 
     // Set cookie
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    });
+    res.cookie("accessToken", accessToken, cookieOptions);
 
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
-    });
+    res.cookie("refreshToken", refreshToken, cookieOptions);
 
     // Redirect to frontend
     res.redirect(`${process.env.FRONTEND_URL}/auth/google/success`);
