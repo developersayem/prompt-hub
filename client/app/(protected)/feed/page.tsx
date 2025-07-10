@@ -842,32 +842,34 @@ export default function FeedPage() {
                       >
                         <Avatar>
                           <AvatarImage
-                            src={prompt.creator?.avatar || "/placeholder.svg"}
+                            src={prompt?.creator?.avatar || "/placeholder.svg"}
                           />
                           <AvatarFallback>
-                            {prompt.creator?.name
+                            {prompt?.creator?.name
                               ?.split(" ")
                               .map((n) => n[0])
                               .join("") || "NA"}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-semibold">{prompt.creator.name}</p>
+                          <p className="font-semibold">
+                            {prompt?.creator?.name}
+                          </p>
                           <p className="text-sm text-gray-500">
                             {new Intl.DateTimeFormat("en-US", {
                               year: "numeric",
                               month: "short",
                               day: "numeric",
-                            }).format(new Date(prompt.createdAt))}
+                            }).format(new Date(prompt?.createdAt))}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2 capitalize">
-                        <Badge variant="secondary">{prompt.category}</Badge>
+                        <Badge variant="secondary">{prompt?.category}</Badge>
                         {prompt.paymentStatus === "paid" ? (
                           <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
                             <Coins className="w-3 h-3" />
-                            {prompt.paymentStatus}
+                            {prompt?.paymentStatus}
                           </Badge>
                         ) : (
                           <Badge variant="outline">Free</Badge>
@@ -878,20 +880,20 @@ export default function FeedPage() {
                   <CardContent className="space-y-4">
                     <div>
                       <h3 className="text-xl font-semibold mb-2 capitalize">
-                        {prompt.title}
+                        {prompt?.title}
                       </h3>
                       <div className="text-gray-600 text-sm whitespace-pre-wrap capitalize">
                         {expandedDescriptions[prompt._id]
-                          ? prompt.description
-                          : prompt.description.length > 150
-                          ? `${prompt.description.slice(0, 150)}...`
-                          : prompt.description}
-                        {prompt.description.length > 150 && (
+                          ? prompt?.description
+                          : prompt?.description.length > 150
+                          ? `${prompt?.description.slice(0, 150)}...`
+                          : prompt?.description}
+                        {prompt?.description.length > 150 && (
                           <button
-                            onClick={() => toggleDescription(prompt._id)}
+                            onClick={() => toggleDescription(prompt?._id)}
                             className="text-white hover:underline ml-1"
                           >
-                            {expandedDescriptions[prompt._id]
+                            {expandedDescriptions[prompt?._id]
                               ? "See less"
                               : "See more"}
                           </button>
@@ -901,15 +903,15 @@ export default function FeedPage() {
 
                     {/* Preview Content */}
                     <div className="bg-gray-50 rounded-lg p-4">
-                      {prompt.resultType === "image" ? (
+                      {prompt?.resultType === "image" ? (
                         <Image
                           width={400}
                           height={400}
-                          src={prompt.resultContent || "/placeholder.svg"}
+                          src={prompt?.resultContent || "/placeholder.svg"}
                           alt="Prompt result"
                           className="w-full rounded-lg"
                         />
-                      ) : prompt.resultType === "video" ? (
+                      ) : prompt?.resultType === "video" ? (
                         <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">
                           <video
                             controls
@@ -918,7 +920,7 @@ export default function FeedPage() {
                             poster="/video-thumbnail.png" // optional placeholder
                           >
                             <source
-                              src={prompt.resultContent || ""}
+                              src={prompt?.resultContent || ""}
                               type="video/mp4"
                             />
                             Your browser does not support the video tag.
@@ -927,18 +929,18 @@ export default function FeedPage() {
                       ) : (
                         <div>
                           <p className="text-sm whitespace-pre-wrap text-black capitalize">
-                            {expandedPrompts[prompt._id]
-                              ? prompt.resultContent
-                              : prompt.resultContent.length > 200
-                              ? `${prompt.resultContent.slice(0, 200)}...`
-                              : prompt.resultContent}
+                            {expandedPrompts[prompt?._id]
+                              ? prompt?.resultContent
+                              : prompt?.resultContent.length > 200
+                              ? `${prompt?.resultContent.slice(0, 200)}...`
+                              : prompt?.resultContent}
                           </p>
-                          {prompt.resultContent.length > 200 && (
+                          {prompt?.resultContent.length > 200 && (
                             <button
-                              onClick={() => toggleExpand(prompt._id)}
+                              onClick={() => toggleExpand(prompt?._id)}
                               className="text-blue-500 hover:underline mt-2 text-sm"
                             >
-                              {expandedPrompts[prompt._id]
+                              {expandedPrompts[prompt?._id]
                                 ? "See less"
                                 : "See more"}
                             </button>
@@ -948,7 +950,7 @@ export default function FeedPage() {
                     </div>
                     {/* Tags */}
                     <div className="flex flex-wrap gap-2">
-                      {prompt.tags.map((tag, index) => (
+                      {prompt?.tags.map((tag, index) => (
                         <Badge
                           key={`${tag}-${index}`}
                           variant="outline"
@@ -962,7 +964,7 @@ export default function FeedPage() {
                     {/* AI Model */}
                     <div className="flex items-center text-sm text-gray-500">
                       <Sparkles className="h-4 w-4 mr-1" />
-                      Generated with {prompt.aiModel}
+                      Generated with {prompt?.aiModel}
                     </div>
                     <Separator />
 
@@ -970,7 +972,7 @@ export default function FeedPage() {
                     <div className="flex w-full">
                       {/* Each button gets flex-1 to take equal width */}
                       <Button
-                        onClick={() => handleLikePrompt(prompt._id)}
+                        onClick={() => handleLikePrompt(prompt?._id)}
                         variant="ghost"
                         size="sm"
                         className="flex-1 flex items-center justify-center"
@@ -978,12 +980,12 @@ export default function FeedPage() {
                       >
                         <Heart
                           className={`h-4 w-4 mr-2 ${
-                            prompt.likes.includes(user?._id ?? "")
+                            prompt?.likes.includes(user?._id ?? "")
                               ? "text-red-500"
                               : "text-gray-500"
                           }`}
                         />
-                        {prompt.likes.length}
+                        {prompt?.likes.length}
                       </Button>
 
                       <Button
@@ -993,12 +995,12 @@ export default function FeedPage() {
                         onClick={() =>
                           setOpenComments((prev) => ({
                             ...prev,
-                            [prompt._id]: !prev[prompt._id],
+                            [prompt?._id]: !prev[prompt?._id],
                           }))
                         }
                       >
                         <MessageCircle className="h-4 w-4 mr-2" />
-                        {countAllComments(prompt.comments)}
+                        {countAllComments(prompt?.comments)}
                       </Button>
 
                       <Button
@@ -1016,7 +1018,7 @@ export default function FeedPage() {
                         className="flex-1 flex items-center justify-center"
                       >
                         <Eye className="h-4 w-4 mr-2" />
-                        {prompt.views}
+                        {prompt?.views}
                       </Button>
 
                       <Button
@@ -1026,7 +1028,7 @@ export default function FeedPage() {
                       >
                         <Bookmark className="h-4 w-4" />
                       </Button>
-                      {prompt.paymentStatus === "free" && (
+                      {prompt?.paymentStatus === "free" && (
                         <Button
                           variant="outline"
                           size="sm"
@@ -1037,7 +1039,7 @@ export default function FeedPage() {
                           Copy
                         </Button>
                       )}
-                      {prompt.paymentStatus === "paid" && (
+                      {prompt?.paymentStatus === "paid" && (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -1081,7 +1083,7 @@ export default function FeedPage() {
                       )}
                     </div>
                     <>
-                      {openComments[prompt._id] && (
+                      {openComments[prompt?._id] && (
                         <div className="mt-4 space-y-3 transition-all duration-500 ease-in-out">
                           {/* Add New Comment */}
                           <div className="flex items-start space-x-3">
@@ -1103,18 +1105,18 @@ export default function FeedPage() {
                                 onSubmit={(e) => {
                                   e.preventDefault();
                                   handleAddComment(
-                                    prompt._id,
-                                    newComment[prompt._id] || ""
+                                    prompt?._id,
+                                    newComment[prompt?._id] || ""
                                   );
                                 }}
                               >
                                 <input
                                   type="text"
-                                  value={newComment[prompt._id] || ""}
+                                  value={newComment[prompt?._id] || ""}
                                   onChange={(e) =>
                                     setNewComment((prev) => ({
                                       ...prev,
-                                      [prompt._id]: e.target.value,
+                                      [prompt?._id]: e.target.value,
                                     }))
                                   }
                                   placeholder="Write a comment..."
@@ -1129,17 +1131,17 @@ export default function FeedPage() {
 
                           {/* Show Existing Comments */}
                           <div className="space-y-2 ">
-                            {prompt.comments?.length === 0 && (
+                            {prompt?.comments?.length === 0 && (
                               <p className="text-sm text-gray-400">
                                 No comments yet.
                               </p>
                             )}
-                            {prompt.comments.map((comment) => (
+                            {prompt?.comments.map((comment) => (
                               <CommentThread
-                                key={comment._id}
+                                key={comment?._id}
                                 comment={comment}
                                 currentUserId={user?._id as string}
-                                promptId={prompt._id}
+                                promptId={prompt?._id}
                                 onLike={handleLikeComment}
                                 onReply={handleReply}
                                 onDelete={handleDeleteComment}
