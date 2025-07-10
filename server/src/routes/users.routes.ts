@@ -51,7 +51,7 @@ router.get(
     });
 
     // Redirect to frontend
-    res.redirect(`${process.env.FRONTEND_URL}/auth/google/success`);
+    res.redirect(`${process.env.FRONTEND_URL}/feed`);
   }
 );
 // Route for verify user
