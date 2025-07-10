@@ -14,7 +14,9 @@ router.get("/", verifyJWT, userController);
 // Route for get current user
 router.get("/me", verifyJWT, getMeController);
 // Route for register
-router.route("/register").post(userRegistrationController);
+router.route("/register").post(
+    userRegistrationController
+)
 // Start Google OAuth
 router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
 // Callback URL after Google authentication

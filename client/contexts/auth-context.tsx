@@ -176,16 +176,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const register = async (data: RegisterData) => {
     dispatch({ type: "LOGIN_START" });
     try {
-      const formData = new FormData();
-      Object.entries(data).forEach(([key, value]) => {
-        if (value) formData.append(key, value);
-      });
-
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/register`,
         {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" }, // Important!
+          body: JSON.stringify(data),
           credentials: "include",
         }
       );
@@ -193,16 +189,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (!res.ok) throw new Error("Registration failed");
 
       const result = await res.json();
-      const user = result.data.user;
+
+      // FIX: use `result.data.email` directly since `user` is not returned
+      const userEmail = result.data?.email;
 
       toast.success("Registration successful!");
-      // optionally redirect here e.g.
-      window.location.href = "/auth/verify?step=code&email=" + user.email;
-      localStorage.setItem("user", JSON.stringify(user));
-      dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
-    } catch (err) {
+
+      if (userEmail) {
+        window.location.href = `/auth/verify?step=code&email=${encodeURIComponent(
+          userEmail
+        )}`;
+      } else {
+        window.location.href = "/auth/verify";
+      }
+    } catch (error) {
       dispatch({ type: "LOGIN_FAILURE" });
-      throw err;
+      console.error("Registration error:", error);
+      toast.error("Registration failed. Please try again.");
+      throw error;
     }
   };
 

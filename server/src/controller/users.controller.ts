@@ -73,6 +73,7 @@ const userController = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(200).json(new ApiResponse(200, { user }, "User fetched successfully"));
 })
+//controller for user registration
 const userRegistrationController = asyncHandler(
   async (req: Request, res: Response) => {
     const { name, email, password } = req.body;
@@ -89,22 +90,20 @@ const userRegistrationController = asyncHandler(
     if (existingUser) {
       throw new ApiError(400, "User already exists");
     }
-
-    // Remove avatar validation and upload
-
     // Generate email verification code
     const verificationCode = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
     try {
-      // Create user in DB, without avatar field
+      // Create user in DB
       const user = await User.create({
         name,
         email,
         password,
+        avatar: "",
         isVerified: false,
         verificationCode,
-        verificationCodeExpires: expiresAt,
+        verificationCodeExpires:expiresAt
       });
 
       // Send verification email
