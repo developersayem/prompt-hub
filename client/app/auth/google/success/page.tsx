@@ -1,9 +1,11 @@
 "use client";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function GoogleAuthSuccess() {
   const router = useRouter();
+  const { updateUser } = useAuth();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -18,7 +20,8 @@ export default function GoogleAuthSuccess() {
         const data = await res.json();
         localStorage.setItem("user", JSON.stringify(data.data.user));
 
-        // Optional: manually update AuthContext here if needed
+        // ✅ Manually update context
+        updateUser(data.data.user);
 
         router.replace("/feed");
       } catch (err) {
@@ -28,7 +31,7 @@ export default function GoogleAuthSuccess() {
     };
 
     fetchUser();
-  }, [router]);
+  }, [router, updateUser]);
 
   return <p className="text-center">Logging you in with Google...</p>;
 }
