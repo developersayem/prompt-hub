@@ -77,7 +77,6 @@ const userSchema = new Schema<IUser>(
     avatar: {
       type: String,
       default: "",
-      required: true,
     },
     bio: {
       type: String,

@@ -73,7 +73,6 @@ const userController = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(200).json(new ApiResponse(200, { user }, "User fetched successfully"));
 })
-//controller for user registration
 const userRegistrationController = asyncHandler(
   async (req: Request, res: Response) => {
     const { name, email, password } = req.body;
@@ -91,37 +90,21 @@ const userRegistrationController = asyncHandler(
       throw new ApiError(400, "User already exists");
     }
 
-    const avatarLocalPath = (
-      req.files as { [fieldname: string]: Express.Multer.File[] }
-    )?.avatar?.[0]?.path;
-
-    if (!avatarLocalPath) {
-      throw new ApiError(400, "Avatar is required");
-    }
-
-    let avatar: UploadApiResponse | null = null;
-
-    try {
-      avatar = await uploadOnCloudinary(avatarLocalPath);
-    } catch (error) {
-      console.error("Cloudinary upload failed:", error);
-      throw new ApiError(500, "Failed to upload avatar");
-    }
+    // Remove avatar validation and upload
 
     // Generate email verification code
     const verificationCode = generateVerificationCode();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
 
     try {
-      // Create user in DB
+      // Create user in DB, without avatar field
       const user = await User.create({
         name,
         email,
         password,
-        avatar: avatar?.secure_url,
         isVerified: false,
         verificationCode,
-        verificationCodeExpires:expiresAt
+        verificationCodeExpires: expiresAt,
       });
 
       // Send verification email
@@ -139,7 +122,6 @@ const userRegistrationController = asyncHandler(
       );
     } catch (error) {
       console.error("Error creating user:", error);
-      if (avatar) await deleteFromCloudinary(avatar.public_id);
       throw new ApiError(500, "Failed to create user");
     }
   }

@@ -13,8 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sparkles, Upload } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth-context";
 import GoogleLoginButton from "../shared/google-login-button";
@@ -29,24 +28,10 @@ export function RegisterForm() {
     confirmPassword: "",
   });
 
-  const [avatar, setAvatar] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState<string>("");
   const [error, setError] = useState("");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setAvatar(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -75,7 +60,7 @@ export function RegisterForm() {
         name,
         email,
         password,
-        avatar: avatar || undefined,
+        // removed avatar here
       });
     } catch (err) {
       setError("Registration failed. Please try again.");
@@ -112,24 +97,7 @@ export function RegisterForm() {
               </Alert>
             )}
 
-            <div className="flex justify-center">
-              <div className="relative">
-                <Avatar className="h-20 w-20">
-                  {avatarPreview && <AvatarImage src={avatarPreview} />}
-                  {avatarPreview === "" && (
-                    <AvatarFallback>
-                      <Upload className="h-8 w-8 text-gray-400" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-              </div>
-            </div>
+            {/* Avatar upload removed */}
 
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
