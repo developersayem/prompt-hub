@@ -1,7 +1,8 @@
 "use client";
+
 import { useAuth } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export default function ProtectedLayout({
   children,
@@ -10,10 +11,14 @@ export default function ProtectedLayout({
 }) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const hasRedirected = useRef(false); // prevent multiple redirects
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.replace("/auth/login");
+    if (!isLoading && !isAuthenticated && !hasRedirected.current) {
+      hasRedirected.current = true;
+      setTimeout(() => {
+        router.replace("/auth/login");
+      }, 300); // slight delay allows context to update if needed
     }
   }, [isLoading, isAuthenticated, router]);
 
@@ -22,7 +27,7 @@ export default function ProtectedLayout({
   }
 
   if (!isAuthenticated) {
-    return null; // ⏳ wait while redirecting
+    return null;
   }
 
   return <>{children}</>;

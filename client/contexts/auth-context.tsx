@@ -80,6 +80,7 @@ interface AuthContextType extends AuthState {
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   updateUser: (data: Partial<IUser>) => void;
+  manualLogin: (user: IUser) => void; // add this
 }
 
 interface RegisterData {
@@ -99,6 +100,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // On app start, check session by calling /me endpoint
   useEffect(() => {
     const checkAuth = async () => {
+      const localUser = localStorage.getItem("user");
+      if (localUser) {
+        try {
+          const parsedUser = JSON.parse(localUser);
+          dispatch({
+            type: "LOGIN_SUCCESS",
+            payload: { user: parsedUser, tokens: null },
+          });
+        } catch {
+          localStorage.removeItem("user");
+        }
+      }
+
+      // Delay to allow cookies to be registered by the browser
+      await new Promise((res) => setTimeout(res, 500));
+
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/me`,
@@ -107,19 +124,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           }
         );
         if (!res.ok) throw new Error("Not authenticated");
+
         const data = await res.json();
         dispatch({
           type: "LOGIN_SUCCESS",
           payload: { user: data.data.user, tokens: null },
         });
+
         localStorage.setItem("user", JSON.stringify(data.data.user));
       } catch {
         localStorage.removeItem("user");
         dispatch({ type: "LOGIN_FAILURE" });
       }
     };
+
     checkAuth();
   }, []);
+
+  const manualLogin = (user: IUser) => {
+    localStorage.setItem("user", JSON.stringify(user));
+    dispatch({ type: "LOGIN_SUCCESS", payload: { user, tokens: null } });
+  };
 
   const login = async (email: string, password: string) => {
     dispatch({ type: "LOGIN_START" });
@@ -256,6 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         register,
         logout,
         updateUser,
+        manualLogin, // add h
       }}
     >
       {children}

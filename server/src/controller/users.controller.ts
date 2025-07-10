@@ -166,7 +166,7 @@ const loginUserController = asyncHandler(
       );
     }
 
-    // ✅ If no 2FA, proceed to issue tokens
+    // If no 2FA, proceed to issue tokens
     const { accessToken, refreshToken } =
       await generateAccessTokenAndRefreshToken(user._id as string);
 
@@ -352,9 +352,19 @@ const verifyUserController = asyncHandler(async (req: Request, res: Response) =>
 
   await user.save();
 
+  // get user data without sensitive info
+  const verifiedUser = await User.findById(user._id).select("-password -refreshToken");
+  if (!verifiedUser) throw new ApiError(404, "User not found");
+
+  // proceed to issue tokens
+    const { accessToken, refreshToken } =
+      await generateAccessTokenAndRefreshToken(user._id as string);
+
   res
     .status(200)
-    .json(new ApiResponse(200, {}, "Email verified successfully"));
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(new ApiResponse(200, { user: verifiedUser }, "Email verified successfully"));
 });
 // Controller for resend verification code
 const resendVerificationCodeController = asyncHandler(

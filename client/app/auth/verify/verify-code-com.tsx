@@ -28,8 +28,10 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function VerifyCodeCom() {
+  const { manualLogin } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchParamsEmail = searchParams.get("email");
@@ -52,18 +54,8 @@ export default function VerifyCodeCom() {
     const stepFromUrl = searchParams.get("step");
     if (stepFromUrl === "code") {
       setStep("code");
-      // Remove query params after navigating to "code" step
-      router.replace("/auth/verify");
     }
   }, [searchParams, router]);
-  useEffect(() => {
-    if (step === "success") {
-      const timer = setTimeout(() => {
-        router.push("/auth/login");
-      }, 3000); // 3 seconds
-      return () => clearTimeout(timer);
-    }
-  }, [step, router]);
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,7 +115,6 @@ export default function VerifyCodeCom() {
     }
 
     try {
-      // Replace with your backend call
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/verify`,
         {
@@ -132,27 +123,27 @@ export default function VerifyCodeCom() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ email, code }),
+          credentials: "include", // Include cookies for session management
         }
       );
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Code verification failed");
 
-      if (!res.ok) {
-        throw new Error(data.message || "Code verification failed");
-      }
-
-      toast.success("Code verified successfully");
+      await new Promise((res) => setTimeout(res, 500));
+      manualLogin(data.data.user);
+      await new Promise((res) => setTimeout(res, 500)); // ← additional delay before setting success
       setStep("success");
-      // Clean URL again after success
-      router.replace("/auth/verify");
+
+      toast.success("Verification successful");
+      // redirect to feed
+      router.replace("/feed");
+      // Clean URL after success
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-        toast.error(err.message);
-      } else {
-        setError("Something went wrong");
-        toast.error("Something went wrong");
-      }
+      const errorMessage =
+        err instanceof Error ? err.message : "Something went wrong";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -245,8 +236,8 @@ export default function VerifyCodeCom() {
                   </div>
                 </div>
               </div>
-              <Link href="/auth/login">
-                <Button className="w-full">Continue to Sign In</Button>
+              <Link href="/feed">
+                <Button className="w-full">Continue to Feed</Button>
               </Link>
             </CardContent>
           </Card>
