@@ -24,5 +24,11 @@ export function usePrompts(filters: FiltersType, selectedCategory: string) {
 
   
 // Export the key for use in mutation
-return { prompts: data || [], error, isLoading, mutate, key };
+return {
+  prompts: Array.isArray(data) ? data : [],
+  error,
+  isLoading,
+  mutate,
+  key,
+};
 }
