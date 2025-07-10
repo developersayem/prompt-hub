@@ -13,11 +13,10 @@ import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { TabsContent } from "../ui/tabs";
 import { Card, CardContent } from "../ui/card";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { IPrompt } from "@/types/prompts.type";
 import { toast } from "sonner";
 import countAllComments from "@/utils/count-all-nested-comments";
-import Link from "next/link";
 import Image from "next/image";
 import Masonry from "react-masonry-css";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -33,14 +32,38 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "../ui/alert-dialog";
+import CreatePromptModal from "../shared/create-prompt-modal";
+import useSWR, { mutate } from "swr";
 
 const breakpointColumnsObj = {
   default: 2,
   700: 1,
 };
 
+// SWR fetcher function
+const fetcher = async (url: string) => {
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new Error(`HTTP error! status: ${res.status}`);
+  }
+  const json = await res.json();
+  return Array.isArray(json?.data?.data) ? json.data.data : [];
+};
+
 const MyPromptsTab = ({ value }: { value: string }) => {
-  const [myPrompts, setMyPrompts] = useState<IPrompt[]>([]);
+  const {
+    data: myPrompts = [],
+    error,
+    isLoading,
+  } = useSWR(
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`,
+    fetcher
+  );
+
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedPrompt, setSelectedPrompt] = useState<IPrompt | null>(null);
   const [expandedPrompts, setExpandedPrompts] = useState<
@@ -49,6 +72,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
   const [expandedDescriptions, setExpandedDescriptions] = useState<
     Record<string, boolean>
   >({});
+  const [openCreateModal, setOpenCreateModal] = useState(false);
 
   const openEdit = (prompt: IPrompt) => {
     setSelectedPrompt(prompt);
@@ -64,31 +88,6 @@ const MyPromptsTab = ({ value }: { value: string }) => {
   const toggleDescription = (id: string) => {
     setExpandedDescriptions((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-
-  const fetchPrompts = useCallback(async () => {
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`,
-        {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      const promptsData = Array.isArray(data.data.data) ? data.data.data : [];
-      setMyPrompts(promptsData);
-    } catch (error) {
-      console.error("Error fetching prompts:", error);
-      setMyPrompts([]);
-      toast.error("Failed to fetch prompts.");
-    }
-  }, []);
 
   const deletePrompt = async (prompt: IPrompt) => {
     try {
@@ -108,22 +107,29 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       const data = await response.json();
       toast.success(data.message || "Prompt deleted successfully");
 
-      setMyPrompts((prev) => prev.filter((p) => p._id !== prompt._id));
+      // Revalidate SWR cache to update list
+      await mutate(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`
+      );
     } catch (error) {
       console.error("Error deleting prompt:", error);
       toast.error("Failed to delete prompt.");
     }
   };
 
-  useEffect(() => {
-    fetchPrompts();
-  }, [fetchPrompts]);
-
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
       setIsEditOpen(false);
     }
   };
+
+  if (isLoading) {
+    return <p className="text-center">Loading prompts...</p>;
+  }
+
+  if (error) {
+    return <p className="text-center text-red-500">Failed to load prompts.</p>;
+  }
 
   return (
     <TabsContent
@@ -149,12 +155,19 @@ const MyPromptsTab = ({ value }: { value: string }) => {
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <p className="text-gray-500 mb-4">No prompts found.</p>
-              <Link href="/create">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create First Prompt
-                </Button>
-              </Link>
+              <Button onClick={() => setOpenCreateModal(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Prompt
+              </Button>
+              <CreatePromptModal
+                open={openCreateModal}
+                onClose={() => setOpenCreateModal(false)}
+                onSuccess={() =>
+                  mutate(
+                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`
+                  )
+                }
+              />
             </div>
           </CardContent>
         </Card>
@@ -165,7 +178,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
         className="flex gap-6"
         columnClassName="flex flex-col gap-6"
       >
-        {myPrompts.map((prompt) => (
+        {myPrompts.map((prompt: IPrompt) => (
           <Card key={prompt._id} className="hover:shadow-lg transition-shadow">
             <CardContent className="space-y-4">
               <div className="flex items-start justify-between">
@@ -173,6 +186,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                   <Avatar>
                     <AvatarImage
                       src={prompt.creator.avatar || "/placeholder.svg"}
+                      alt={prompt.creator.name || "User avatar"}
                     />
                     <AvatarFallback>
                       {prompt.creator.name
@@ -221,7 +235,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                   {prompt.description.length > 150 && (
                     <button
                       onClick={() => toggleDescription(prompt._id)}
-                      className="text-white hover:underline ml-1"
+                      className="text-blue-500 hover:underline ml-1"
                     >
                       {expandedDescriptions[prompt._id]
                         ? "See less"
@@ -356,9 +370,23 @@ const MyPromptsTab = ({ value }: { value: string }) => {
           open={isEditOpen}
           prompt={selectedPrompt}
           onClose={() => setIsEditOpen(false)}
-          onSuccess={fetchPrompts} // to refresh after successful update
+          onSuccess={() =>
+            mutate(
+              `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`
+            )
+          }
         />
       )}
+
+      <CreatePromptModal
+        open={openCreateModal}
+        onClose={() => setOpenCreateModal(false)}
+        onSuccess={() =>
+          mutate(
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`
+          )
+        }
+      />
     </TabsContent>
   );
 };
