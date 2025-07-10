@@ -77,9 +77,8 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
     resultContent: rawResultContent,
     aiModel,
     price,
-    paymentStatus, // ⬅ updated from isPaid
+    paymentStatus,
   } = req.body;
-
   // Get the user ID from the authenticated request
   const userId = (req as any).user?._id;
   if (!userId) throw new ApiError(401, "Unauthorized");
@@ -101,11 +100,21 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
     throw new ApiError(400, "Invalid paymentStatus value");
   }
 
-  // Normalize tags
-  const normalizedTags = Array.isArray(tags)
-    ? tags.flatMap((tag: string) => tag.split(",").map((t) => t.trim()))
-    : [];
+  // If tags is a string (from FormData), parse it
+let parsedTags = tags;
+if (typeof tags === "string") {
+  try {
+    parsedTags = JSON.parse(tags);
+  } catch (e) {
+    console.warn("Failed to parse tags JSON:", tags);
+    parsedTags = [];
+  }
+}
 
+// Now normalize
+const normalizedTags = Array.isArray(parsedTags)
+  ? parsedTags.flatMap((tag: string) => tag.split(",").map((t) => t.trim()))
+  : [];
   // Handle resultContent
   let finalResultContent = "";
 
