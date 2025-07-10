@@ -842,13 +842,13 @@ export default function FeedPage() {
                       >
                         <Avatar>
                           <AvatarImage
-                            src={prompt.creator.avatar || "/placeholder.svg"}
+                            src={prompt.creator?.avatar || "/placeholder.svg"}
                           />
                           <AvatarFallback>
-                            {prompt.creator.name
-                              .split(" ")
+                            {prompt.creator?.name
+                              ?.split(" ")
                               .map((n) => n[0])
-                              .join("")}
+                              .join("") || "NA"}
                           </AvatarFallback>
                         </Avatar>
                         <div>
