@@ -23,7 +23,10 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user?.avatar} alt={user?.name || "User"} />
+            <AvatarImage
+              src={user?.avatar || "/default-avatar.png"}
+              alt={user?.name || "User"}
+            />
             <AvatarFallback>
               {user?.name
                 ? user.name.split(" ")[0].charAt(0).toUpperCase()
