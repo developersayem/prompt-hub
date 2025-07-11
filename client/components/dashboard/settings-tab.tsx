@@ -3,10 +3,10 @@
 import { TabsContent } from "../ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
-import { Bell, Mail, Shield, Smartphone } from "lucide-react";
+import { Bell, Loader2, Mail, Shield, Smartphone } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuth } from "@/contexts/auth-context";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Separator } from "../ui/separator";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
@@ -14,25 +14,32 @@ import { Switch } from "../ui/switch";
 import { ChangePasswordComponent } from "./components/settings/password-change";
 import { TwoFactorAuthentication } from "./components/settings/two-factor-authentication";
 import { toast } from "sonner";
-
 const SettingsTab = ({ value }: { value: string }) => {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
 
-  // Initialize state from user settings or default true
   const [settings, setSettings] = useState({
-    emailNotifications: user?.isEmailNotificationEnabled ?? true,
-    pushNotifications: user?.isPushNotificationEnabled ?? true,
-    marketingEmails: user?.isMarketingNotificationEnabled ?? true,
+    emailNotifications: false,
+    pushNotifications: false,
+    marketingEmails: false,
   });
 
-  // Frontend mapping: frontend key => human-readable string
   const settingKeyMap: Record<string, string> = {
     emailNotifications: "Email Notification",
     pushNotifications: "Push Notification",
     marketingEmails: "Marketing Notification",
   };
 
-  // Function to toggle setting on backend and update state accordingly
+  useEffect(() => {
+    if (user) {
+      setSettings({
+        emailNotifications: !!user.isEmailNotificationEnabled,
+        pushNotifications: !!user.isPushNotificationEnabled,
+        marketingEmails: !!user.isMarketingNotificationEnabled,
+      });
+      setLoading(false);
+    }
+  }, [user]);
 
   const toggleSetting = async (key: string, value: boolean) => {
     try {
@@ -43,7 +50,7 @@ const SettingsTab = ({ value }: { value: string }) => {
           headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({
-            setting: settingKeyMap[key], // now e.g. "Email Notification"
+            setting: settingKeyMap[key],
           }),
         }
       );
@@ -54,13 +61,12 @@ const SettingsTab = ({ value }: { value: string }) => {
 
       setSettings((prev) => ({
         ...prev,
-        [key]: data.data[settingKeyMap[key]], // access exactly by mongoose key
+        [key]: data.data[settingKeyMap[key]],
       }));
 
       toast.success(data.message);
     } catch {
       toast.error("Could not update setting");
-      // Revert toggle on error
       setSettings((prev) => ({
         ...prev,
         [key]: !value,
@@ -69,13 +75,20 @@ const SettingsTab = ({ value }: { value: string }) => {
   };
 
   const handleSettingChange = (key: string, checked: boolean) => {
-    // Optimistically update UI
     setSettings((prev) => ({
       ...prev,
       [key]: checked,
     }));
     toggleSetting(key, checked);
   };
+
+  if (loading || !user) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="animate-spin h-5 w-5" />
+      </div>
+    );
+  }
 
   return (
     <TabsContent value={value} className="space-y-6">

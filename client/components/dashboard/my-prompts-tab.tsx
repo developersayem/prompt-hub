@@ -56,11 +56,7 @@ const fetcher = async (url: string) => {
 };
 
 const MyPromptsTab = ({ value }: { value: string }) => {
-  const {
-    data: myPrompts = [],
-    error,
-    isLoading,
-  } = useSWR(
+  const { data: myPrompts = [] } = useSWR(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`,
     fetcher
   );
@@ -122,10 +118,6 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       setIsEditOpen(false);
     }
   };
-
-  if (isLoading) return <p className="text-center">Loading prompts...</p>;
-  if (error)
-    return <p className="text-center text-red-500">Failed to load prompts.</p>;
 
   return (
     <TabsContent
