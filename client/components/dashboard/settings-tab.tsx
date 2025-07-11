@@ -25,41 +25,42 @@ const SettingsTab = ({ value }: { value: string }) => {
     marketingEmails: user?.isMarketingNotificationEnabled ?? true,
   });
 
-  // Map frontend keys to backend keys for API route param
+  // Frontend mapping: frontend key => human-readable string
   const settingKeyMap: Record<string, string> = {
-    emailNotifications: "isEmailNotificationEnabled",
-    pushNotifications: "isPushNotificationEnabled",
-    marketingEmails: "isMarketingNotificationEnabled",
+    emailNotifications: "Email Notification",
+    pushNotifications: "Push Notification",
+    marketingEmails: "Marketing Notification",
   };
 
   // Function to toggle setting on backend and update state accordingly
+
   const toggleSetting = async (key: string, value: boolean) => {
-    const backendKey = settingKeyMap[key];
     try {
       const res = await fetch(
-        `http://localhost:5000/api/v1/user/toggle-notification/${backendKey}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/toggle-notification`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
+          body: JSON.stringify({
+            setting: settingKeyMap[key], // now e.g. "Email Notification"
+          }),
         }
       );
 
-      if (!res.ok) {
-        throw new Error("Failed to toggle setting");
-      }
+      if (!res.ok) throw new Error("Failed to toggle setting");
 
       const data = await res.json();
 
       setSettings((prev) => ({
         ...prev,
-        [key]: data.data[backendKey],
+        [key]: data.data[settingKeyMap[key]], // access exactly by mongoose key
       }));
 
       toast.success(data.message);
     } catch {
       toast.error("Could not update setting");
-      // Revert the toggle on error
+      // Revert toggle on error
       setSettings((prev) => ({
         ...prev,
         [key]: !value,
