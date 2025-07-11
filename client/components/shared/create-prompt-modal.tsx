@@ -107,7 +107,6 @@ export default function CreatePromptModal({
     }
 
     try {
-      console.log("Submitting prompt:", formData);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/create`,
         {
@@ -121,6 +120,21 @@ export default function CreatePromptModal({
         const error = await res.json();
         throw new Error(error.message || "Failed to create prompt");
       }
+
+      // Clear form data
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        aiModel: "",
+        promptText: "",
+        resultType: "text",
+        resultContent: "",
+        tags: [],
+        paymentStatus: "free",
+        price: "",
+      });
+      setUploadedFile(null);
 
       toast.success("Prompt created successfully");
       onClose();
