@@ -13,7 +13,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth-context";
 import GoogleLoginButton from "../shared/google-login-button";
@@ -73,15 +72,9 @@ export function RegisterForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <div className="flex items-center justify-center space-x-3 mb-6">
-          <div className="relative">
-            <Sparkles className="h-10 w-10 text-blue-600" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full animate-pulse"></div>
-          </div>
-          <div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Prompt Hub
-            </span>
-          </div>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-50 tracking-tight">
+            PastPrompt
+          </h1>
         </div>
         <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
         <CardDescription>

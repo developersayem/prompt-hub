@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, Sparkles } from "lucide-react";
+import { Search, Plus } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { UserNav } from "@/components/dashboard/components/profile/user-nav";
@@ -32,8 +32,10 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Link href="/" className="flex items-center space-x-2">
-                <Sparkles className="h-8 w-8 text-blue-600" />
-                <span className="text-xl font-bold">Prompt Hub</span>
+                {/* <Sparkles className="h-8 w-8 text-blue-600" /> */}
+                <h1 className="text-2xl ml-5 font-bold text-slate-800 dark:text-slate-50 tracking-tight">
+                  PastPrompt
+                </h1>
               </Link>
             </div>
 

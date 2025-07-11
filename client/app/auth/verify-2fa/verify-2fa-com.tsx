@@ -18,7 +18,6 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp";
-import { Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 
 function Verify2FACom() {
@@ -107,9 +106,8 @@ function Verify2FACom() {
         <Card className="shadow-2xl">
           <CardHeader className="text-center pb-6">
             <div className="flex items-center justify-center space-x-3 mb-6">
-              <Sparkles className="h-10 w-10 text-blue-600" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Prompt Hub
+              <h1 className="text-2xl ml-5 font-bold text-slate-800 dark:text-slate-50 tracking-tight">
+                PastPrompt
               </h1>
             </div>
             <CardTitle className="text-2xl font-bold">

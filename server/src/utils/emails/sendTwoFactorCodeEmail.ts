@@ -18,7 +18,7 @@ export const sendTwoFactorCodeEmail = async (to: string, code: string) => {
   });
 
   const mailOptions = {
-    from: `"PromptHub Security" <${process.env.SMTP_USER}>`,
+    from: `"PastPrompt Security" <${process.env.SMTP_USER}>`,
     to,
     subject: "Your 2FA Verification Code",
     html: `

@@ -18,11 +18,11 @@ export const sendVerificationEmail = async (to: string, code: string) => {
   });
 
   const mailOptions = {
-    from: `"PromptHub" <${process.env.SMTP_USER}>`,
+    from: `"PastPrompt" <${process.env.SMTP_USER}>`,
     to,
     subject: "Verify your email address",
     html: `
-      <h2>Welcome to PromptHub 👋</h2>
+      <h2>Welcome to PastPrompt 👋</h2>
       <p>Your verification code is:</p>
       <h1 style="color: #4f46e5;">${code}</h1>
       <p>Use this code to verify your email. It expires in 10 minutes.</p>

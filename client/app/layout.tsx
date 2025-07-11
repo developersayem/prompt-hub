@@ -9,7 +9,7 @@ import { Toaster } from "sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "PromptHub - AI Prompt Directory",
+  title: "PastPrompt - AI Prompt Directory",
   description: "Discover, share, and monetize AI prompts",
 };
 
@@ -27,7 +27,7 @@ export default function RootLayout({
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange={false}
-          storageKey="prompthub-theme"
+          storageKey="pastprompt-theme"
         >
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>

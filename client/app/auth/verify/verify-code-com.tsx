@@ -12,13 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Sparkles,
-  Mail,
-  CheckCircle,
-  AlertCircle,
-  MailCheck,
-} from "lucide-react";
+import { Mail, CheckCircle, AlertCircle, MailCheck } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -252,9 +246,9 @@ export default function VerifyCodeCom() {
         <Card className="shadow-2xl">
           <CardHeader className="text-center pb-6">
             <div className="flex items-center justify-center space-x-3 mb-6">
-              <Sparkles className="h-10 w-10 text-blue-600" />
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                Prompt Hub
+              {/* <Sparkles className="h-10 w-10 text-blue-600" /> */}
+              <h1 className="text-2xl ml-5 font-bold text-slate-800 dark:text-slate-50 tracking-tight">
+                PastPrompt
               </h1>
             </div>
             <CardTitle className="text-2xl font-bold">
