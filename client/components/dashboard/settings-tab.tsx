@@ -1,72 +1,91 @@
 "use client";
 
 import { TabsContent } from "../ui/tabs";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Badge } from "../ui/badge";
-import {
-  // AlertTriangle,
-  Bell,
-  // Download,
-  // Globe,
-  Mail,
-  Shield,
-  Smartphone,
-  // Trash2,
-} from "lucide-react";
+import { Bell, Mail, Shield, Smartphone } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { Separator } from "../ui/separator";
 import { Label } from "../ui/label";
-import { Input } from "../ui/input";
 import { Switch } from "../ui/switch";
 
 import { ChangePasswordComponent } from "./components/settings/password-change";
 import { TwoFactorAuthentication } from "./components/settings/two-factor-authentication";
+import { toast } from "sonner";
 
 const SettingsTab = ({ value }: { value: string }) => {
   const { user } = useAuth();
 
+  // Initialize state from user settings or default true
   const [settings, setSettings] = useState({
-    emailNotifications: true,
-    pushNotifications: false,
-    marketingEmails: true,
-    profileVisibility: "public",
-    twoFactorAuth: false,
-    dataSharing: false,
+    emailNotifications: user?.isEmailNotificationEnabled ?? true,
+    pushNotifications: user?.isPushNotificationEnabled ?? true,
+    marketingEmails: user?.isMarketingNotificationEnabled ?? true,
   });
 
-  const handleSettingChange = (key: string, value: boolean | string) => {
-    setSettings((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
+  // Map frontend keys to backend keys for API route param
+  const settingKeyMap: Record<string, string> = {
+    emailNotifications: "isEmailNotificationEnabled",
+    pushNotifications: "isPushNotificationEnabled",
+    marketingEmails: "isMarketingNotificationEnabled",
   };
 
-  // const handleExportData = () => {
-  //   console.log("Exporting user data...");
-  // };
+  // Function to toggle setting on backend and update state accordingly
+  const toggleSetting = async (key: string, value: boolean) => {
+    const backendKey = settingKeyMap[key];
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/v1/user/toggle-notification/${backendKey}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
 
-  // const handleDeleteAccount = () => {
-  //   console.log("Account deletion requested...");
-  // };
+      if (!res.ok) {
+        throw new Error("Failed to toggle setting");
+      }
+
+      const data = await res.json();
+
+      setSettings((prev) => ({
+        ...prev,
+        [key]: data.data[backendKey],
+      }));
+
+      toast.success(data.message);
+    } catch {
+      toast.error("Could not update setting");
+      // Revert the toggle on error
+      setSettings((prev) => ({
+        ...prev,
+        [key]: !value,
+      }));
+    }
+  };
+
+  const handleSettingChange = (key: string, checked: boolean) => {
+    // Optimistically update UI
+    setSettings((prev) => ({
+      ...prev,
+      [key]: checked,
+    }));
+    toggleSetting(key, checked);
+  };
 
   return (
     <TabsContent value={value} className="space-y-6">
-      <div className="">
+      <div>
         <Card className="w-full ">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Account Settings</CardTitle>
-              <CardDescription>
+              <p className="text-sm text-muted-foreground">
                 Manage your account preferences and security
-              </CardDescription>
+              </p>
             </div>
           </CardHeader>
 
@@ -83,7 +102,12 @@ const SettingsTab = ({ value }: { value: string }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Email Address</Label>
-                    <Input value={user?.email} disabled />
+                    <input
+                      type="email"
+                      value={user?.email ?? ""}
+                      disabled
+                      className="input input-bordered w-full"
+                    />
                   </div>
                   <div className="space-y-4">
                     <Label>Account Status</Label>
@@ -185,73 +209,6 @@ const SettingsTab = ({ value }: { value: string }) => {
                 </div>
               </CardContent>
             </Card>
-
-            {/* TODO: Implement in future Data & Privacy */}
-            {/* <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Globe className="w-5 h-5" />
-                  Data & Privacy
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-1">
-                    <Label>Data Sharing</Label>
-                    <p className="text-sm text-gray-600">
-                      Allow anonymous usage data collection
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.dataSharing}
-                    onCheckedChange={(checked) =>
-                      handleSettingChange("dataSharing", checked)
-                    }
-                  />
-                </div>
-
-                <Separator />
-
-                <div className="space-y-2">
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start"
-                    onClick={handleExportData}
-                  >
-                    <Download className="w-4 h-4 mr-2" />
-                    Export My Data
-                  </Button>
-                  <p className="text-xs text-gray-600">
-                    Download a copy of all your data
-                  </p>
-                </div>
-              </CardContent>
-            </Card> */}
-
-            {/* TODO: Implement in future Danger Zone */}
-            {/* <Card className="border-red-200">
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2 text-red-600">
-                  <AlertTriangle className="w-5 h-5" />
-                  Danger Zone
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-medium text-red-600">Delete Account</h4>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Permanently delete your account and all associated data.
-                      This action cannot be undone.
-                    </p>
-                    <Button variant="destructive" onClick={handleDeleteAccount}>
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Delete Account
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card> */}
           </CardContent>
         </Card>
       </div>

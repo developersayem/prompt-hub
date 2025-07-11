@@ -21,6 +21,9 @@ export interface IUser {
   isVerified: boolean;
   verificationCodeExpires: Date | null;
   lastVerificationSentAt: Date | null;
+  isEmailNotificationEnabled: boolean;
+  isPushNotificationEnabled: boolean;
+  isMarketingNotificationEnabled: boolean;
   prompt: [];
   purchasedPrompts: string[];
   bookmarks: [];
