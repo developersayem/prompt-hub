@@ -647,12 +647,11 @@ const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Res
 //     );
 // });
 // Controller for toggle notifications settings on/off
-// Controller for toggle notifications settings on/off
 const toggleNotificationSetting = asyncHandler(
   async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?._id;
-      const { setting } = req.params;
+      const setting = req.body.setting as string;
 
       // Map of human-readable labels to IUser keys
       const settingMap = {
@@ -661,21 +660,25 @@ const toggleNotificationSetting = asyncHandler(
         "Marketing Notification": "isMarketingNotificationEnabled",
       } as const;
 
-      type SettingLabel = keyof typeof settingMap;
-      type SettingKey = typeof settingMap[SettingLabel];
+      type SettingLabel = keyof typeof settingMap; // "Email Notification" | "Push Notification" | "Marketing Notification"
+      type SettingKey = typeof settingMap[SettingLabel]; // "isEmailNotificationEnabled" | "isPushNotificationEnabled" | "isMarketingNotificationEnabled"
 
+      // Runtime check: ensure `setting` is a valid key of settingMap
       if (!(setting in settingMap)) {
         return res.status(400).json({ message: "Invalid setting key." });
       }
 
-      const fieldKey = settingMap[setting as SettingLabel];
+      // TS now knows setting is SettingLabel
+      const safeSetting = setting as SettingLabel;
+      const fieldKey: SettingKey = settingMap[safeSetting];
 
       const user = await User.findById(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found." });
       }
 
-      const currentValue = user[fieldKey];
+      // Toggle the current value safely with type checking
+      const currentValue = user[fieldKey] as boolean;
       user[fieldKey] = !currentValue;
 
       await user.save();
