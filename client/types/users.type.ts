@@ -22,7 +22,7 @@ export interface IUser {
   verificationCodeExpires: Date | null;
   lastVerificationSentAt: Date | null;
   prompt: [];
-  purchasedPrompts: [];
+  purchasedPrompts: string[];
   bookmarks: [];
   refreshToken: string;
   createdAt: string;

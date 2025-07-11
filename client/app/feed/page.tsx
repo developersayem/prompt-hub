@@ -436,25 +436,25 @@ export default function FeedPage() {
     });
   };
 
-  //Function for copy prompt
   const handleCopyPrompt = async (prompt: IPrompt) => {
     try {
       if (!prompt) return;
-      if (prompt.paymentStatus === "free") {
-        console.log("promptId:", prompt._id);
+
+      const isOwner = prompt.creator?._id === user?._id;
+      const isFree = prompt.paymentStatus === "free";
+      const isPurchased = user?.purchasedPrompts?.includes(prompt._id);
+
+      // Copy directly if allowed
+      if (isFree || isOwner || isPurchased) {
         await navigator.clipboard.writeText(prompt.promptText);
         toast.success("Prompt copied to clipboard");
+        return;
       }
-    } catch (error) {
-      console.error("Error copying prompt", error);
-    }
-  };
-  // Function for buying prompt
-  const handleBuyPrompt = async (prompt: IPrompt) => {
-    try {
-      if (handleProtectedAction()) return;
-      if (!prompt || prompt.paymentStatus !== "paid") return;
 
+      // User not logged in
+      if (handleProtectedAction()) return;
+
+      // Purchase prompt
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/${prompt._id}/buy`,
         {
@@ -462,33 +462,28 @@ export default function FeedPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", // cookies for auth
+          credentials: "include",
         }
       );
 
       const data = await response.json();
 
       if (!response.ok) {
-        const serverMessage =
-          (data as { message?: string })?.message ||
-          "Purchase failed. Try again.";
-        throw new Error(serverMessage);
+        throw new Error(data?.message || "Purchase failed. Try again.");
       }
 
-      // ✅ Update user credits
-      updateUser({ credits: data.data.updatedCredits });
+      // Update user context with new credits and purchased prompt
+      updateUser({
+        credits: data.data.updatedCredits,
+        purchasedPrompts: [...(user?.purchasedPrompts || []), prompt._id],
+      });
 
-      // ✅ Copy prompt text to clipboard
+      // Copy prompt after purchase
       await navigator.clipboard.writeText(prompt.promptText);
-
       toast.success("Prompt purchased and copied to clipboard");
-    } catch (error: unknown) {
-      console.error("Buy Prompt Error:", error);
-      if (error instanceof Error) {
-        toast.error("Failed to purchase the prompt");
-      } else {
-        toast.error("Failed to purchase the prompt");
-      }
+    } catch (error) {
+      console.error("Error using prompt:", error);
+      toast.error("Failed to use this prompt");
     }
   };
 
@@ -1058,7 +1053,9 @@ export default function FeedPage() {
                       >
                         <Bookmark className="h-4 w-4" />
                       </Button>
-                      {prompt?.paymentStatus === "free" && (
+                      {prompt?.paymentStatus === "free" ||
+                      prompt.creator._id === user?._id ||
+                      user?.purchasedPrompts?.includes(prompt._id) ? (
                         <Button
                           variant="outline"
                           size="sm"
@@ -1068,8 +1065,7 @@ export default function FeedPage() {
                           <Clipboard className="h-4 w-4 mr-2" />
                           Copy
                         </Button>
-                      )}
-                      {prompt?.paymentStatus === "paid" && (
+                      ) : (
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -1084,28 +1080,19 @@ export default function FeedPage() {
                           <AlertDialogContent>
                             <AlertDialogHeader>
                               <AlertDialogTitle>
-                                Are you absolutely sure?
+                                Buy this prompt?
                               </AlertDialogTitle>
                               <AlertDialogDescription>
-                                This action cannot be undone. This will
-                                permanently delete your account and remove your
-                                data from our servers.
+                                You’ll be charged and the prompt will be copied
+                                after purchase.
                               </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
-                              <AlertDialogCancel
-                                onClick={() => {
-                                  toast.error("Action cancelled");
-                                }}
-                              >
-                                Cancel
-                              </AlertDialogCancel>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
                               <AlertDialogAction
-                                onClick={() => {
-                                  handleBuyPrompt(prompt);
-                                }}
+                                onClick={() => handleCopyPrompt(prompt)}
                               >
-                                Continue
+                                Buy & Copy
                               </AlertDialogAction>
                             </AlertDialogFooter>
                           </AlertDialogContent>
