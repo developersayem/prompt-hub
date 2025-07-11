@@ -147,10 +147,15 @@ const SettingsTab = ({ value }: { value: string }) => {
 
                 {/* Password Change Flow */}
                 <ChangePasswordComponent />
-                {/* Manage Connected Devices button */}
+                {/* TODO: Manage Connected Devices button */}
                 <Button variant="outline" className="w-full justify-start">
-                  <Smartphone className="w-4 h-4 mr-2" />
-                  Manage Connected Devices
+                  <div className="flex items-center">
+                    <Smartphone className="w-4 h-4 mr-2" />
+                    Manage Connected Devices
+                  </div>
+                  <Badge variant="outline" className="ml-auto text-red-500">
+                    Coming soon
+                  </Badge>
                 </Button>
               </CardContent>
             </Card>
