@@ -1,6 +1,6 @@
 import { Router } from "express";
 import passport from "passport";
-import { userRegistrationController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController, verifyTwoFactorCodeController, toggleTwoFactorAuthController, send2FACodeController, getMeController } from "../controller/users.controller";
+import { userRegistrationController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController, verifyTwoFactorCodeController, toggleTwoFactorAuthController, send2FACodeController, getMeController, toggleNotificationSetting } from "../controller/users.controller";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
 import { sendCodeLimiter } from "../middlewares/ratelimit.middlewares";
@@ -72,5 +72,7 @@ router.route("/profile").put(
 );
 // Route for public profile info
 router.get("/profile/basic/:userId", getUserProfileController);
+// Route from toggle notification settings on/off
+router.patch("/toggle-notification/:setting", verifyJWT, toggleNotificationSetting);
 
 export default router

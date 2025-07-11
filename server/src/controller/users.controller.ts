@@ -3,7 +3,7 @@ import { Types } from "mongoose";
 import { cookieOptions } from "../utils/cookieOptions";
 import asyncHandler from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
-import {  User } from "../models/users.model";
+import {  IUser, User } from "../models/users.model";
 import { Prompt } from "../models/prompts.model";
 import { Like } from "../models/like.model";
 import { Comment } from "../models/comments.model";
@@ -646,7 +646,55 @@ const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Res
 //       new ApiResponse(200, {}, "User account soft deleted successfully")
 //     );
 // });
+// Controller for toggle notifications settings on/off
+// Controller for toggle notifications settings on/off
+const toggleNotificationSetting = asyncHandler(
+  async (req: Request, res: Response) => {
+    try {
+      const userId = (req as any).user?._id;
+      const { setting } = req.params;
 
+      // Map of human-readable labels to IUser keys
+      const settingMap = {
+        "Email Notification": "isEmailNotificationEnabled",
+        "Push Notification": "isPushNotificationEnabled",
+        "Marketing Notification": "isMarketingNotificationEnabled",
+      } as const;
+
+      type SettingLabel = keyof typeof settingMap;
+      type SettingKey = typeof settingMap[SettingLabel];
+
+      if (!(setting in settingMap)) {
+        return res.status(400).json({ message: "Invalid setting key." });
+      }
+
+      const fieldKey = settingMap[setting as SettingLabel];
+
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+
+      const currentValue = user[fieldKey];
+      user[fieldKey] = !currentValue;
+
+      await user.save();
+
+      const statusText = user[fieldKey] ? "enabled" : "disabled";
+
+      return res.status(200).json(
+        new ApiResponse(
+          200,
+          { [fieldKey]: user[fieldKey] },
+          `${setting} has been ${statusText}.`
+        )
+      );
+    } catch (error) {
+      console.error("Toggle notification setting error:", error);
+      return res.status(500).json({ message: "Something went wrong." });
+    }
+  }
+);
 
 
 
@@ -667,5 +715,6 @@ export {
   send2FACodeController,
   verifyTwoFactorCodeController,
   toggleTwoFactorAuthController,
-  // softDeleteUserAccount
+  // softDeleteUserAccount,
+  toggleNotificationSetting
 };

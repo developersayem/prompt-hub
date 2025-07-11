@@ -33,6 +33,9 @@ export interface IUser extends Document {
   credits: number;
   isGoogleAuthenticated?: boolean;
   isCertified?: boolean;
+  isEmailNotificationEnabled: boolean;
+  isPushNotificationEnabled: boolean;
+  isMarketingNotificationEnabled: boolean;
   // isDeleted: boolean;
   // deletedAt: Date | null;
   prompts: mongoose.Schema.Types.ObjectId[];
@@ -88,6 +91,18 @@ const userSchema = new Schema<IUser>(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    isEmailNotificationEnabled: {
+      type: Boolean,
+      default: true,
+    },
+    isPushNotificationEnabled: {
+      type: Boolean,
+      default: true,
+    },
+    isMarketingNotificationEnabled: {
+      type: Boolean,
+      default: true,
     },
     verificationCode: {
       type: String,
