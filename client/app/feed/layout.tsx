@@ -11,12 +11,14 @@ import RightSidebar from "@/components/feed/right-sidebar";
 import LeftSidebar from "@/components/feed/left-sidebar";
 import CreatePromptModal from "@/components/shared/create-prompt-modal";
 import { usePrompts } from "@/hooks/usePrompts";
+import { useAuth } from "@/contexts/auth-context";
 
 interface FeedLayoutProps {
   children: React.ReactNode;
 }
 
 export default function FeedLayout({ children }: FeedLayoutProps) {
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const filters = { resultType: "all" };
@@ -52,10 +54,12 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Button onClick={() => setOpenCreateModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Prompt
-              </Button>
+              {user && (
+                <Button onClick={() => setOpenCreateModal(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Prompt
+                </Button>
+              )}
               <CreatePromptModal
                 open={openCreateModal}
                 onClose={() => setOpenCreateModal(false)}

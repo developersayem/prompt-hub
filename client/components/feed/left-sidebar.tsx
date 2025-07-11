@@ -84,19 +84,21 @@ export default function LeftSidebar() {
           </CardContent>
         </Card>
         {/* user credits Card */}
-        <Card className="sticky">
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Coins className="w-4 h-4 text-yellow-500" />
-                <span className="text-sm font-medium">Credits</span>
+        {user && (
+          <Card className="sticky">
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Coins className="w-4 h-4 text-yellow-500" />
+                  <span className="text-sm font-medium">Credits</span>
+                </div>
+                <Badge variant="secondary" className="font-mono">
+                  {user?.credits.toLocaleString()}
+                </Badge>
               </div>
-              <Badge variant="secondary" className="font-mono">
-                {user?.credits.toLocaleString()}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

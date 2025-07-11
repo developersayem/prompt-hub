@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const protectedRoutes = ["/feed", "/create"];
+const protectedRoutes = ["/create"];
 
 export function middleware(req: NextRequest) {
   const token = req.cookies.get("accessToken");
@@ -17,5 +17,6 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/feed", "/create"],
+  matcher: ["/create"], // no more /feed here
 };
+

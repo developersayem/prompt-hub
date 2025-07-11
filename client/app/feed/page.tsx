@@ -53,6 +53,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { usePrompts } from "@/hooks/usePrompts";
+import LoginPromptModal from "@/components/feed/LoginPromptModal";
 
 export default function FeedPage() {
   const { user, updateUser } = useAuth();
@@ -78,6 +79,16 @@ export default function FeedPage() {
   const [expandedDescriptions, setExpandedDescriptions] = useState<
     Record<string, boolean>
   >({});
+
+  const [showLoginModal, setShowLoginModal] = useState(false);
+
+  const handleProtectedAction = () => {
+    if (!user?._id) {
+      setShowLoginModal(true);
+      return true; // Block action
+    }
+    return false; // Allow action
+  };
 
   const { prompts, isLoading, error, mutate } = usePrompts(
     filters,
@@ -441,6 +452,7 @@ export default function FeedPage() {
   // Function for buying prompt
   const handleBuyPrompt = async (prompt: IPrompt) => {
     try {
+      if (handleProtectedAction()) return;
       if (!prompt || prompt.paymentStatus !== "paid") return;
 
       const response = await fetch(
@@ -485,6 +497,7 @@ export default function FeedPage() {
     console.log(userId);
 
     try {
+      if (handleProtectedAction()) return;
       setIsLoadingPublicProfile(true);
       setShowPublicProfile(true);
       const response = await fetch(
@@ -796,7 +809,12 @@ export default function FeedPage() {
                 </CardContent>
               </Card>
             )}
-
+            {/* Login Prompt Modal */}
+            {/* Show login modal if user is not logged in */}
+            <LoginPromptModal
+              open={showLoginModal}
+              onClose={() => setShowLoginModal(false)}
+            />
             {/* Empty State */}
             {!isLoading && !error && prompts.length === 0 && (
               <Card>
@@ -972,7 +990,10 @@ export default function FeedPage() {
                     <div className="flex w-full">
                       {/* Each button gets flex-1 to take equal width */}
                       <Button
-                        onClick={() => handleLikePrompt(prompt?._id)}
+                        onClick={() => {
+                          if (handleProtectedAction()) return;
+                          handleLikePrompt(prompt?._id);
+                        }}
                         variant="ghost"
                         size="sm"
                         className="flex-1 flex items-center justify-center"
@@ -992,18 +1013,23 @@ export default function FeedPage() {
                         variant="ghost"
                         size="sm"
                         className="flex-1 flex items-center justify-center"
-                        onClick={() =>
+                        onClick={() => {
+                          if (handleProtectedAction()) return;
                           setOpenComments((prev) => ({
                             ...prev,
                             [prompt?._id]: !prev[prompt?._id],
-                          }))
-                        }
+                          }));
+                        }}
                       >
                         <MessageCircle className="h-4 w-4 mr-2" />
                         {countAllComments(prompt?.comments)}
                       </Button>
 
                       <Button
+                        onClick={() => {
+                          if (handleProtectedAction()) return;
+                          // setOpenShareModal(true);
+                        }}
                         variant="ghost"
                         size="sm"
                         className="flex-1 flex items-center justify-center"
@@ -1022,6 +1048,10 @@ export default function FeedPage() {
                       </Button>
 
                       <Button
+                        onClick={() => {
+                          if (handleProtectedAction()) return;
+                          // todo add to collection bookmarks
+                        }}
                         variant="ghost"
                         size="sm"
                         className="flex-1 flex items-center justify-center"

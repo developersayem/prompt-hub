@@ -19,51 +19,61 @@ export function UserNav() {
   const { user, logout } = useAuth();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-          <Avatar className="h-9 w-9">
-            <AvatarImage
-              src={user?.avatar || "/default-avatar.png"}
-              alt={user?.name || "User"}
-            />
-            <AvatarFallback>
-              {user?.name
-                ? user.name.split(" ")[0].charAt(0).toUpperCase()
-                : "U"}
-              {user?.name
-                ? user.name.split(" ")[1]?.charAt(0).toUpperCase()
-                : "A"}
-            </AvatarFallback>
-          </Avatar>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 mt-5" align="end" forceMount>
-        <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none capitalize">
-              {user?.name || "Guest"}
-            </p>
-            <p className="text-xs leading-none text-muted-foreground">
-              {user?.email || "guest@example.com"}
-            </p>
-          </div>
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <Link href="/dashboard?tab=profile">Profile</Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Link href="/dashboard">Dashboard</Link>
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout}>
-          Log out
-          <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      {user ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="h-9 w-9">
+                <AvatarImage
+                  src={user?.avatar || "/default-avatar.png"}
+                  alt={user?.name || "User"}
+                />
+                <AvatarFallback>
+                  {user?.name
+                    ? user.name.split(" ")[0].charAt(0).toUpperCase()
+                    : "U"}
+                  {user?.name
+                    ? user.name.split(" ")[1]?.charAt(0).toUpperCase()
+                    : "A"}
+                </AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 mt-5" align="end" forceMount>
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none capitalize">
+                  {user?.name || "Guest"}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {user?.email || "guest@example.com"}
+                </p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <Link href="/dashboard?tab=profile">Profile</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/dashboard">Dashboard</Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={logout}>
+              Log out
+              <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Link href="/auth/login">
+          <Button variant="default" className=" ">
+            Login in
+          </Button>
+        </Link>
+      )}
+    </>
   );
 }

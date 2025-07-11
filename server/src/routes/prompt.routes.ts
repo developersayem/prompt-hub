@@ -23,7 +23,7 @@ const router = Router()
 
 
 // Route for get all prompts with filters options
-router.get("/", verifyJWT, getAllPromptsController)
+router.get("/", getAllPromptsController)
 // Route for create prompt
 router.post("/create",
     verifyJWT,
