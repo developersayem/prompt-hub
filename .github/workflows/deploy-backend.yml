@@ -45,5 +45,5 @@ jobs:
             pnpm build
 
             echo "🚀 Restarting server"
-            pm2 restart prompt-hub-server || pm2 start dist/app.js --name prompt-hub-server
+            /home/shopxetc/.nvm/versions/node/v18.17.1/bin/pm2 restart backed || /home/shopxetc/.nvm/versions/node/v18.17.1/bin/pm2 start dist/app.js --name backed
           EOF
