@@ -18,7 +18,6 @@ import { IPrompt } from "@/types/prompts.type";
 import { toast } from "sonner";
 import countAllComments from "@/utils/count-all-nested-comments";
 import Image from "next/image";
-import Masonry from "react-masonry-css";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import EditPromptModal from "./components/my-prompts/EditPromptModal";
 import {
@@ -34,13 +33,15 @@ import {
 } from "../ui/alert-dialog";
 import CreatePromptModal from "../shared/create-prompt-modal";
 import useSWR, { mutate } from "swr";
+import Masonry from "react-masonry-css";
 
+// 👉 Masonry responsive breakpoints
 const breakpointColumnsObj = {
-  default: 2,
-  700: 1,
+  default: 3,
+  1024: 2,
+  768: 1,
 };
 
-// SWR fetcher function
 const fetcher = async (url: string) => {
   const res = await fetch(url, {
     method: "GET",
@@ -107,7 +108,6 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       const data = await response.json();
       toast.success(data.message || "Prompt deleted successfully");
 
-      // Revalidate SWR cache to update list
       await mutate(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`
       );
@@ -123,13 +123,9 @@ const MyPromptsTab = ({ value }: { value: string }) => {
     }
   };
 
-  if (isLoading) {
-    return <p className="text-center">Loading prompts...</p>;
-  }
-
-  if (error) {
+  if (isLoading) return <p className="text-center">Loading prompts...</p>;
+  if (error)
     return <p className="text-center text-red-500">Failed to load prompts.</p>;
-  }
 
   return (
     <TabsContent
@@ -156,23 +152,14 @@ const MyPromptsTab = ({ value }: { value: string }) => {
             <div className="text-center py-8">
               <p className="text-gray-500 mb-4">No prompts found.</p>
               <Button onClick={() => setOpenCreateModal(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Prompt
+                <Plus className="h-4 w-4 mr-2" /> Create Prompt
               </Button>
-              <CreatePromptModal
-                open={openCreateModal}
-                onClose={() => setOpenCreateModal(false)}
-                onSuccess={() =>
-                  mutate(
-                    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`
-                  )
-                }
-              />
             </div>
           </CardContent>
         </Card>
       )}
 
+      {/* Masonry Grid */}
       <Masonry
         breakpointCols={breakpointColumnsObj}
         className="flex gap-6"
@@ -180,7 +167,8 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       >
         {myPrompts.map((prompt: IPrompt) => (
           <Card key={prompt._id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 flex flex-col h-full">
+              {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-3">
                   <Avatar>
@@ -190,7 +178,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                     />
                     <AvatarFallback>
                       {prompt.creator.name
-                        .split(" ")
+                        ?.split(" ")
                         .map((n) => n[0])
                         .join("")}
                     </AvatarFallback>
@@ -208,13 +196,11 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                     </p>
                   </div>
                 </div>
-
                 <div className="flex items-center gap-2 capitalize">
                   <Badge variant="secondary">{prompt.category}</Badge>
                   {prompt.paymentStatus === "paid" ? (
                     <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
-                      <Coins className="w-3 h-3" />
-                      {prompt.paymentStatus}
+                      <Coins className="w-3 h-3" /> Paid
                     </Badge>
                   ) : (
                     <Badge variant="outline">Free</Badge>
@@ -222,6 +208,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                 </div>
               </div>
 
+              {/* Title & Description */}
               <div>
                 <h3 className="text-xl font-semibold mb-1 capitalize">
                   {prompt.title}
@@ -229,10 +216,10 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                 <div className="text-gray-600 text-sm whitespace-pre-wrap capitalize">
                   {expandedDescriptions[prompt._id]
                     ? prompt.description
-                    : prompt.description.length > 150
+                    : prompt.description?.length > 150
                     ? `${prompt.description.slice(0, 150)}...`
                     : prompt.description}
-                  {prompt.description.length > 150 && (
+                  {prompt.description?.length > 150 && (
                     <button
                       onClick={() => toggleDescription(prompt._id)}
                       className="text-blue-500 hover:underline ml-1"
@@ -245,6 +232,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                 </div>
               </div>
 
+              {/* Content Preview */}
               <div className="bg-gray-50 rounded-lg p-4">
                 {prompt.resultType === "image" ? (
                   <Image
@@ -284,6 +272,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                 )}
               </div>
 
+              {/* Tags */}
               <div className="flex flex-wrap gap-2">
                 {prompt.tags.map((tag, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
@@ -292,15 +281,14 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                 ))}
               </div>
 
-              <div className="flex justify-between items-center gap-4 text-sm text-muted-foreground">
+              {/* Footer */}
+              <div className="flex justify-between items-center gap-4 text-sm text-muted-foreground mt-auto">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1">
-                    <Eye className="w-4 h-4" />
-                    {prompt.views}
+                    <Eye className="w-4 h-4" /> {prompt.views}
                   </div>
                   <div className="flex items-center gap-1">
-                    <Heart className="w-4 h-4" />
-                    {prompt.likes.length}
+                    <Heart className="w-4 h-4" /> {prompt.likes.length}
                   </div>
                   <div className="flex items-center gap-1">
                     <MessageCircle className="w-4 h-4" />
@@ -313,19 +301,13 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                     variant="outline"
                     size="sm"
                   >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Edit
+                    <Edit className="w-4 h-4 mr-1" /> Edit
                   </Button>
 
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="bg-red-500 text-white border border-red-500 hover:border hover:bg-transparent hover:text-red-500 transition-colors ease-in-out duration-500"
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
+                      <Button variant="default" size="sm">
+                        <Trash2 className="w-4 h-4 mr-1" /> Delete
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
@@ -339,21 +321,12 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel
-                          onClick={() => {
-                            toast.error("Action cancelled");
-                          }}
-                        >
-                          Cancel
-                        </AlertDialogCancel>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                          onClick={() => {
-                            deletePrompt(prompt);
-                          }}
-                          className="bg-red-500 text-white border border-red-500 hover:border hover:bg-transparent hover:text-red-500 transition-colors ease-in-out duration-500"
+                          onClick={() => deletePrompt(prompt)}
+                          className="bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 transition"
                         >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
+                          <Trash2 className="w-4 h-4 mr-1" /> Delete
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
