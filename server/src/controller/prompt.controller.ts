@@ -572,8 +572,14 @@ const deletePromptController = asyncHandler(async (req: Request, res: Response) 
   // 4. Remove prompt ID from user's prompts array
 await User.updateOne(
   { _id: userId },
-  { $pull: { prompts: prompt._id } }
+  {
+    $pull: {
+      prompts: prompt._id,
+      bookmarks: prompt._id,
+    },
+  }
 );
+
 
   res
     .status(200)

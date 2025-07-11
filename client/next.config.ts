@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  devtool: "source-map",
   images: {
     remotePatterns: [
       {
