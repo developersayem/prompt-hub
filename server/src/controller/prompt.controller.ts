@@ -569,11 +569,16 @@ const deletePromptController = asyncHandler(async (req: Request, res: Response) 
   // 3. Delete the prompt itself
   await prompt.deleteOne();
 
+  // 4. Remove prompt ID from user's prompts array
+await User.updateOne(
+  { _id: userId },
+  { $pull: { prompts: prompt._id } }
+);
+
   res
     .status(200)
     .json(new ApiResponse(200, {}, "Prompt deleted successfully"));
 });
-
 
 //controller for buy prompt
 const buyPromptController = asyncHandler(async (req: Request, res: Response) => {
