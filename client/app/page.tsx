@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,8 +24,21 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
+import { useEffect } from "react";
 
 export default function LandingPage() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace("/feed");
+    }
+  }, [isAuthenticated, isLoading, router]);
+
+  if (isAuthenticated) return null; // Avoid flash of landing page
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950  relative overflow-hidden">
       {/* Header */}
