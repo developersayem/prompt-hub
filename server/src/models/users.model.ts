@@ -33,6 +33,8 @@ export interface IUser extends Document {
   credits: number;
   isGoogleAuthenticated?: boolean;
   isCertified?: boolean;
+  // isDeleted: boolean;
+  // deletedAt: Date | null;
   prompts: mongoose.Schema.Types.ObjectId[];
   purchasedPrompts: mongoose.Schema.Types.ObjectId[];
   bookmarks: mongoose.Schema.Types.ObjectId[];
@@ -95,6 +97,8 @@ const userSchema = new Schema<IUser>(
       type: Date,
       default: null,
     },
+    // isDeleted: { type: Boolean, default: false, index: true },
+    // deletedAt: { type: Date, default: null },
     isTwoFactorEnabled: { type: Boolean, default: false },
     twoFactorCode: { type: String },
     twoFactorCodeExpires: { type: Date },

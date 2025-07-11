@@ -1,21 +1,25 @@
-import type { Request, Response } from "express";
+import type {  Request, Response } from "express";
 import { Types } from "mongoose";
 import { cookieOptions } from "../utils/cookieOptions";
 import asyncHandler from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
 import {  User } from "../models/users.model";
+import { Prompt } from "../models/prompts.model";
+import { Like } from "../models/like.model";
+import { Comment } from "../models/comments.model";
+import { PurchaseHistory } from "../models/purchaseHistory.model";
 import {
   deleteFromCloudinary,
   uploadOnCloudinary,
 } from "../utils/cloudinary";
 import { ApiResponse } from "../utils/ApiResponse";
-import type { UploadApiResponse } from "cloudinary";
 import { sendVerificationEmail } from "../utils/emails/sendVerificationEmail";
 import { generateVerificationCode } from "../utils/generateVerificationCode";
 import { RESEND_VERIFICATION_CODE_INTERVAL_MINUTES } from "../constants";
 import { CODE_EXPIRES_MINUTES } from "../constants";
 import { sendTwoFactorCodeEmail } from "../utils/emails/sendTwoFactorCodeEmail";
 import crypto from "crypto";
+
 
 interface TokenResponse {
   accessToken: string;
@@ -617,6 +621,31 @@ const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Res
     new ApiResponse(200, { isTwoFactorEnabled: enable }, `2FA ${enable ? "enabled" : "disabled"}`)
   );
 });
+// TODO: Implement in future Controller for delete user
+// const softDeleteUserAccount = asyncHandler(async (req: Request, res: Response) => {
+//   const userId = (req as any).user?._id;
+//   if (!userId) return res.status(401).json({ message: "Unauthorized" });
+
+//   // Soft delete user
+//   await User.findByIdAndUpdate(userId, { isDeleted: true });
+
+//   // Optional: soft delete or clean up related data (like prompts)
+//   await Prompt.updateMany({ creator: userId }, { isDeleted: true });
+//   await Like.updateMany({ user: userId }, { isDeleted: true });
+//   await Comment.updateMany({ user: userId }, { isDeleted: true });
+//   await PurchaseHistory.updateMany({ user: userId }, { isDeleted: true });
+
+//   // Optionally, clear refresh tokens or sessions
+//   await User.findByIdAndUpdate(userId, { refreshToken: "" });
+
+//   res
+//     .status(200)
+//     .clearCookie("accessToken", cookieOptions)
+//     .clearCookie("refreshToken", cookieOptions)
+//     .json(
+//       new ApiResponse(200, {}, "User account soft deleted successfully")
+//     );
+// });
 
 
 
@@ -637,5 +666,6 @@ export {
   verifyOTPController,
   send2FACodeController,
   verifyTwoFactorCodeController,
-  toggleTwoFactorAuthController
+  toggleTwoFactorAuthController,
+  // softDeleteUserAccount
 };

@@ -10,14 +10,14 @@ import {
 } from "../ui/card";
 import { Badge } from "../ui/badge";
 import {
-  AlertTriangle,
+  // AlertTriangle,
   Bell,
-  Download,
-  Globe,
+  // Download,
+  // Globe,
   Mail,
   Shield,
   Smartphone,
-  Trash2,
+  // Trash2,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuth } from "@/contexts/auth-context";
@@ -49,13 +49,13 @@ const SettingsTab = ({ value }: { value: string }) => {
     }));
   };
 
-  const handleExportData = () => {
-    console.log("Exporting user data...");
-  };
+  // const handleExportData = () => {
+  //   console.log("Exporting user data...");
+  // };
 
-  const handleDeleteAccount = () => {
-    console.log("Account deletion requested...");
-  };
+  // const handleDeleteAccount = () => {
+  //   console.log("Account deletion requested...");
+  // };
 
   return (
     <TabsContent value={value} className="space-y-6">
@@ -186,8 +186,8 @@ const SettingsTab = ({ value }: { value: string }) => {
               </CardContent>
             </Card>
 
-            {/* Data & Privacy */}
-            <Card>
+            {/* TODO: Implement in future Data & Privacy */}
+            {/* <Card>
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Globe className="w-5 h-5" />
@@ -226,10 +226,10 @@ const SettingsTab = ({ value }: { value: string }) => {
                   </p>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
 
-            {/* Danger Zone */}
-            <Card className="border-red-200">
+            {/* TODO: Implement in future Danger Zone */}
+            {/* <Card className="border-red-200">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2 text-red-600">
                   <AlertTriangle className="w-5 h-5" />
@@ -251,7 +251,7 @@ const SettingsTab = ({ value }: { value: string }) => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </Card> */}
           </CardContent>
         </Card>
       </div>
