@@ -68,9 +68,7 @@ const getAllPromptsController = asyncHandler(async (req: Request, res: Response)
   );
 });
 
-// Controller to handle prompt creation
 const createPromptController = asyncHandler(async (req: Request, res: Response) => {
-  // Destructure fields from the request body
   const {
     title,
     description,
@@ -83,68 +81,52 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
     price,
     paymentStatus,
   } = req.body;
-  // Get the user ID from the authenticated request
+
   const userId = (req as any).user?._id;
   if (!userId) throw new ApiError(401, "Unauthorized");
 
   // Validate required fields
-  if (
-    !title ||
-    !category ||
-    !promptText ||
-    !resultType ||
-    !aiModel ||
-    typeof paymentStatus === "undefined"
-  ) {
+  if (!title || !category || !promptText || !resultType || !aiModel || !paymentStatus) {
     throw new ApiError(400, "Missing required fields");
   }
 
-  // Validate paymentStatus value
+  // Validate payment status
   if (!["free", "paid"].includes(paymentStatus)) {
-    throw new ApiError(400, "Invalid paymentStatus value");
+    throw new ApiError(400, "Invalid payment status");
   }
 
-  // If tags is a string (from FormData), parse it
-let parsedTags = tags;
-if (typeof tags === "string") {
-  try {
-    parsedTags = JSON.parse(tags);
-  } catch (e) {
-    console.warn("Failed to parse tags JSON:", tags);
-    parsedTags = [];
+  // Parse and normalize tags
+  let parsedTags = tags;
+  if (typeof tags === "string") {
+    try {
+      parsedTags = JSON.parse(tags);
+    } catch {
+      console.warn("Failed to parse tags JSON:", tags);
+      parsedTags = [];
+    }
   }
-}
+  const normalizedTags = Array.isArray(parsedTags)
+    ? parsedTags.flatMap((tag: string) => tag.split(",").map((t) => t.trim()))
+    : [];
 
-// Now normalize
-const normalizedTags = Array.isArray(parsedTags)
-  ? parsedTags.flatMap((tag: string) => tag.split(",").map((t) => t.trim()))
-  : [];
-  // Handle resultContent
+  // Handle result content
   let finalResultContent = "";
-
   if (resultType === "text") {
     if (!rawResultContent) {
       throw new ApiError(400, "Text result content is required");
     }
     finalResultContent = rawResultContent;
-  } else if (resultType === "image" || resultType === "video") {
+  } else if (["image", "video"].includes(resultType)) {
     const file = (req.files as any)?.promptContent?.[0];
     if (!file?.path) {
       throw new ApiError(400, "Media file is required for image/video prompt");
     }
 
-    try {
-      const uploaded: UploadApiResponse | null = await uploadOnCloudinary(file.path);
-      if (!uploaded) {
-        throw new ApiError(500, "Failed to upload media to Cloudinary");
-      }
-      finalResultContent = uploaded.secure_url;
-    } catch (error) {
-      console.error("Cloudinary upload failed:", error);
-      throw new ApiError(500, "Failed to upload media");
+    const uploaded: UploadApiResponse | null = await uploadOnCloudinary(file.path);
+    if (!uploaded) {
+      throw new ApiError(500, "Failed to upload media to Cloudinary");
     }
-  } else {
-    throw new ApiError(400, "Invalid result type");
+    finalResultContent = uploaded.secure_url;
   }
 
   // Create the prompt
@@ -158,22 +140,24 @@ const normalizedTags = Array.isArray(parsedTags)
     resultContent: finalResultContent,
     aiModel,
     price: paymentStatus === "paid" ? Number(price) || 0 : 0,
-    isPaid: paymentStatus === "paid",
+    paymentStatus,
     creator: userId,
     likes: [],
     comments: [],
-    buyers: [],
+    views: 0,
+    viewedBy: [],
+    viewedIPs: [],
+    purchasedBy: [],
   });
 
   if (!newPrompt) {
     throw new ApiError(500, "Failed to create prompt");
   }
 
-  // Update user with new prompt
+  // Add prompt to user's profile
   const user = await User.findById(userId);
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
+  if (!user) throw new ApiError(404, "User not found");
+
   user.prompts.push(newPrompt._id as Schema.Types.ObjectId);
   await user.save();
 
