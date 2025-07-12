@@ -109,7 +109,7 @@ export const TwoFactorAuthentication = () => {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: otp }),
+          body: JSON.stringify({ code: otp, email: user?.email }),
         }
       );
 

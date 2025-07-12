@@ -537,9 +537,9 @@ const send2FACodeController = asyncHandler(async (req: Request, res: Response) =
   const user = await User.findById(userId);
   if (!user) throw new ApiError(404, "User not found");
 
-  // if (!user || !user.isTwoFactorEnabled) {
-  //   throw new ApiError(404, "User not found or 2FA is not enabled");
-  // }
+  if (!user || !user.isTwoFactorEnabled) {
+    throw new ApiError(404, "User not found or 2FA is not enabled");
+  }
 
   const now = new Date();
   // const waitTime = 60 * 1000; // 1 minute
