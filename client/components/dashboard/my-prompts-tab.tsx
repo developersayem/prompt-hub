@@ -16,7 +16,7 @@ import { Card, CardContent } from "../ui/card";
 import { useState } from "react";
 import { IPrompt } from "@/types/prompts.type";
 import { toast } from "sonner";
-import countAllComments from "@/utils/count-all-nested-comments";
+import countAllComments from "@/helper/count-all-nested-comments";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import EditPromptModal from "./components/my-prompts/EditPromptModal";

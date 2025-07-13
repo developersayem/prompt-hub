@@ -70,7 +70,7 @@ export function UserNav() {
       ) : (
         <Link href="/auth/login">
           <Button variant="default" className=" ">
-            Login in
+            Log in
           </Button>
         </Link>
       )}
