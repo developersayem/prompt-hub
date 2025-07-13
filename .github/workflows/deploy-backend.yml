@@ -38,6 +38,21 @@ jobs:
             echo "🔨 Building project"
             pnpm build
 
+            echo "🛑 Killing manual node backend processes"
+            PIDS=$(ps aux | grep '/home/shopxetc/public_html/prompt-hub/server/dist/app.js' | grep -v grep | awk '{print $2}')
+            if [ -n "$PIDS" ]; then
+              echo "Found manual node processes: $PIDS"
+              kill -9 $PIDS
+            else
+              echo "No manual node backend processes found"
+            fi
+
+            WRAPPER_PIDS=$(ps aux | grep 'npm run start' | grep -v grep | awk '{print $2}')
+            if [ -n "$WRAPPER_PIDS" ]; then
+              echo "Killing npm run start wrapper processes: $WRAPPER_PIDS"
+              kill -9 $WRAPPER_PIDS
+            fi
+
             echo "🚀 Restarting server with PM2"
-            pm2 restart backed || pm2 start dist/app.js --name backed
+            pm2 restart backed || pm2 start npm --name backed -- run start
           EOF
