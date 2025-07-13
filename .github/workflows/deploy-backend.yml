@@ -27,23 +27,17 @@ jobs:
             echo "📂 Moving to server folder"
             cd ~/public_html/prompt-hub/server
 
-            echo "📦 Setting paths for local installs"
-            export PNPM_HOME="$HOME/.local/share/pnpm"
-            export PATH="$PNPM_HOME:$PATH"
-            export PATH="$HOME/.nvm/versions/node/$(nvm version)/bin:$PATH"
-            export PATH="$HOME/bin:$HOME/.local/bin:$PATH"
-            export PATH="$HOME/.nvm:$PATH"
-            export PATH="$HOME/.nvm/versions/node/v$(nvm version)/bin:$PATH"
+            echo "📦 Loading NVM and Node.js v22"
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+            nvm use 22
 
-            echo "📦 Pulling latest code"
-            /usr/bin/git fetch origin && /usr/bin/git reset --hard origin/main
-
-            echo "📥 Installing deps"
+            echo "📥 Installing dependencies"
             pnpm install
 
-            echo "🔨 Building"
+            echo "🔨 Building project"
             pnpm build
 
-            echo "🚀 Restarting server"
-            /home/shopxetc/.nvm/versions/node/v18.17.1/bin/pm2 restart backed || /home/shopxetc/.nvm/versions/node/v18.17.1/bin/pm2 start dist/app.js --name backed
+            echo "🚀 Restarting server with PM2"
+            pm2 restart backed || pm2 start dist/app.js --name backed
           EOF
