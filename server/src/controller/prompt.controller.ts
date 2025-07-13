@@ -11,6 +11,8 @@ import { Like } from "../models/like.model"; // adjust the path
 import { Comment } from "../models/comments.model";
 import { populateRepliesRecursively } from "../utils/populateRepliesRecursively";
 import { PurchaseHistory } from "../models/purchaseHistory.model";
+import { RequestWithIP } from "../middlewares/getClientIp.middlewares";
+import { trackPromptView } from "../utils/trackPromptView";
 
 // Controller for show all prompts
 const getAllPromptsController = asyncHandler(async (req: Request, res: Response) => {
@@ -176,6 +178,9 @@ const likePromptController = asyncHandler(async (req: Request, res: Response) =>
 
   const prompt = await Prompt.findById(promptId);
   if (!prompt) throw new ApiError(404, "Prompt not found");
+
+  // Track prompt view if user like the prompt
+  await trackPromptView({ promptIdOrDoc: promptId, userId });
 
   // Check if the user already liked the prompt
   const existingLike = await Like.findOne({ user: userId, prompt: promptId });
@@ -649,6 +654,59 @@ const getMyPurchasesController = asyncHandler(async (req: Request, res: Response
   return res.status(200).json(new ApiResponse(200, history, "Purchase history fetched"));
 });
 
+// Controller for get prompt by slug
+const getPromptBySlugController = asyncHandler(
+  async (req: RequestWithIP, res: Response) => {
+    const { slug } = req.params;
+    const ip = req.clientIP;
+    const userId = (req as any)?.user?._id as mongoose.Types.ObjectId | undefined;
+
+    const prompt = await Prompt.findOne({ slug, isPublic: true }).populate(
+      "creator",
+      "name avatar"
+    );
+
+    if (!prompt) {
+      throw new ApiError(404, "Prompt not found");
+    }
+
+    // Increment views (unique by user/ip)
+    await trackPromptView({ promptIdOrDoc: prompt, userId, ip });
+
+    // Increment share count only if not shared before by this user/ip
+    let isNewShare = false;
+
+    // Initialize sharedBy if undefined (in case schema or doc is old)
+    if (!prompt.sharedBy) {
+      prompt.sharedBy = { users: [], ips: [] };
+    }
+
+    if (userId) {
+      if (!prompt.sharedBy.users.some((id) => id.equals(userId))) {
+        prompt.sharedBy.users.push(userId);
+        isNewShare = true;
+      }
+    } else if (ip) {
+      if (!prompt.sharedBy.ips.includes(ip)) {
+        prompt.sharedBy.ips.push(ip);
+        isNewShare = true;
+      }
+    }
+
+    if (isNewShare) {
+      prompt.shareCount += 1;
+      prompt.markModified("sharedBy"); // Important to tell Mongoose the nested array changed
+      await prompt.save();
+    }
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, prompt, "Prompt viewed successfully"));
+  }
+);
+
+
+
 
 export { 
   getAllPromptsController,
@@ -664,5 +722,6 @@ export {
   updatePromptController,
   deletePromptController,
   buyPromptController,
-  getMyPurchasesController
+  getMyPurchasesController,
+  getPromptBySlugController
 };

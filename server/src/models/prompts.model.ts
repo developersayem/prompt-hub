@@ -1,4 +1,9 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
+import slugify from "slugify";
+import { customAlphabet } from "nanoid";
+
+// 🔑 Nanoid setup for 8-character random string
+const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz1234567890", 8);
 
 export type ResultType = "text" | "image" | "video";
 export type PaymentStatus = "free" | "paid";
@@ -18,9 +23,16 @@ export interface IPrompt extends Document {
   likes: Types.ObjectId[];
   comments: Types.ObjectId[];
   views: number;
-  viewedBy: mongoose.Types.ObjectId[];
+  viewedBy: Types.ObjectId[];
   viewedIPs: string[];
-  purchasedBy: mongoose.Types.ObjectId[];
+  purchasedBy: Types.ObjectId[];
+  slug: string;
+  isPublic: boolean;
+  shareCount: number;
+  sharedBy: {
+    users: Types.ObjectId[];
+    ips: string[];
+  };
 }
 
 const promptSchema = new Schema<IPrompt>(
@@ -51,8 +63,31 @@ const promptSchema = new Schema<IPrompt>(
     viewedBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
     viewedIPs: [{ type: String }],
     purchasedBy: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    shareCount: { type: Number, default: 0 },
+    sharedBy: {
+      users: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
+      ips: { type: [String], default: [] },
+    },
+    slug: {
+      type: String,
+      unique: true,
+    },
+    isPublic: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
+
+// 🔁 Pre-save hook to generate unique slug using nanoid
+promptSchema.pre("save", function (next) {
+  if (!this.slug || this.isModified("title")) {
+    const baseSlug = slugify(this.title, { lower: true, strict: true });
+    const randomStr = nanoid();
+    this.slug = `${baseSlug}-${randomStr}`; // e.g. cool-title-3k7x9ab1
+  }
+  next();
+});
 
 export const Prompt = mongoose.model<IPrompt>("Prompt", promptSchema);

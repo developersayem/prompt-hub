@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
+import { extractClientIP } from './../middlewares/getClientIp.middlewares';
 import {
     buyPromptController,
     createCommentController,
@@ -10,6 +11,7 @@ import {
     getAllPromptsController,
     getMyPromptsController,
     getMyPurchasesController,
+    getPromptBySlugController,
     getSinglePromptController,
     likeCommentController,
     likePromptController,
@@ -56,6 +58,9 @@ router.delete("/:id", verifyJWT, deletePromptController);
 router.post("/:id/buy", verifyJWT, buyPromptController);
 // Route for get my purchases
 router.get("/purchase-history", verifyJWT, getMyPurchasesController);
+// Route for get prompt by slug
+router.get("/slug/:slug",verifyJWT, extractClientIP, getPromptBySlugController);
+
 
 
 
