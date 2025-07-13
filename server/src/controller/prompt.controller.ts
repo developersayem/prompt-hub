@@ -13,6 +13,7 @@ import { populateRepliesRecursively } from "../utils/populateRepliesRecursively"
 import { PurchaseHistory } from "../models/purchaseHistory.model";
 import { RequestWithIP } from "../middlewares/getClientIp.middlewares";
 import { trackPromptView } from "../utils/trackPromptView";
+import { getAllNestedCommentIds } from "../helper/getAllNestedCommentIds";
 
 // Controller for show all prompts
 const getAllPromptsController = asyncHandler(async (req: Request, res: Response) => {
@@ -270,33 +271,45 @@ const updateCommentController = asyncHandler(async (req: Request, res: Response)
 
 // Controller for delete comments
 const deleteCommentController = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user?._id;
+  const userId = (req as any).user?._id?.toString();
   const { commentId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(commentId)) {
+    throw new ApiError(400, "Invalid comment ID");
+  }
 
   const comment = await Comment.findById(commentId);
   if (!comment) throw new ApiError(404, "Comment not found");
 
-  if (String(comment.user) !== String(userId)) {
+  if (comment.user.toString() !== userId) {
     throw new ApiError(403, "You are not authorized to delete this comment");
   }
 
-  // If it's a reply, remove from parent.replies
+  // Get all nested comment IDs (comment + all replies + their replies ...)
+  const allCommentIds = await getAllNestedCommentIds(commentId);
+
+  // Delete all likes related to these comments
+  await Like.deleteMany({
+    comment: { $in: allCommentIds.map(id => new mongoose.Types.ObjectId(id)) },
+  });
+
+  // Remove references to all these comments from their parents or prompt
   if (comment.parentComment) {
+    // It's a reply, remove only from its parent's replies
     await Comment.findByIdAndUpdate(comment.parentComment, {
-      $pull: { replies: comment._id }
+      $pull: { replies: comment._id },
     });
   } else {
-    // If it's a top-level comment, remove from prompt.comments
+    // Top-level comment: remove all these comments from prompt's comments array
     await Prompt.findByIdAndUpdate(comment.prompt, {
-      $pull: { comments: comment._id }
+      $pull: { comments: { $in: allCommentIds } },
     });
   }
 
-  await comment.deleteOne();
+  // Delete all comments recursively
+  await Comment.deleteMany({ _id: { $in: allCommentIds } });
 
-  res.status(200).json(
-    new ApiResponse(200, {}, "Comment deleted successfully")
-  );
+  res.status(200).json(new ApiResponse(200, {}, "Comment and all nested replies deleted successfully"));
 });
 
 // Controller to add comment or reply
