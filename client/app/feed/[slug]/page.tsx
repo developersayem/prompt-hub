@@ -100,7 +100,7 @@ export default function PromptSlugPage() {
         ))}
         <div className="flex justify-center mt-10">
           <Button asChild variant="outline">
-            <a href="/feed">Show all prompts</a>
+            <Link href="/feed">Show all prompts</Link>
           </Button>
         </div>
       </div>
