@@ -145,7 +145,6 @@ export default function ResetPasswordPage() {
 
     setIsLoading(true);
     try {
-      console.log(formData);
       const changeRes = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/reset-password`,
         {

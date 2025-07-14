@@ -317,7 +317,6 @@ const deleteCommentController = asyncHandler(async (req: Request, res: Response)
 const replyCommentController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
   const { promptId, text, parentComment } = req.body;
-  console.log(userId, promptId, text, parentComment)
 
   if (!text || !promptId || !parentComment) {
     throw new ApiError(400, "Text, promptId, and parentComment are required");
@@ -421,7 +420,6 @@ const getMyPromptsController = asyncHandler(async (req: Request, res: Response) 
 // Controller for get single
 const getSinglePromptController = asyncHandler(async (req: Request, res: Response) => {
     const promptId = req.params.id;
-    console.log("promptId",promptId)
     const userId = (req as any).user?._id;
     const ip =
       (req.headers["x-forwarded-for"] as string) || req.socket.remoteAddress;

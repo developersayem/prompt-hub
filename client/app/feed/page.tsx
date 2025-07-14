@@ -136,8 +136,6 @@ export default function FeedPage() {
 
   // Function for public profile
   const handlePublicProfile = async (userId: string) => {
-    console.log(userId);
-
     try {
       // if (handleProtectedAction()) return;
       setIsLoadingPublicProfile(true);
@@ -150,7 +148,6 @@ export default function FeedPage() {
         }
       );
       const data = await response.json();
-      console.log(data.data.profile);
       setPublicUserData(data.data.profile);
       setIsLoadingPublicProfile(false);
     } catch (error) {
