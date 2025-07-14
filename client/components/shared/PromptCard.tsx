@@ -10,7 +10,6 @@ import {
   Eye,
   Heart,
   MessageCircle,
-  Share2,
   Bookmark,
   Clipboard,
   Sparkles,
@@ -41,6 +40,7 @@ import {
 } from "@/utils/swrOptimisticUpdate";
 import countAllComments from "@/helper/count-all-nested-comments";
 import { useAuth } from "@/contexts/auth-context";
+import { ShareDialog } from "./share-dialog";
 
 interface PromptCardProps {
   prompt: IPrompt;
@@ -110,7 +110,7 @@ const PromptCard: FC<PromptCardProps> = ({
 
       // Send like request to backend
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/like`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/like`,
         {
           method: "POST",
           credentials: "include",
@@ -133,7 +133,7 @@ const PromptCard: FC<PromptCardProps> = ({
     try {
       // Send comment request to backend
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/comment`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/comment`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -218,12 +218,12 @@ const PromptCard: FC<PromptCardProps> = ({
             </h3>
             <div className="text-gray-600 text-sm whitespace-pre-wrap capitalize">
               {expandedDescriptions[prompt._id]
-                ? prompt?.description
-                : prompt?.description.length > 150
-                ? `${prompt?.description.slice(0, 150)}...`
-                : prompt?.description}
+                ? prompt?.description ?? ""
+                : (prompt?.description ?? "").length > 150
+                ? `${(prompt?.description ?? "").slice(0, 150)}...`
+                : prompt?.description ?? ""}
 
-              {prompt?.description.length > 150 && (
+              {prompt?.description && prompt.description.length > 150 && (
                 <button
                   onClick={() => toggleDescription(prompt?._id)}
                   className="text-white hover:underline ml-1 text-sm"
@@ -331,16 +331,11 @@ const PromptCard: FC<PromptCardProps> = ({
               <MessageCircle className="h-4 w-4 mr-2" />
               {countAllComments(prompt?.comments)}
             </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 flex items-center justify-center min-w-[60px]"
-            >
-              <Share2 className="h-4 w-4 mr-2" />
-              Share
-            </Button>
-
+            {/* Share button */}
+            <ShareDialog
+              shareUrl={`${window.location.origin}/feed/${prompt?.slug}`}
+            />
+            {/* View button */}
             <Button
               variant="ghost"
               size="sm"
@@ -349,7 +344,7 @@ const PromptCard: FC<PromptCardProps> = ({
               <Eye className="h-4 w-4 mr-2" />
               {prompt?.views}
             </Button>
-            {/*            Bookmark button */}
+            {/* Bookmark button */}
             <Button
               variant="ghost"
               size="sm"
@@ -357,7 +352,7 @@ const PromptCard: FC<PromptCardProps> = ({
             >
               <Bookmark className="h-4 w-4" />
             </Button>
-            {/*            Copy button */}
+            {/*Copy button */}
             {prompt?.paymentStatus === "free" ||
             prompt.creator._id === user?._id ||
             user?.purchasedPrompts?.includes(prompt._id) ? (

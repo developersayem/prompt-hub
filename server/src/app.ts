@@ -76,7 +76,7 @@ import statsRoutes from "./routes/stats.routes"
 // Use routes
 app.use("/api/v1/health-check", healthCheckRoutes);
 app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/prompt", promptRoutes);
+app.use("/api/v1/prompts", promptRoutes);
 app.use("/api/v1/stats", statsRoutes)
 
 

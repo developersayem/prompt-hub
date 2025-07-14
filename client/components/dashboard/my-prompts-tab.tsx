@@ -57,7 +57,7 @@ const fetcher = async (url: string) => {
 
 const MyPromptsTab = ({ value }: { value: string }) => {
   const { data: myPrompts = [] } = useSWR(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`,
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/my-prompts`,
     fetcher
   );
 
@@ -89,7 +89,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
   const deletePrompt = async (prompt: IPrompt) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/${prompt._id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/${prompt._id}`,
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
@@ -105,7 +105,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       toast.success(data.message || "Prompt deleted successfully");
 
       await mutate(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/my-prompts`
       );
     } catch (error) {
       console.error("Error deleting prompt:", error);
@@ -208,10 +208,10 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                 <div className="text-gray-600 text-sm whitespace-pre-wrap capitalize">
                   {expandedDescriptions[prompt._id]
                     ? prompt.description
-                    : prompt.description?.length > 150
-                    ? `${prompt.description.slice(0, 150)}...`
+                    : (prompt.description ?? "").length > 150
+                    ? `${(prompt.description ?? "").slice(0, 150)}...`
                     : prompt.description}
-                  {prompt.description?.length > 150 && (
+                  {(prompt.description ?? "").length > 150 && (
                     <button
                       onClick={() => toggleDescription(prompt._id)}
                       className="text-blue-500 hover:underline ml-1"
@@ -337,7 +337,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
           onClose={() => setIsEditOpen(false)}
           onSuccess={() =>
             mutate(
-              `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`
+              `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/my-prompts`
             )
           }
         />
@@ -348,7 +348,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
         onClose={() => setOpenCreateModal(false)}
         onSuccess={() =>
           mutate(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/my-prompts`
+            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/my-prompts`
           )
         }
       />

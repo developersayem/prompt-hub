@@ -103,7 +103,7 @@ export default function FeedPage() {
 
       // Purchase prompt
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/${prompt._id}/buy`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/${prompt._id}/buy`,
         {
           method: "POST",
           headers: {

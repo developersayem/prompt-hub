@@ -3,51 +3,150 @@
   "data": {
     "data": [
       {
-        "_id": "68610a0492567ab956175744",
-        "title": "test post",
-        "description": "test post",
-        "tags": ["ai", "coding"],
-        "category": "programming",
-        "promptText": "this is the test post",
+        "_id": "6863bbd7c58dee08c369dd12",
+        "title": "Realistic Scenes",
+        "description": "Generate a photorealistic image of a bustling street market in New Orleans during Mardi Gras.",
+        "tags": ["ai", "chatgpt", "design", "image"],
+        "category": "design",
+        "promptText": "\"Generate a photorealistic image of a bustling street market in New Orleans during Mardi Gras.\"",
         "resultType": "image",
-        "resultContent": "https://res.cloudinary.com/djgkha9ss/image/upload/v1751190019/moesmahd76jwtoersqje.jpg",
-        "aiModel": "claude",
-        "price": 0,
-        "isPaid": true,
+        "resultContent": "https://res.cloudinary.com/djgkha9ss/image/upload/v1751366614/nfxboagygwq7y8rslvsq.png",
+        "aiModel": "gpt-4",
+        "price": 299,
         "creator": {
-          "socialLinks": {
-            "facebook": "",
-            "instagram": "",
-            "github": "",
-            "linkedIn": "",
-            "x": "",
-            "portfolio": ""
-          },
-          "_id": "685fcbf5c1995d40ee467b17",
-          "name": "Sayem Molla",
-          "email": "sayemmolla012@gmail.com",
+          "_id": "686175a40995635aa7bc93ce",
+          "name": "Developer Sayem",
+          "email": "developersayem012@gmail.com",
           "isGoogleAuthenticated": false,
           "isCertified": false,
-          "avatar": "http://res.cloudinary.com/djgkha9ss/image/upload/v1751108597/mzdjpyitvo6nhgfwhuqt.webp",
-          "bio": "",
-          "credits": 1000,
+          "avatar": "http://res.cloudinary.com/djgkha9ss/image/upload/v1751217572/ljwzz6kdwnrtqaquc4ov.jpg",
+          "bio": "Hi,my name is Sayem Molla and i am the developer of this platform.",
+          "socialLinks": {
+            "facebook": "https://web.facebook.com/sayemmolla.dev/",
+            "instagram": "",
+            "github": "",
+            "linkedIn": "https://www.linkedin.com/in/sayem-molla",
+            "x": "",
+            "portfolio": "https://sayemmolla.vercel.app/"
+          },
+          "credits": 3341,
           "prompts": [
-            "686109e992567ab95617573f",
-            "68610a0492567ab956175744",
-            "68610a2892567ab956175749"
+            "686177f30995635aa7bc93f2",
+            "686178ab0995635aa7bc93f7",
+            "6862b54dd4a4f7b6208cfaf2",
+            "6863657b161969bd09dbfb69",
+            "6863bbd7c58dee08c369dd12",
+            "686577776dceca258653cf4e",
+            "68657ed06dceca258653d0e0",
+            "686580a625795f1da99a982a",
+            "6865816d25795f1da99a9897",
+            "686581c825795f1da99a98b6",
+            "686583ea35a78f49c47c40dd",
+            "6873e25cb439877b70aec17d"
           ],
-          "purchasedPrompts": [],
+          "purchasedPrompts": ["6871559bf36d7f739ff6db64"],
           "bookmarks": [],
-          "createdAt": "2025-06-28T11:03:17.885Z",
-          "updatedAt": "2025-06-29T09:40:56.414Z",
-          "__v": 3
+          "createdAt": "2025-06-29T17:19:32.748Z",
+          "updatedAt": "2025-07-13T18:57:30.345Z",
+          "__v": 21,
+          "countryCode": "+880",
+          "phone": "01704878051",
+          "address": {
+            "street": "dhaka",
+            "city": "dhaka",
+            "state": "dhaka",
+            "postalCode": "1820",
+            "country": "Bangladesh"
+          },
+          "isVerified": true,
+          "verificationCode": "",
+          "lastVerificationSentAt": "2025-07-10T15:07:07.808Z",
+          "verificationCodeExpires": null,
+          "isTwoFactorEnabled": false,
+          "isEmailNotificationEnabled": true,
+          "isMarketingNotificationEnabled": true,
+          "isPushNotificationEnabled": true,
+          "twoFactorCode": "",
+          "twoFactorCodeExpires": null
         },
-        "likes": ["68610fdb7af2a473323aeb9f"],
-        "comments": [],
+        "likes": [
+          "685fcbf5c1995d40ee467b17",
+          "686175a40995635aa7bc93ce",
+          "6863da68ab0c044a2f4069e2"
+        ],
+        "comments": [
+          {
+            "_id": "6863bc58c58dee08c369dd50",
+            "user": {
+              "_id": "685fcbf5c1995d40ee467b17",
+              "name": "Sayem Molla",
+              "avatar": "http://res.cloudinary.com/djgkha9ss/image/upload/v1751108597/mzdjpyitvo6nhgfwhuqt.webp"
+            },
+            "text": "nice image",
+            "replies": [
+              {
+                "_id": "6863bc68c58dee08c369dd6d",
+                "user": {
+                  "_id": "686175a40995635aa7bc93ce",
+                  "name": "Developer Sayem",
+                  "avatar": "http://res.cloudinary.com/djgkha9ss/image/upload/v1751217572/ljwzz6kdwnrtqaquc4ov.jpg"
+                },
+                "text": "thanks",
+                "replies": [
+                  {
+                    "_id": "6863bc7fc58dee08c369dd8d",
+                    "user": {
+                      "_id": "685fcbf5c1995d40ee467b17",
+                      "name": "Sayem Molla",
+                      "avatar": "http://res.cloudinary.com/djgkha9ss/image/upload/v1751108597/mzdjpyitvo6nhgfwhuqt.webp"
+                    },
+                    "text": "give me the prompt",
+                    "replies": [
+                      {
+                        "_id": "6863bc98c58dee08c369ddb1",
+                        "user": {
+                          "_id": "686175a40995635aa7bc93ce",
+                          "name": "Developer Sayem",
+                          "avatar": "http://res.cloudinary.com/djgkha9ss/image/upload/v1751217572/ljwzz6kdwnrtqaquc4ov.jpg"
+                        },
+                        "text": "check the post it's freee..",
+                        "replies": [],
+                        "likes": ["685fcbf5c1995d40ee467b17"],
+                        "createdAt": "2025-07-01T10:46:48.889Z"
+                      }
+                    ],
+                    "likes": [],
+                    "createdAt": "2025-07-01T10:46:23.129Z"
+                  }
+                ],
+                "likes": [
+                  "685fcbf5c1995d40ee467b17",
+                  "686175a40995635aa7bc93ce"
+                ],
+                "createdAt": "2025-07-01T10:46:00.218Z"
+              }
+            ],
+            "likes": [],
+            "createdAt": "2025-07-01T10:45:44.964Z"
+          },
+          {
+            "_id": "6863dc9cc88a5fc652f0cb7f",
+            "user": null,
+            "text": "nice work",
+            "replies": [],
+            "likes": [],
+            "createdAt": "2025-07-01T13:03:24.670Z"
+          }
+        ],
         "buyers": [],
-        "createdAt": "2025-06-29T09:40:20.265Z",
-        "updatedAt": "2025-06-29T10:05:15.515Z",
-        "__v": 1
+        "views": 2,
+        "viewedBy": ["685fcbf5c1995d40ee467b17", "686175a40995635aa7bc93ce"],
+        "viewedIPs": [],
+        "createdAt": "2025-07-01T10:43:35.719Z",
+        "updatedAt": "2025-07-11T17:55:19.771Z",
+        "__v": 13,
+        "paymentStatus": "paid",
+        "purchasedBy": ["687010583f79d9e48184c4d7"]
       }
     ]
   },

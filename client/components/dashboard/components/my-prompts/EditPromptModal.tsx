@@ -74,7 +74,7 @@ export default function EditPromptModal({
 
     const data = new FormData();
     data.append("title", formData.title);
-    data.append("description", formData.description);
+    data.append("description", formData.description ?? "");
     data.append("category", formData.category);
     data.append("aiModel", formData.aiModel);
     data.append("promptText", formData.promptText);
@@ -91,7 +91,7 @@ export default function EditPromptModal({
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/${prompt._id}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/${prompt._id}`,
         {
           method: "PUT",
           body: data,

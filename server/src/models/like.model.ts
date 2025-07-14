@@ -25,4 +25,6 @@ const likeSchema = new Schema<ILike>(
   { timestamps: true }
 );
 
+likeSchema.index({ user: 1, prompt: 1 }, { unique: true });
+
 export const Like = mongoose.model<ILike>("Like", likeSchema);

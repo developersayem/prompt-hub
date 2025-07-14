@@ -53,7 +53,7 @@ export const CommentThread = ({
       await optimisticUpdateCommentLike(mutatePrompts, commentId, user._id);
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/comment/like`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/comment/like`,
         {
           method: "POST",
           credentials: "include",
@@ -78,7 +78,7 @@ export const CommentThread = ({
     try {
       // ✅ Now make the request (async but we already updated the UI)
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/comment/${commentId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/comment/${commentId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -103,7 +103,7 @@ export const CommentThread = ({
       await optimisticDeleteComment(mutatePrompts, commentId);
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/comment/${commentId}`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/comment/${commentId}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -141,7 +141,7 @@ export const CommentThread = ({
 
       // Call backend to add reply
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/comment/reply`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/comment/reply`,
         {
           method: "POST",
           credentials: "include",

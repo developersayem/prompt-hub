@@ -18,7 +18,7 @@ export function usePrompts(filters: FiltersType, selectedCategory: string) {
 
   // Add more filters if needed, e.g. priceRange, tags, aiModels etc
 
-  const key = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt?${queryParams.toString()}`;
+  const key = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts?${queryParams.toString()}`;
 
  const { data, error, isLoading, mutate } = useSWR(key, fetcher);
 

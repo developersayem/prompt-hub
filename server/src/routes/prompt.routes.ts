@@ -59,7 +59,7 @@ router.post("/:id/buy", verifyJWT, buyPromptController);
 // Route for get my purchases
 router.get("/purchase-history", verifyJWT, getMyPurchasesController);
 // Route for get prompt by slug
-router.get("/slug/:slug",verifyJWT, extractClientIP, getPromptBySlugController);
+router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
 
 
 

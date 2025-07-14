@@ -108,7 +108,7 @@ export default function CreatePromptModal({
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompt/create`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/create`,
         {
           method: "POST",
           body: data,

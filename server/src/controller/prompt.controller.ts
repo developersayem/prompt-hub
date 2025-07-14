@@ -169,9 +169,8 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
     .json(new ApiResponse(201, { data: newPrompt }, "Prompt created successfully"));
 });
 
-// Controller to handle like/unlike
 const likePromptController = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user?._id;
+  const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
   if (!userId) throw new ApiError(401, "Unauthorized");
 
   const { promptId } = req.body;
@@ -180,35 +179,37 @@ const likePromptController = asyncHandler(async (req: Request, res: Response) =>
   const prompt = await Prompt.findById(promptId);
   if (!prompt) throw new ApiError(404, "Prompt not found");
 
-  // Track prompt view if user like the prompt
-  await trackPromptView({ promptIdOrDoc: promptId, userId });
-
-  // Check if the user already liked the prompt
   const existingLike = await Like.findOne({ user: userId, prompt: promptId });
 
   if (existingLike) {
-    // Unlike: remove the like document and update prompt.likes array
-    await Like.deleteOne({ _id: (existingLike as any)._id });
+    await Like.findByIdAndDelete(existingLike._id);
 
-    prompt.likes = prompt.likes.filter(
-      (likeId) => likeId.toString() !== ((existingLike as any)._id as Types.ObjectId).toString()
-    );
+    const updatedLikes = await Like.find({ prompt: promptId }).select("_id");
+    prompt.likes = updatedLikes.map((like) => like._id) as mongoose.Types.ObjectId[];
     await prompt.save();
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, { data: null }, "Disliked successfully"));
+    return res.status(200).json(
+      new ApiResponse(200, { data: null }, "Disliked successfully")
+    );
   }
 
-  // Like: create new like and update prompt.likes array
-  const newLike = await Like.create({ user: userId, prompt: promptId });
+  try {
+    const newLike = await Like.create({ user: userId, prompt: promptId });
 
-  prompt.likes.push(newLike._id as Types.ObjectId);
-  await prompt.save();
+    const updatedLikes = await Like.find({ prompt: promptId }).select("_id");
+    prompt.likes = updatedLikes.map((like) => like._id) as mongoose.Types.ObjectId[];
+    await prompt.save();
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, { data: newLike }, "Liked successfully"));
+    return res.status(200).json(
+      new ApiResponse(200, { data: newLike }, "Liked successfully")
+    );
+  } catch (err: any) {
+    if (err.code === 11000) {
+      return res.status(400).json(new ApiResponse(400, null, "Already liked"));
+    }
+
+    throw new ApiError(500, "Something went wrong while liking the prompt");
+  }
 });
 
 //Controller for comments
@@ -672,51 +673,84 @@ const getPromptBySlugController = asyncHandler(
   async (req: RequestWithIP, res: Response) => {
     const { slug } = req.params;
     const ip = req.clientIP;
-    const userId = (req as any)?.user?._id as mongoose.Types.ObjectId | undefined;
 
-    const prompt = await Prompt.findOne({ slug, isPublic: true }).populate(
-      "creator",
-      "name avatar"
-    );
+    const prompt = await Prompt.findOne({ slug, isPublic: true })
+      .populate({
+        path: "creator",
+        select: "-password -refreshToken",
+      })
+      .populate({
+        path: "comments",
+        match: { parentComment: null },
+        populate: [
+          {
+            path: "user",
+            select: "name avatar",
+          },
+          {
+            path: "likes",
+            select: "user",
+          },
+          {
+            path: "replies",
+            populate: [
+              {
+                path: "user",
+                select: "name avatar",
+              },
+              {
+                path: "likes",
+                select: "user",
+              },
+              {
+                path: "replies",
+                populate: [
+                  {
+                    path: "user",
+                    select: "name avatar",
+                  },
+                  {
+                    path: "likes",
+                    select: "user",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+      .lean();
 
     if (!prompt) {
       throw new ApiError(404, "Prompt not found");
     }
 
-    // Increment views (unique by user/ip)
-    await trackPromptView({ promptIdOrDoc: prompt, userId, ip });
-
-    // Increment share count only if not shared before by this user/ip
-    let isNewShare = false;
-
-    // Initialize sharedBy if undefined (in case schema or doc is old)
+    // Ensure `sharedBy` exists
     if (!prompt.sharedBy) {
       prompt.sharedBy = { users: [], ips: [] };
     }
 
-    if (userId) {
-      if (!prompt.sharedBy.users.some((id) => id.equals(userId))) {
-        prompt.sharedBy.users.push(userId);
-        isNewShare = true;
-      }
-    } else if (ip) {
-      if (!prompt.sharedBy.ips.includes(ip)) {
-        prompt.sharedBy.ips.push(ip);
-        isNewShare = true;
-      }
+    let isNewShare = false;
+    if (ip && !prompt.sharedBy.ips.includes(ip)) {
+      prompt.sharedBy.ips.push(ip);
+      isNewShare = true;
     }
 
     if (isNewShare) {
       prompt.shareCount += 1;
-      prompt.markModified("sharedBy"); // Important to tell Mongoose the nested array changed
-      await prompt.save();
+      prompt.markModified("sharedBy");
+      await Prompt.findByIdAndUpdate(prompt._id, {
+        sharedBy: prompt.sharedBy,
+        shareCount: prompt.shareCount,
+      });
     }
 
-    return res
-      .status(200)
-      .json(new ApiResponse(200, prompt, "Prompt viewed successfully"));
+    return res.status(200).json(
+      new ApiResponse(200, { data: [prompt] }, "Prompts fetched successfully")
+    );
   }
 );
+
 
 
 
