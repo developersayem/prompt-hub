@@ -7,6 +7,7 @@ import PromptCard from "@/components/shared/PromptCard";
 import { IPrompt } from "@/types/prompts.type";
 import { useAuth } from "@/contexts/auth-context";
 import { usePromptsBySlug } from "@/hooks/usePromptBySlug";
+import Link from "next/link";
 
 export default function PromptSlugPage() {
   const params = useParams();
@@ -79,7 +80,7 @@ export default function PromptSlugPage() {
           {error || "Prompt not found"}
         </p>
         <Button asChild>
-          <a href="/feed">Back to feed</a>
+          <Link href="/feed">Back to feed</Link>
         </Button>
       </div>
     );
