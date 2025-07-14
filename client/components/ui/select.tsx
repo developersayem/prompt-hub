@@ -43,7 +43,7 @@ function SelectTrigger({
         "disabled:cursor-not-allowed disabled:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         "*:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2",
-        className // ✅ allow full override for bg colors
+        className //   allow full override for bg colors
       )}
       {...props}
     >

@@ -25,7 +25,7 @@ import { IPrompt } from "@/types/prompts.type";
 import { PublicProfileModal } from "@/components/shared/public-profile-modal";
 import { IPublicUser } from "@/types/publicUser.type";
 import { usePrompts } from "@/hooks/usePrompts";
-import PromptCard from "@/components/shared/PromptCard";
+import PromptCard from "@/components/shared/prompt-card";
 
 export default function FeedPage() {
   const { user, updateUser } = useAuth();

@@ -63,7 +63,7 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
               <CreatePromptModal
                 open={openCreateModal}
                 onClose={() => setOpenCreateModal(false)}
-                onSuccess={() => mutate(key)} // ✅ Properly refetch
+                onSuccess={() => mutate(key)} //   Properly refetch
               />
               <ThemeToggle />
               <UserNav />

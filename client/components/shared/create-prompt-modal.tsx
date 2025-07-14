@@ -99,7 +99,7 @@ export default function CreatePromptModal({
       data.append("price", formData.price);
     }
 
-    // ✅ FIX: send tags as JSON string
+    // send tags as JSON string
     data.append("tags", JSON.stringify(formData.tags));
 
     if (uploadedFile) {

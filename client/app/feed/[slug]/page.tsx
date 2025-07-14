@@ -3,7 +3,7 @@
 import { useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import PromptCard from "@/components/shared/PromptCard";
+import PromptCard from "@/components/shared/prompt-card";
 import { IPrompt } from "@/types/prompts.type";
 import { useAuth } from "@/contexts/auth-context";
 import { usePromptsBySlug } from "@/hooks/usePromptBySlug";

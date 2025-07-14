@@ -94,7 +94,7 @@ export default function ResetPasswordPage() {
     } catch (error) {
       toast.error((error as Error).message || "Failed to send OTP");
     } finally {
-      setIsLoading(false); // ✅ Fix here
+      setIsLoading(false);
     }
   };
 
@@ -121,11 +121,11 @@ export default function ResetPasswordPage() {
 
       toast.success("OTP verified successfully");
       setStep("password");
-      setIsLoading(false); // ✅ Fix here
+      setIsLoading(false); //   Fix here
     } catch (error) {
       toast.error((error as Error).message || "Verification failed");
     } finally {
-      setIsLoading(false); // ✅ Also ensure reset here
+      setIsLoading(false); //   Also ensure reset here
     }
   };
 

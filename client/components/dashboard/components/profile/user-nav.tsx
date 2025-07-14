@@ -59,6 +59,9 @@ export function UserNav() {
               <DropdownMenuItem>
                 <Link href="/dashboard">Dashboard</Link>
               </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link href="/dashboard?tab=settings">Settings</Link>
+              </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout}>

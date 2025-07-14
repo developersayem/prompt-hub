@@ -61,9 +61,7 @@ export const PublicProfileModal = ({
                 {user.bio && (
                   <p className="text-sm text-muted-foreground">{user.bio}</p>
                 )}
-                {user.isCertified && (
-                  <Badge className="mt-1">✅ Certified</Badge>
-                )}
+                {user.isCertified && <Badge className="mt-1"> Certified</Badge>}
               </div>
 
               <Separator className="my-2" />

@@ -29,7 +29,7 @@ app.use(
   })
 );
 
-app.set("trust proxy", 1); // ✅ Required when behind proxy (e.g. Webuzo/Nginx)
+app.set("trust proxy", 1); //   Required when behind proxy (e.g. Webuzo/Nginx)
 
 
 

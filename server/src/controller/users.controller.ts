@@ -148,7 +148,7 @@ const loginUserController = asyncHandler(
       throw new ApiError(401, "Please verify your email before logging in.");
     }
 
-    // ✅ If 2FA is enabled
+    //   If 2FA is enabled
     if (user.isTwoFactorEnabled) {
       const twoFactorCode = crypto.randomInt(100000, 999999).toString();
       const twoFactorExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -519,7 +519,7 @@ const verifyOTPController = asyncHandler(async (req: Request, res: Response) => 
     throw new ApiError(400, "Verification code has expired");
   }
 
-  // ✅ Just clear code after success
+  //   Just clear code after success
   user.verificationCode = "";
   user.verificationCodeExpires = null;
   user.lastVerificationSentAt = null;

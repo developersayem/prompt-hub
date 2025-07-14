@@ -29,7 +29,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { IPrompt } from "@/types/prompts.type";
-import { CommentThread } from "./CommentThread";
+import { CommentThread } from "./comment-thread";
 // import { IComment } from "@/types/comments.type";
 import { toast } from "sonner";
 import LoginPromptModal from "../feed/LoginPromptModal";

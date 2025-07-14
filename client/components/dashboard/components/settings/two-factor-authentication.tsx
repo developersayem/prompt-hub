@@ -98,7 +98,7 @@ export const TwoFactorAuthentication = () => {
     }
   };
 
-  // ✅ Verify 2FA code
+  //   Verify 2FA code
   const handleVerify = async () => {
     if (otp.length !== 6) return;
     try {

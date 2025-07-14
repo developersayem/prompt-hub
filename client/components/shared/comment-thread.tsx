@@ -1,4 +1,3 @@
-// components/CommentThread.tsx
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import formatShortTimeAgo from "@/helper/formate-time-ago";
 import {
@@ -76,7 +75,7 @@ export const CommentThread = ({
     optimisticUpdateComment(mutatePrompts, commentId, newText);
 
     try {
-      // ✅ Now make the request (async but we already updated the UI)
+      //   Now make the request (async but we already updated the UI)
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/comment/${commentId}`,
         {
