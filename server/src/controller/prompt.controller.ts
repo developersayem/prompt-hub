@@ -719,7 +719,6 @@ const getPromptBySlugController = asyncHandler(
           },
         ],
       })
-      .lean();
 
     if (!prompt) {
       throw new ApiError(404, "Prompt not found");
