@@ -72,12 +72,16 @@ import healthCheckRoutes from "./routes/health-check.routes";
 import userRoutes from "./routes/users.routes";
 import promptRoutes from "./routes/prompt.routes";
 import statsRoutes from "./routes/stats.routes"
+import categoryRoutes from "./routes/category.routes"
+import aiModelRoutes from "./routes/ai-model.route"
 
 // Use routes
 app.use("/api/v1/health-check", healthCheckRoutes);
 app.use("/api/v1/users", userRoutes);
 app.use("/api/v1/prompts", promptRoutes);
 app.use("/api/v1/stats", statsRoutes)
+app.use("/api/v1/categories", categoryRoutes);
+app.use("/api/v1/ai-models", aiModelRoutes);
 
 
 

@@ -48,6 +48,8 @@ export interface IUser extends Document {
   isTwoFactorEnabled: boolean;
   twoFactorCode: string;
   twoFactorCodeExpires: Date | null;
+  aiModels: mongoose.Schema.Types.ObjectId[];
+  categories: mongoose.Schema.Types.ObjectId[];
 
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): string;
@@ -130,6 +132,18 @@ const userSchema = new Schema<IUser>(
       type: Number,
       default: 1000,
     },
+    aiModels: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "AiModel",
+      },
+    ],
+    categories: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Category",
+      },
+    ],
     prompts: [
       {
         type: mongoose.Schema.Types.ObjectId,
