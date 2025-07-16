@@ -34,6 +34,9 @@ import {
 import CreatePromptModal from "../shared/create-prompt-modal";
 import useSWR, { mutate } from "swr";
 import Masonry from "react-masonry-css";
+import { getEmbeddableVideoUrl } from "@/helper/getEmbeddableVideoUrl";
+import isValidUrl from "@/helper/check-url";
+import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
 
 // 👉 Masonry responsive breakpoints
 const breakpointColumnsObj = {
@@ -225,33 +228,96 @@ const MyPromptsTab = ({ value }: { value: string }) => {
               </div>
 
               {/* Content Preview */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                {prompt.resultType === "image" ? (
-                  <Image
-                    width={500}
-                    height={500}
-                    src={prompt.resultContent || "/placeholder.svg"}
-                    alt="Preview"
-                    className="w-full rounded-lg"
-                  />
-                ) : prompt.resultType === "video" ? (
-                  <video
-                    controls
-                    preload="metadata"
-                    className="w-full h-auto max-h-[500px] rounded-xl bg-black"
-                  >
-                    <source src={prompt.resultContent || ""} type="video/mp4" />
-                    Your browser does not support the video tag.
-                  </video>
-                ) : (
-                  <div>
-                    <p className="text-sm whitespace-pre-wrap text-black capitalize">
-                      {expandedPrompts[prompt._id]
-                        ? prompt.resultContent
-                        : prompt.resultContent.length > 200
-                        ? `${prompt.resultContent.slice(0, 200)}...`
-                        : prompt.resultContent}
+              <div
+                className={`${
+                  prompt?.resultType === "text"
+                    ? "bg-gray-200 dark:bg-gray-50"
+                    : ""
+                } rounded-lg p-4 `}
+              >
+                {prompt?.resultType === "image" ? (
+                  isValidUrl(prompt.resultContent) ? (
+                    isWhitelistedDomain(prompt.resultContent) ? (
+                      <Image
+                        width={700}
+                        height={300}
+                        src={prompt.resultContent}
+                        alt={prompt.title || "Prompt image"}
+                        className="mx-auto rounded-lg object-contain max-h-[500px]"
+                        loading="lazy"
+                      />
+                    ) : (
+                      // fallback img for non-whitelisted domains
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={prompt.resultContent}
+                        alt={prompt.title || "Prompt image"}
+                        className="mx-auto rounded-lg object-contain max-h-[500px]"
+                        loading="lazy"
+                        decoding="async"
+                      />
+                    )
+                  ) : (
+                    <p className="text-center text-sm text-gray-500">
+                      Invalid image URL
                     </p>
+                  )
+                ) : prompt?.resultType === "video" ? (
+                  (() => {
+                    const embed = getEmbeddableVideoUrl(
+                      isValidUrl(prompt.resultContent)
+                        ? prompt.resultContent
+                        : ""
+                    );
+
+                    if (!embed) {
+                      return (
+                        <p className="text-center text-sm text-gray-500">
+                          Unsupported or private media URL
+                        </p>
+                      );
+                    }
+
+                    if (embed.type === "video") {
+                      return (
+                        <div
+                          className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg"
+                          style={{ aspectRatio: "16/9" }}
+                        >
+                          <video
+                            controls
+                            preload="metadata"
+                            className="absolute inset-0 w-full h-full rounded-xl object-cover bg-black"
+                            src={prompt.resultContent}
+                          >
+                            Your browser does not support the video tag.
+                          </video>
+                        </div>
+                      );
+                    }
+
+                    // embed.type === "iframe"
+                    return (
+                      <div
+                        className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg"
+                        style={{ aspectRatio: "16/9" }}
+                      >
+                        <iframe
+                          src={embed.url}
+                          className="absolute inset-0 w-full h-full rounded-xl"
+                          allowFullScreen
+                          title={prompt.title || "Embedded video"}
+                        />
+                      </div>
+                    );
+                  })()
+                ) : (
+                  <p className="text-sm whitespace-pre-wrap text-black capitalize">
+                    {expandedPrompts[prompt._id]
+                      ? prompt.resultContent
+                      : prompt.resultContent.length > 200
+                      ? `${prompt.resultContent.slice(0, 200)}...`
+                      : prompt.resultContent}
                     {prompt.resultContent.length > 200 && (
                       <button
                         onClick={() => toggleExpand(prompt._id)}
@@ -260,7 +326,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
                         {expandedPrompts[prompt._id] ? "See less" : "See more"}
                       </button>
                     )}
-                  </div>
+                  </p>
                 )}
               </div>
 

@@ -214,6 +214,7 @@ const PromptCard: FC<PromptCardProps> = ({
         </CardHeader>
 
         <CardContent className="space-y-4">
+          {/* Prompt title and description */}
           <div>
             <h3 className="text-xl font-semibold mb-2 capitalize">
               {prompt?.title}
@@ -234,7 +235,7 @@ const PromptCard: FC<PromptCardProps> = ({
               )}
             </div>
           </div>
-
+          {/* content preview section */}
           <div
             className={`${
               prompt?.resultType === "text" ? "bg-gray-200 dark:bg-gray-50" : ""
@@ -333,6 +334,7 @@ const PromptCard: FC<PromptCardProps> = ({
             )}
           </div>
 
+          {/* Tags */}
           <div className="flex flex-wrap gap-2">
             {prompt?.tags.map((tag, index) => (
               <Badge
@@ -344,14 +346,14 @@ const PromptCard: FC<PromptCardProps> = ({
               </Badge>
             ))}
           </div>
-
+          {/* AI model */}
           <div className="flex items-center text-sm text-gray-500">
             <Sparkles className="h-4 w-4 mr-1" />
             Generated with {prompt?.aiModel}
           </div>
 
           <Separator />
-
+          {/* Actions buttons section */}
           <div className="flex w-full flex-wrap gap-1">
             {/* Like button */}
             <Button
