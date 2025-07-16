@@ -242,6 +242,7 @@ const PromptCard: FC<PromptCardProps> = ({
                 src={prompt?.resultContent || "/placeholder.svg"}
                 alt="Prompt result"
                 className="w-full rounded-lg"
+                priority
               />
             ) : prompt?.resultType === "video" ? (
               <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg">

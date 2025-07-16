@@ -3,11 +3,10 @@ export const fetcher = async (url: string) => {
   const res = await fetch(url, {
     method: "GET",
     headers: { "Content-Type": "application/json" },
-    credentials: "include", // send cookies (accessToken)
+    credentials: "include",
   });
 
   if (res.status === 401) {
-    // Token expired or invalid – auto logout
     localStorage.removeItem("user");
     if (typeof window !== "undefined") {
       window.location.href = "/auth/login";
@@ -16,18 +15,18 @@ export const fetcher = async (url: string) => {
   }
 
   if (!res.ok) {
-    // Other error (403, 500, etc.)
     const error = await res.json().catch(() => null);
     throw new Error(error?.message || "Failed to fetch");
   }
 
   const json = await res.json();
 
-  // Check if json.data.data exists and is an array
-  if (json?.data?.data && Array.isArray(json.data.data)) {
-    return json.data.data; // Return actual data array
+  // 🧠 Handle both nested and flat "data"
+  if (Array.isArray(json?.data)) {
+    return json.data;
+  } else if (Array.isArray(json?.data?.data)) {
+    return json.data.data;
   }
 
-  // Fallback: return empty array
   return [];
 };

@@ -25,6 +25,13 @@ import { Upload, X, Send, Coins, Save } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import { ICategory } from "@/types/category.type";
+import Combobox from "./Combobox";
+// import { IAiModel } from "@/types/ai-model.types";
+import { useCategories } from "@/hooks/API/useCategories";
+import { IAiModel } from "@/types/ai-model.types";
+import { useAiModels } from "@/hooks/API/useAiModels";
+// import { useAuth } from "@/contexts/auth-context";
 
 export default function CreatePromptModal({
   open,
@@ -50,6 +57,16 @@ export default function CreatePromptModal({
 
   const [currentTag, setCurrentTag] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  // get categories from useCategories hook
+  const {
+    categories,
+    categoriesIsLoading,
+    categoriesIsError,
+    categoriesMutate,
+  } = useCategories();
+  //get ai models from useAiModels hook
+  const { aiModels, aiModelsIsLoading, aiModelsIsError, aiModelsMutate } =
+    useAiModels();
 
   const handleAddTag = () => {
     const trimmed = currentTag.trim();
@@ -75,10 +92,9 @@ export default function CreatePromptModal({
     if (file) setUploadedFile(file);
   };
 
-  // ONLY CHANGED SECTION
-
   // Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
+    // const { user } = useAuth();
     e.preventDefault();
 
     if (formData.resultType !== "text" && !uploadedFile) {
@@ -135,7 +151,6 @@ export default function CreatePromptModal({
         price: "",
       });
       setUploadedFile(null);
-
       toast.success("Prompt created successfully");
       onClose();
       if (onSuccess) onSuccess();
@@ -150,7 +165,7 @@ export default function CreatePromptModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-screen overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-screen overflow-visible flex flex-col min-h-0">
         <DialogHeader className="w-full justify-evenly">
           <div className="flex justify-baseline items-center space-x-2">
             <DialogTitle>Create Prompt</DialogTitle>
@@ -168,7 +183,7 @@ export default function CreatePromptModal({
                 className={cn(
                   "text-white border-0",
                   formData.paymentStatus === "paid"
-                    ? "bg-blue-900 hover:bg-yellow-500"
+                    ? "bg-blue-900 hover:bg-blue-500"
                     : "bg-green-900 hover:bg-green-500"
                 )}
               >
@@ -234,39 +249,98 @@ export default function CreatePromptModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, category: value })
+                  <Combobox<ICategory>
+                    options={categories}
+                    isLoading={categoriesIsLoading}
+                    isError={categoriesIsError}
+                    value={
+                      categories.find((c) => c.name === formData.category)
+                        ?._id || ""
                     }
-                  >
-                    <SelectTrigger className="w-full bg-[#1d1c1c]">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="marketing">Marketing</SelectItem>
-                      <SelectItem value="design">Design</SelectItem>
-                      <SelectItem value="programming">Programming</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    placeholder="Select category..."
+                    getLabel={(c) => c.name}
+                    getValue={(c) => c._id}
+                    onChange={(id) => {
+                      const selectedCategory = categories.find(
+                        (cat) => cat._id === id
+                      );
+                      const name = selectedCategory?.name || "";
+                      setFormData({ ...formData, category: name });
+                    }}
+                    onCreateOption={async (input) => {
+                      try {
+                        const res = await fetch(
+                          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/categories/create`,
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                            body: JSON.stringify({
+                              name: input,
+                              isUserCreated: true,
+                            }),
+                          }
+                        );
+                        if (!res.ok)
+                          throw new Error((await res.json()).message);
 
+                        const newCategory: ICategory = await res.json();
+                        categoriesMutate();
+                        setFormData({
+                          ...formData,
+                          category: newCategory.name,
+                        });
+                        toast.success("Category created and selected");
+                      } catch (err) {
+                        toast.error((err as Error).message);
+                      }
+                    }}
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label>AI Model</Label>
-                  <Select
-                    value={formData.aiModel}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, aiModel: value })
-                    }
-                  >
-                    <SelectTrigger className="w-full bg-[#1d1c1c]">
-                      <SelectValue placeholder="Select AI model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="gpt-4">GPT-4</SelectItem>
-                      <SelectItem value="gpt-3.5">GPT-3.5</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Combobox<IAiModel>
+                    options={aiModels}
+                    isLoading={aiModelsIsLoading}
+                    isError={aiModelsIsError}
+                    value={
+                      aiModels.find((m) => m.name === formData.aiModel)?._id ||
+                      ""
+                    } // <- controlled by name
+                    placeholder="Select model..."
+                    getLabel={(c) => c.name}
+                    getValue={(c) => c._id}
+                    onChange={(id) => {
+                      const selectedModel = aiModels.find((m) => m._id === id);
+                      const name = selectedModel?.name || "";
+                      setFormData({ ...formData, aiModel: name });
+                    }}
+                    onCreateOption={async (input) => {
+                      try {
+                        const res = await fetch(
+                          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/ai-models/create`,
+                          {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            credentials: "include",
+                            body: JSON.stringify({
+                              name: input,
+                              isUserCreated: true,
+                            }),
+                          }
+                        );
+                        if (!res.ok)
+                          throw new Error((await res.json()).message);
+
+                        const newModel: IAiModel = await res.json();
+                        aiModelsMutate();
+                        setFormData({ ...formData, aiModel: newModel.name });
+                        toast.success("AI Model created and selected");
+                      } catch (err) {
+                        toast.error((err as Error).message);
+                      }
+                    }}
+                  />
                 </div>
               </div>
             </div>
