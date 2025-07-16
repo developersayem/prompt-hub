@@ -15,6 +15,18 @@ import { RequestWithIP } from "../middlewares/getClientIp.middlewares";
 import { trackPromptView } from "../utils/trackPromptView";
 import { getAllNestedCommentIds } from "../helper/getAllNestedCommentIds";
 
+// Helper: check if a string is a valid URL
+const isValidUrl = (urlString: string) => {
+  try {
+    new URL(urlString);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+
+
 // Controller for show all prompts
 const getAllPromptsController = asyncHandler(async (req: Request, res: Response) => {
   const { category, isPaid, searchString } = req.query;
@@ -70,7 +82,7 @@ const getAllPromptsController = asyncHandler(async (req: Request, res: Response)
     new ApiResponse(200, { data: promptsWithLikes }, "Prompts fetched successfully")
   );
 });
-
+// Controller for create prompt
 const createPromptController = asyncHandler(async (req: Request, res: Response) => {
   const {
     title,
@@ -115,21 +127,31 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
   // Handle result content
   let finalResultContent = "";
   if (resultType === "text") {
-    if (!rawResultContent) {
+    if (!rawResultContent || rawResultContent.trim() === "") {
       throw new ApiError(400, "Text result content is required");
     }
-    finalResultContent = rawResultContent;
+    finalResultContent = rawResultContent.trim();
   } else if (["image", "video"].includes(resultType)) {
-    const file = (req.files as any)?.promptContent?.[0];
-    if (!file?.path) {
-      throw new ApiError(400, "Media file is required for image/video prompt");
+    if (rawResultContent && rawResultContent.trim() !== "") {
+      // Use pasted URL if valid
+      if (!isValidUrl(rawResultContent.trim())) {
+        throw new ApiError(400, "Invalid URL provided for media content");
+      }
+      finalResultContent = rawResultContent.trim();
+    } else {
+      // Otherwise expect uploaded file
+      const file = (req.files as any)?.promptContent?.[0];
+      if (!file || !file.path) {
+        throw new ApiError(400, `Media file or URL is required for ${resultType} prompt`);
+      }
+      const uploaded: UploadApiResponse | null = await uploadOnCloudinary(file.path);
+      if (!uploaded || !uploaded.secure_url) {
+        throw new ApiError(500, "Failed to upload media to Cloudinary");
+      }
+      finalResultContent = uploaded.secure_url;
     }
-
-    const uploaded: UploadApiResponse | null = await uploadOnCloudinary(file.path);
-    if (!uploaded) {
-      throw new ApiError(500, "Failed to upload media to Cloudinary");
-    }
-    finalResultContent = uploaded.secure_url;
+  } else {
+    throw new ApiError(400, "Invalid result type");
   }
 
   // Create the prompt
@@ -168,7 +190,7 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
     .status(201)
     .json(new ApiResponse(201, { data: newPrompt }, "Prompt created successfully"));
 });
-
+// Controller for like prompt
 const likePromptController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
   if (!userId) throw new ApiError(401, "Unauthorized");
@@ -211,7 +233,6 @@ const likePromptController = asyncHandler(async (req: Request, res: Response) =>
     throw new ApiError(500, "Something went wrong while liking the prompt");
   }
 });
-
 //Controller for comments
 const createCommentController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
@@ -242,7 +263,6 @@ const createCommentController = asyncHandler(async (req: Request, res: Response)
   res.status(201).json(
     new ApiResponse(201, { comment: populatedComment }, "Comment created successfully"));
 });
-
 // Controller for update comments 
 const updateCommentController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id; // assuming auth middleware sets req.user
@@ -269,7 +289,6 @@ const updateCommentController = asyncHandler(async (req: Request, res: Response)
     new ApiResponse(200, { comment }, "Comment updated successfully")
   );
 });
-
 // Controller for delete comments
 const deleteCommentController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id?.toString();
@@ -312,7 +331,6 @@ const deleteCommentController = asyncHandler(async (req: Request, res: Response)
 
   res.status(200).json(new ApiResponse(200, {}, "Comment and all nested replies deleted successfully"));
 });
-
 // Controller to add comment or reply
 const replyCommentController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
@@ -340,7 +358,6 @@ const replyCommentController = asyncHandler(async (req: Request, res: Response) 
 
   res.status(201).json(new ApiResponse(201, { comment }, "Reply posted successfully"));
 });
-
 // Controller for like comments
 const likeCommentController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
@@ -370,7 +387,6 @@ const likeCommentController = asyncHandler(async (req: Request, res: Response) =
       .json(new ApiResponse(200, { liked: true }, "Comment liked"));
   }
 });
-
 // Controller for my prompts
 const getMyPromptsController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
@@ -416,7 +432,6 @@ const getMyPromptsController = asyncHandler(async (req: Request, res: Response) 
     new ApiResponse(200, { data: promptsWithLikes }, "Your prompts fetched successfully")
   );
 });
-
 // Controller for get single
 const getSinglePromptController = asyncHandler(async (req: Request, res: Response) => {
     const promptId = req.params.id;
@@ -462,7 +477,6 @@ const getSinglePromptController = asyncHandler(async (req: Request, res: Respons
       .json(new ApiResponse(200, { prompt }, "Prompt fetched successfully"));
   }
 );
-
 const updatePromptController = asyncHandler(async (req: Request, res: Response) => {
   const promptId = req.params.id;
   const userId = (req as any).user?._id;
@@ -520,7 +534,6 @@ const updatePromptController = asyncHandler(async (req: Request, res: Response) 
     new ApiResponse(200, { prompt: updatedPrompt }, "Prompt updated successfully")
   );
 });
-
 // Controller for delete prompts
 const deletePromptController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
@@ -586,7 +599,6 @@ await User.updateOne(
     .status(200)
     .json(new ApiResponse(200, {}, "Prompt deleted successfully"));
 });
-
 //controller for buy prompt
 const buyPromptController = asyncHandler(async (req: Request, res: Response) => {
   const promptId = req.params.id;
@@ -653,7 +665,6 @@ const buyPromptController = asyncHandler(async (req: Request, res: Response) => 
 );
 
 });
-
 // Controller for get my purchases
 const getMyPurchasesController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
@@ -665,7 +676,6 @@ const getMyPurchasesController = asyncHandler(async (req: Request, res: Response
 
   return res.status(200).json(new ApiResponse(200, history, "Purchase history fetched"));
 });
-
 // Controller for get prompt by slug
 const getPromptBySlugController = asyncHandler(
   async (req: RequestWithIP, res: Response) => {

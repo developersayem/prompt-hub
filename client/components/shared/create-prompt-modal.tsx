@@ -31,6 +31,10 @@ import Combobox from "./Combobox";
 import { useCategories } from "@/hooks/API/useCategories";
 import { IAiModel } from "@/types/ai-model.types";
 import { useAiModels } from "@/hooks/API/useAiModels";
+import { Separator } from "../ui/separator";
+import isValidUrl from "@/utils/check-url";
+import { getEmbeddableVideoUrl } from "@/utils/getEmbeddableVideoUrl";
+import isWhitelistedDomain from "@/utils/isWhiteListedDomain";
 // import { useAuth } from "@/contexts/auth-context";
 
 export default function CreatePromptModal({
@@ -97,8 +101,12 @@ export default function CreatePromptModal({
     // const { user } = useAuth();
     e.preventDefault();
 
-    if (formData.resultType !== "text" && !uploadedFile) {
-      toast.error("Please upload a file for image or video prompts.");
+    if (
+      formData.resultType !== "text" &&
+      !uploadedFile &&
+      !formData.resultContent.trim()
+    ) {
+      toast.error("Please upload a file or provide a valid link.");
       return;
     }
 
@@ -166,51 +174,50 @@ export default function CreatePromptModal({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-screen overflow-visible flex flex-col min-h-0">
-        <DialogHeader className="w-full justify-evenly">
-          <div className="flex justify-baseline items-center space-x-2">
-            <DialogTitle>Create Prompt</DialogTitle>
-            <Select
-              value={formData.paymentStatus}
-              onValueChange={(value) =>
-                setFormData({
-                  ...formData,
-                  paymentStatus: value as "free" | "paid",
-                })
-              }
-            >
-              <SelectTrigger
-                size="xs"
-                className={cn(
-                  "text-white border-0",
-                  formData.paymentStatus === "paid"
-                    ? "bg-blue-900 hover:bg-blue-500"
-                    : "bg-green-900 hover:bg-green-500"
-                )}
-              >
-                <Coins />
-                <SelectValue
-                  placeholder="Select"
-                  className={cn(
-                    formData.paymentStatus === "paid"
-                      ? "text-yellow-900"
-                      : "text-green-900"
-                  )}
-                />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectItem value="free">Free</SelectItem>
-                <SelectItem value="paid">Paid</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogDescription>
-            Fill in the details and preview will appear inside the upload
-            section.
-          </DialogDescription>
-        </DialogHeader>
-
         <form onSubmit={handleSubmit} className="space-y-2">
+          <DialogHeader className="w-full justify-evenly">
+            <div className="flex justify-baseline items-center space-x-2">
+              <DialogTitle>Create Prompt</DialogTitle>
+              <Select
+                value={formData.paymentStatus}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    paymentStatus: value as "free" | "paid",
+                  })
+                }
+              >
+                <SelectTrigger
+                  size="xs"
+                  className={cn(
+                    "text-white border-0",
+                    formData.paymentStatus === "paid"
+                      ? "bg-blue-900 hover:bg-blue-500"
+                      : "bg-green-900 hover:bg-green-500"
+                  )}
+                >
+                  <Coins />
+                  <SelectValue
+                    placeholder="Select"
+                    className={cn(
+                      formData.paymentStatus === "paid"
+                        ? "text-yellow-900"
+                        : "text-green-900"
+                    )}
+                  />
+                </SelectTrigger>
+
+                <SelectContent>
+                  <SelectItem value="free">Free</SelectItem>
+                  <SelectItem value="paid">Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogDescription>
+              Fill in the details and preview will appear inside the upload
+              section.
+            </DialogDescription>
+          </DialogHeader>
           {/* TITLE / DESC / PROMPT */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
@@ -343,10 +350,61 @@ export default function CreatePromptModal({
                   />
                 </div>
               </div>
+              {/* CREDITS */}
+              <div className="w-full space-y-2">
+                <Label>Credits</Label>
+                <div className="relative">
+                  <Coins className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    type="number"
+                    className="pl-10"
+                    min="1"
+                    step="0.01"
+                    placeholder="Enter credits"
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
+                    required={formData.paymentStatus === "paid"}
+                    disabled={formData.paymentStatus === "free"}
+                  />
+                </div>
+              </div>
+              {/* TAGS */}
+              <div className="w-full">
+                <Label>Tags</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    value={currentTag}
+                    onChange={(e) => setCurrentTag(e.target.value)}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && (e.preventDefault(), handleAddTag())
+                    }
+                  />
+                  <Button type="button" onClick={handleAddTag}>
+                    Add
+                  </Button>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {Array.isArray(formData.tags) &&
+                  formData.tags.map((tag) => (
+                    <div
+                      key={tag}
+                      className="flex items-center gap-1 bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm"
+                    >
+                      <span>#{tag}</span>
+                      <X
+                        className="h-3 w-3 cursor-pointer hover:text-red-500"
+                        onClick={() => handleRemoveTag(tag)}
+                      />
+                    </div>
+                  ))}
+              </div>
             </div>
 
             {/* RESULT TYPE / CATEGORY / FILE */}
-            <div className="space-y-6">
+            <div className="space-y-6 -mt-10">
               <div className="space-y-2">
                 <Label>Result Type *</Label>
                 <RadioGroup
@@ -359,52 +417,167 @@ export default function CreatePromptModal({
                   {["text", "image", "video"].map((type) => (
                     <div key={type} className="flex items-center gap-2">
                       <RadioGroupItem value={type} id={type} />
-                      <Label htmlFor={type}>{type}</Label>
+                      <Label htmlFor={type} className="capitalize">
+                        {type}
+                      </Label>
                     </div>
                   ))}
                 </RadioGroup>
               </div>
 
               {formData.resultType !== "text" ? (
-                <div className="space-y-2">
-                  <Label>Upload File</Label>
-                  <div className="border border-dashed rounded-lg p-4 text-center min-h-[250px] flex items-center justify-center">
-                    <input
-                      type="file"
-                      accept={
-                        formData.resultType === "image" ? "image/*" : "video/*"
-                      }
-                      onChange={handleFileUpload}
-                      className="hidden"
-                      id="file-upload"
-                    />
-                    <label
-                      htmlFor="file-upload"
-                      className="cursor-pointer w-full block"
-                    >
-                      {!uploadedFile ? (
-                        <div>
-                          <Upload className="h-6 w-6 mx-auto mb-2 text-gray-400" />
-                          <p className="text-sm text-gray-500">
-                            Click to upload
-                          </p>
-                        </div>
-                      ) : formData.resultType === "image" ? (
-                        <Image
-                          width={200}
-                          height={200}
-                          src={URL.createObjectURL(uploadedFile)}
-                          alt="Preview"
-                          className="mx-auto rounded-lg max-h-64"
-                        />
-                      ) : (
-                        <video
-                          controls
-                          src={URL.createObjectURL(uploadedFile)}
-                          className="mx-auto rounded-lg max-h-64 max-w-full"
-                        />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Upload File</Label>
+                      {uploadedFile && (
+                        <button
+                          className="bg-red-700 text-white text-xs py-1 px-3 rounded"
+                          type="button"
+                          onClick={() => {
+                            setUploadedFile(null);
+                            const fileInput = document.getElementById(
+                              "file-upload"
+                            ) as HTMLInputElement;
+                            if (fileInput) fileInput.value = "";
+                          }}
+                        >
+                          Clear
+                        </button>
                       )}
-                    </label>
+                    </div>
+
+                    <div className="border border-dashed rounded-lg p-4 text-center min-h-[326px] flex items-center justify-center">
+                      <input
+                        type="file"
+                        accept={
+                          formData.resultType === "image"
+                            ? "image/*"
+                            : "video/*"
+                        }
+                        onChange={handleFileUpload}
+                        className="hidden"
+                        id="file-upload"
+                      />
+                      <label
+                        htmlFor="file-upload"
+                        className="cursor-pointer w-full block"
+                      >
+                        {uploadedFile ? (
+                          formData.resultType === "image" ? (
+                            <Image
+                              width={300}
+                              height={500}
+                              src={URL.createObjectURL(uploadedFile)}
+                              alt="Preview"
+                              className="mx-auto rounded-lg"
+                            />
+                          ) : (
+                            <video
+                              src={URL.createObjectURL(uploadedFile)}
+                              controls
+                              className="mx-auto rounded-lg max-h-[400px]"
+                              width="300"
+                            />
+                          )
+                        ) : formData.resultContent ? (
+                          formData.resultType === "image" ? (
+                            isValidUrl(formData.resultContent) ? (
+                              isWhitelistedDomain(formData.resultContent) ? (
+                                <Image
+                                  width={300}
+                                  height={0}
+                                  src={formData.resultContent}
+                                  alt="Image Link Preview"
+                                  className="mx-auto rounded-lg"
+                                />
+                              ) : (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={formData.resultContent}
+                                  alt="Image Link Preview"
+                                  width={500}
+                                  height={0}
+                                  className="mx-auto rounded-lg object-contain"
+                                />
+                              )
+                            ) : (
+                              <p className="text-sm text-muted-foreground text-center">
+                                Invalid image URL
+                              </p>
+                            )
+                          ) : (
+                            (() => {
+                              const embed = getEmbeddableVideoUrl(
+                                isValidUrl(formData.resultContent)
+                                  ? formData.resultContent
+                                  : "Not valid URL"
+                              );
+                              if (!embed) {
+                                return (
+                                  <p className="text-sm text-muted-foreground text-center">
+                                    Unsupported or private media URL
+                                  </p>
+                                );
+                              }
+
+                              if (embed.type === "video") {
+                                return (
+                                  <video
+                                    src={embed.url}
+                                    controls
+                                    className="mx-auto rounded-lg max-h-[400px]"
+                                    width="300"
+                                  />
+                                );
+                              }
+
+                              return (
+                                <iframe
+                                  src={embed.url}
+                                  className="mx-auto rounded-lg"
+                                  width="300"
+                                  height="400"
+                                  allowFullScreen
+                                />
+                              );
+                            })()
+                          )
+                        ) : (
+                          <div>
+                            <Upload className="h-6 w-6 mx-auto mb-2 text-gray-400" />
+                            <p className="text-sm text-gray-500">
+                              Click to upload
+                            </p>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center w-full">
+                    <Separator className="max-w-1/2" />
+                    <span>OR</span>
+                    <Separator className="max-w-1/2" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>
+                      {formData.resultType === "image"
+                        ? "Image Link"
+                        : "Video Link"}
+                    </Label>
+                    <Input
+                      type="url"
+                      disabled={uploadedFile !== null}
+                      placeholder={`Paste ${formData.resultType} link here (optional)`}
+                      value={formData.resultContent}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          resultContent: e.target.value,
+                        })
+                      }
+                    />
                   </div>
                 </div>
               ) : (
@@ -419,66 +592,12 @@ export default function CreatePromptModal({
                       })
                     }
                     required
-                    className="min-h-[250px]"
+                    className="min-h-[440px]"
                   />
                 </div>
               )}
             </div>
           </div>
-
-          <div className="flex justify-between items-center gap-6">
-            {/* TAGS */}
-            <div className="w-full">
-              <Label>Tags</Label>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  value={currentTag}
-                  onChange={(e) => setCurrentTag(e.target.value)}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), handleAddTag())
-                  }
-                />
-                <Button type="button" onClick={handleAddTag}>
-                  Add
-                </Button>
-              </div>
-            </div>
-            {/* MONETIZE */}
-            <div className="w-full mt-4">
-              <div className="relative">
-                <Coins className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  type="number"
-                  className="pl-10"
-                  min="1"
-                  step="0.01"
-                  placeholder="Enter credits"
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
-                  }
-                  required={formData.paymentStatus === "paid"}
-                  disabled={formData.paymentStatus === "free"}
-                />
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {Array.isArray(formData.tags) &&
-              formData.tags.map((tag) => (
-                <div
-                  key={tag}
-                  className="flex items-center gap-1 bg-secondary text-secondary-foreground rounded-full px-3 py-1 text-sm"
-                >
-                  <span>#{tag}</span>
-                  <X
-                    className="h-3 w-3 cursor-pointer hover:text-red-500"
-                    onClick={() => handleRemoveTag(tag)}
-                  />
-                </div>
-              ))}
-          </div>
-
           {/* ACTION BUTTONS */}
           <div className="flex justify-end space-x-4">
             <Button type="button" variant="outline">

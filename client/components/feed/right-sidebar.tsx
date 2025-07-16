@@ -1,11 +1,10 @@
-// components/GoogleLoginButton.tsx
-
 // import { Badge } from "lucide-react";
 import { Badge } from "../ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import LoadingCom from "../shared/loading-com";
 
 interface ITag {
   tag: string;
@@ -140,14 +139,7 @@ export default function RightSidebar() {
           <CardContent className="space-y-2">
             <div className="flex flex-wrap gap-2">
               {loading ? (
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-center items-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                      <span className="ml-2">Loading tags...</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                <LoadingCom />
               ) : (
                 tradingTags.map(({ tag }, index) => (
                   <Badge
@@ -170,14 +162,7 @@ export default function RightSidebar() {
           </CardHeader>
           <CardContent className="space-y-3">
             {loading ? (
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex justify-center items-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                    <span className="ml-2">Loading prompts...</span>
-                  </div>
-                </CardContent>
-              </Card>
+              <LoadingCom />
             ) : (
               topCreators.map((creator, index) => (
                 <div
