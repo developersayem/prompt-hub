@@ -283,8 +283,8 @@ export default function CreatePromptModal({
                         );
                         if (!res.ok)
                           throw new Error((await res.json()).message);
-
-                        const newCategory: ICategory = await res.json();
+                        const data = await res.json();
+                        const newCategory: ICategory = data.data;
                         categoriesMutate();
                         setFormData({
                           ...formData,
@@ -331,8 +331,8 @@ export default function CreatePromptModal({
                         );
                         if (!res.ok)
                           throw new Error((await res.json()).message);
-
-                        const newModel: IAiModel = await res.json();
+                        const data = await res.json();
+                        const newModel: IAiModel = data.data;
                         aiModelsMutate();
                         setFormData({ ...formData, aiModel: newModel.name });
                         toast.success("AI Model created and selected");
