@@ -39,9 +39,9 @@ import {
 import countAllComments from "@/helper/count-all-nested-comments";
 import { useAuth } from "@/contexts/auth-context";
 import { ShareDialog } from "./share-dialog";
-import { getEmbeddableVideoUrl } from "@/utils/getEmbeddableVideoUrl";
-import isValidUrl from "@/utils/check-url";
-import isWhitelistedDomain from "@/utils/isWhiteListedDomain";
+import { getEmbeddableVideoUrl } from "@/helper/getEmbeddableVideoUrl";
+import isValidUrl from "@/helper/check-url";
+import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
 import Image from "next/image";
 
 interface PromptCardProps {
@@ -238,7 +238,7 @@ const PromptCard: FC<PromptCardProps> = ({
           <div
             className={`${
               prompt?.resultType === "text" ? "bg-gray-200 dark:bg-gray-50" : ""
-            } rounded-lg p-4`}
+            } rounded-lg p-4 `}
           >
             {prompt?.resultType === "image" ? (
               isValidUrl(prompt.resultContent) ? (

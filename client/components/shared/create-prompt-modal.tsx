@@ -32,9 +32,9 @@ import { useCategories } from "@/hooks/API/useCategories";
 import { IAiModel } from "@/types/ai-model.types";
 import { useAiModels } from "@/hooks/API/useAiModels";
 import { Separator } from "../ui/separator";
-import isValidUrl from "@/utils/check-url";
-import { getEmbeddableVideoUrl } from "@/utils/getEmbeddableVideoUrl";
-import isWhitelistedDomain from "@/utils/isWhiteListedDomain";
+import isValidUrl from "@/helper/check-url";
+import { getEmbeddableVideoUrl } from "@/helper/getEmbeddableVideoUrl";
+import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
 // import { useAuth } from "@/contexts/auth-context";
 
 export default function CreatePromptModal({
