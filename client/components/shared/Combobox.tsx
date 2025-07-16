@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
-import { ChevronDown } from "lucide-react";
+import { CheckIcon, ChevronDown } from "lucide-react";
 import LoadingCom from "./loading-com";
 
 type ComboboxProps<T> = {
@@ -14,7 +14,7 @@ type ComboboxProps<T> = {
   getLabel: (item: T) => string;
   getValue: (item: T) => string;
   onChange: (value: string) => void;
-  onCreateOption?: (input: string) => void; // Optional callback to handle new item
+  onCreateOption?: (input: string) => void;
 };
 
 export default function Combobox<T>({
@@ -40,7 +40,6 @@ export default function Combobox<T>({
     getLabel(item).toLowerCase().includes(query.toLowerCase())
   );
 
-  // Flip dropdown direction
   useEffect(() => {
     if (open && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
@@ -50,7 +49,6 @@ export default function Combobox<T>({
     }
   }, [open]);
 
-  // Close on outside click
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -79,41 +77,41 @@ export default function Combobox<T>({
     }
   };
 
-  if (isLoading) {
-    return <LoadingCom />;
-  }
-
-  if (isError) {
-    return <p className="text-center">Error</p>;
-  }
+  if (isLoading) return <LoadingCom />;
+  if (isError)
+    return <p className="text-center text-red-500">Error loading options</p>;
 
   return (
     <div ref={wrapperRef} className="relative w-full">
       <button
         ref={buttonRef}
-        onClick={() => setOpen((p) => !p)}
-        className="w-full bg-transparent dark:bg-[#171616] text-left border-0 border-gray-600 rounded-md px-3 py-1.5 text-white flex items-center justify-between hover:border-gray-400 transition"
+        onClick={() => setOpen((prev) => !prev)}
+        className="w-full text-left px-3 py-2 border rounded-md flex items-center justify-between transition 
+          bg-white text-black border-gray-300 
+          hover:border-gray-400 
+          dark:bg-[#171616] dark:text-white dark:border-gray-700 dark:hover:border-gray-500"
       >
         <span>
           {value
             ? getLabel(options.find((o) => getValue(o) === value)!)
             : placeholder}
         </span>
-        <ChevronDown size={15} className="text-gray-400" />
+        <ChevronDown size={15} className="text-gray-400 dark:text-gray-300" />
       </button>
 
       {open && (
         <div
           className={cn(
-            "absolute z-50 w-full border rounded-md shadow-lg bg-[#272627] transition-all duration-150",
-            dropUp ? "bottom-full mb-2" : "mt-2",
-            "origin-top scale-100"
+            "absolute z-50 w-full max-h-60 mt-2 border rounded-md shadow-lg overflow-hidden transition-all duration-150",
+            dropUp ? "bottom-full mb-2" : "top-full",
+            "bg-white dark:bg-[#272627] text-black dark:text-white border-gray-200 dark:border-gray-700"
           )}
         >
           <input
             type="text"
             placeholder="Search..."
             value={query}
+            autoFocus
             onChange={(e) => {
               setQuery(e.target.value);
               setHighlightedIndex(null);
@@ -135,25 +133,26 @@ export default function Combobox<T>({
                   handleSelect(filtered[highlightedIndex]);
                 } else if (filtered.length === 0 && onCreateOption) {
                   handleCreate();
-                  console.log("Creating new item:", query);
                 }
               } else if (e.key === "Escape") {
                 setOpen(false);
               }
             }}
-            className="w-full px-3 py-2 border-b border-gray-700 bg-transparent text-white text-sm focus:outline-none"
+            className="w-full px-3 py-2 border-b text-sm outline-none bg-white dark:bg-[#272627] dark:text-white dark:border-gray-700 border-gray-200"
           />
 
-          <ul className="max-h-60 overflow-y-auto text-sm">
+          <ul className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-neutral-700 text-sm">
             {filtered.length === 0 ? (
-              <li className="px-3 py-2 text-gray-400 flex justify-between items-center">
+              <li className="px-3 py-2 text-gray-500 dark:text-gray-400 flex justify-between items-center">
                 <span>No items found</span>
-                <button
-                  onClick={handleCreate}
-                  className="text-blue-400 hover:text-blue-300 text-sm"
-                >
-                  + Add
-                </button>
+                {onCreateOption && (
+                  <button
+                    onClick={handleCreate}
+                    className="text-blue-500 hover:underline"
+                  >
+                    + Add
+                  </button>
+                )}
               </li>
             ) : (
               filtered.map((item, index) => {
@@ -163,16 +162,17 @@ export default function Combobox<T>({
                 return (
                   <li
                     key={getValue(item)}
+                    tabIndex={0}
                     onClick={() => handleSelect(item)}
                     className={cn(
-                      "px-3 py-2 cursor-pointer",
-                      isHighlighted
-                        ? "bg-neutral-700 text-white"
-                        : "hover:bg-neutral-800",
-                      isSelected ? "font-medium" : "text-gray-300"
+                      "px-3 py-2 cursor-pointer flex items-center justify-between transition",
+                      isHighlighted && "bg-neutral-100 dark:bg-neutral-700",
+                      isSelected &&
+                        "bg-neutral-200 dark:bg-neutral-800 font-medium"
                     )}
                   >
                     {getLabel(item)}
+                    {isSelected && <CheckIcon className="size-4 ml-2" />}
                   </li>
                 );
               })
