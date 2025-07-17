@@ -219,7 +219,7 @@ const PromptCard: FC<PromptCardProps> = ({
             <h3 className="text-xl font-semibold mb-2 capitalize">
               {prompt?.title}
             </h3>
-            <div className="text-gray-600 text-sm whitespace-pre-wrap capitalize">
+            <div className="text-gray-600 text-sm whitespace-pre-wrap capitalize break-words w-full overflow-hidden">
               {expandedDescriptions[prompt._id]
                 ? prompt?.description ?? ""
                 : (prompt?.description ?? "").length > 150
