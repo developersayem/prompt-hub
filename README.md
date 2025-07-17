@@ -1,1 +1,1 @@
-# PastPrompt
+# Prompt Hub

@@ -359,7 +359,7 @@ export default function ResetPasswordPage() {
             <div className="flex items-center justify-center space-x-3 mb-6">
               {/* <Sparkles className="h-10 w-10 text-blue-600" /> */}
               <h1 className="text-2xl ml-5 font-bold text-slate-800 dark:text-slate-50 tracking-tight">
-                PastPrompt
+                Prompt Hub
               </h1>
             </div>
             <CardTitle className="text-2xl font-bold">

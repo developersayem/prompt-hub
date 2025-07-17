@@ -47,7 +47,7 @@ export default function LandingPage() {
           <div className="flex items-center space-x-3">
             <div>
               <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-50 tracking-tight">
-                PastPrompt
+                Prompt Hub
               </h1>
               <div className="text-xs bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-medium">
                 AI Prompt Directory
@@ -160,7 +160,7 @@ export default function LandingPage() {
         <div className="container mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Why Choose PastPrompt?
+              Why Choose Prompt Hub?
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
               The most advanced platform for AI prompt creators and enthusiasts
@@ -202,7 +202,7 @@ export default function LandingPage() {
               <CardContent>
                 <p className="text-slate-600 dark:text-slate-300">
                   Set your own prices and keep 90% of revenue. Our creators have
-                  earned over $2M selling their AI prompts on PastPrompt.
+                  earned over $2M selling their AI prompts on Prompt Hub.
                 </p>
               </CardContent>
             </Card>
@@ -463,7 +463,7 @@ export default function LandingPage() {
 
           <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-slate-400 text-sm">
-              &copy; 2025 PastPrompt. All rights reserved.
+              &copy; 2025 Prompt Hub. All rights reserved.
             </p>
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
               <span className="text-slate-400 text-sm">

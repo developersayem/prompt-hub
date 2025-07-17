@@ -73,7 +73,7 @@ export function RegisterForm() {
       <CardHeader className="text-center">
         <div className="flex items-center justify-center space-x-3 mb-6">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-50 tracking-tight">
-            PastPrompt
+            Prompt Hub
           </h1>
         </div>
         <CardTitle className="text-2xl font-bold">Create Account</CardTitle>

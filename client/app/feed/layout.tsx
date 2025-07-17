@@ -36,7 +36,7 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
               <Link href="/" className="flex items-center space-x-2">
                 {/* <Sparkles className="h-8 w-8 text-blue-600" /> */}
                 <h1 className="text-2xl ml-5 font-bold text-slate-800 dark:text-slate-50 tracking-tight">
-                  Past Prompt
+                  Prompt Hub
                 </h1>
               </Link>
             </div>

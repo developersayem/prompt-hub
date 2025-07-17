@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
+// Define which routes are protected
 const protectedRoutes = ["/create"];
 
-// Make sure to set this in your .env.local
-const JWT_SECRET = process.env.JWT_SECRET || "your_default_secret";
+// Use a strong secret, set it in your `.env.local`
+const JWT_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET || "your_default_secret";
 
-// Extend JwtPayload to include any custom properties if needed
+// Extend token structure if needed
 interface MyJwtPayload extends JwtPayload {
-  userId?: string; // Optional: adjust based on your token payload
-  exp?: number; // Add this line to include the exp property
+  userId?: string;
+  email?: string;
 }
 
 export function middleware(req: NextRequest): NextResponse {
@@ -19,36 +20,47 @@ export function middleware(req: NextRequest): NextResponse {
     req.nextUrl.pathname.startsWith(route)
   );
 
+  // Require login for protected routes
   if (isProtected && !token) {
-    return NextResponse.redirect(new URL("/auth/login", req.url));
+    return redirectToLogin(req);
   }
 
+  // 🧠 Validate the JWT
   if (token) {
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as MyJwtPayload;
 
-      // Optional: you can check for custom fields here
       if (!decoded || !decoded.exp) {
         throw new Error("Invalid token structure");
       }
 
       return NextResponse.next();
     } catch (err) {
-  console.error(err); // Log the error
-  const response = NextResponse.redirect(new URL("/auth/login", req.url));
-  // Clear the cookie
-  response.cookies.set("accessToken", "", {
-    httpOnly: true,
-    maxAge: 0,
-    path: "/",
-  });
-}
+      console.warn("JWT expired or invalid:", err);
+      return clearTokenAndRedirect(req);
+    }
   }
 
   return NextResponse.next();
 }
 
-// Apply middleware only to protected routes
+// Helper to redirect to login
+function redirectToLogin(req: NextRequest): NextResponse {
+  return NextResponse.redirect(new URL("/auth/login", req.url));
+}
+
+// Helper to clear accessToken cookie and redirect
+function clearTokenAndRedirect(req: NextRequest): NextResponse {
+  const res = redirectToLogin(req);
+  res.cookies.set("accessToken", "", {
+    httpOnly: true,
+    path: "/",
+    maxAge: 0,
+  });
+  return res;
+}
+
+// Apply middleware only to these routes
 export const config = {
-  matcher: ["/create"],
+  matcher: ["/create"], // Add more as needed
 };
