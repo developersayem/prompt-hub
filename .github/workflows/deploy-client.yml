@@ -16,14 +16,14 @@ jobs:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v3
 
-      - name: 🔐 Setup SSH
+      - name: 🔐 Setup SSH Agent
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.WEBUZO_SSH_KEY }}
 
       - name: 🚀 SSH & Deploy Client
         run: |
-          ssh -o StrictHostKeyChecking=no root@your-server-ip << 'EOF'
+          ssh -o StrictHostKeyChecking=no shopxetc@161.248.189.80 << 'EOF'
             cd /home/shopxetc/prompt-hub/client
             git pull origin main
             pnpm install
