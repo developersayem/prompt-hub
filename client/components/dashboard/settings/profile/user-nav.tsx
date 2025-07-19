@@ -54,13 +54,13 @@ export function UserNav() {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem>
-                <Link href="/dashboard?tab=profile">Profile</Link>
+                <Link href="/dashboard/settings/profile">Profile</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <Link href="/dashboard">Dashboard</Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Link href="/dashboard?tab=settings">Settings</Link>
+                <Link href="/dashboard/settings">Settings</Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

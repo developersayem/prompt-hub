@@ -11,9 +11,9 @@ import {
   Settings2,
 } from "lucide-react";
 
-import { NavMain } from "@/components/nav-main";
-import { NavSecondary } from "@/components/nav-secondary";
-import { NavUser } from "@/components/nav-user";
+import { NavMain } from "@/components/dashboard/shared/nav-main";
+import { NavSecondary } from "@/components/dashboard/shared/nav-secondary";
+import { NavUser } from "@/components/dashboard/shared/nav-user";
 import {
   Sidebar,
   SidebarContent,
@@ -26,7 +26,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import Link from "next/link";
 
-const mainRoute = "/dashboardv2";
+const mainRoute = "/dashboard";
 
 const data = {
   navMain: [
@@ -41,6 +41,7 @@ const data = {
       title: "Prompts",
       url: `${mainRoute}/prompts/my-prompts`,
       icon: Rss,
+      isActive: true,
       items: [
         {
           title: "My Prompts",
@@ -49,6 +50,10 @@ const data = {
         {
           title: "Bookmarks",
           url: `${mainRoute}/prompts/bookmarks`,
+        },
+        {
+          title: "Drafts",
+          url: `${mainRoute}/prompts/drafts`,
         },
         {
           title: "Liked Prompts",
@@ -76,7 +81,7 @@ const data = {
     },
     {
       title: "Settings",
-      url: "#",
+      url: `${mainRoute}/settings/account`,
       icon: Settings2,
       isActive: true,
       items: [
@@ -96,10 +101,6 @@ const data = {
           title: "Security & Privacy",
           url: `${mainRoute}/settings/security-and-privacy`,
         },
-        // {
-        //   title: "Billing",
-        //   url: `${mainRoute}/settings/billing`,
-        // },
       ],
     },
   ],

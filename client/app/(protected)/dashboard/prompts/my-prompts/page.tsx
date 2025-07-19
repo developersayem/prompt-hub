@@ -36,7 +36,7 @@ import LoadingCom from "@/components/shared/loading-com";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import EditPromptModal from "@/components/dashboard/my-prompts/EditPromptModal";
+import EditPromptModal from "@/components/dashboard/prompts/my-prompts/EditPromptModal";
 import CreatePromptModal from "@/components/shared/create-prompt-modal";
 import { Input } from "@/components/ui/input";
 
