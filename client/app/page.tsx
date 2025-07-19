@@ -50,7 +50,7 @@ export default function LandingPage() {
                 Prompt Hub
               </h1>
               <div className="text-xs bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-medium">
-                AI Prompt Directory
+                AI Prompt Directory & Marketplace
               </div>
             </div>
           </div>
