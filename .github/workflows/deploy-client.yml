@@ -1,4 +1,4 @@
-name: 🚀 Update Client Code on Webuzo
+name: 🚀 Deploy Prompt Client via SSH
 
 on:
   push:
@@ -9,15 +9,14 @@ on:
       - ".github/workflows/deploy-client.yml"
 
 jobs:
-  update-client:
-    name: Pull latest client code on Webuzo
+  deploy-client:
     runs-on: ubuntu-latest
 
     steps:
       - name: 🛒 Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🔐 SSH and Pull Code
+      - name: 🔐 SSH and Deploy
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.WEBUZO_SSH_HOST }}
@@ -25,9 +24,18 @@ jobs:
           key: ${{ secrets.WEBUZO_SSH_KEY }}
           port: 22
           script: |
-            echo "📂 Changing to client directory..."
+            echo "📁 Entering client folder..."
             cd /home/shopxetc/prompt-hub/client
 
             echo "📥 Resetting and pulling latest code..."
             git reset --hard HEAD
             git pull origin main
+
+            echo "📦 Installing dependencies..."
+            /usr/local/apps/nodejs22/bin/npm install
+
+            echo "🛠 Building Next.js app..."
+            /usr/local/apps/nodejs22/bin/npm run build
+
+            echo "🔁 Restarting with PM2..."
+            ~/.local/share/pnpm/pm2 restart prompt-client --update-env
