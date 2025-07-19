@@ -55,12 +55,6 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
 
             <div className="flex items-center space-x-4">
               {user && (
-                <Button onClick={() => setOpenCreateModal(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Prompt
-                </Button>
-              )}
-              {user && (
                 <>
                   <Button onClick={() => setOpenCreateModal(true)}>
                     <Plus className="h-4 w-4 mr-2" />
@@ -74,7 +68,15 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
                 </>
               )}
               <ThemeToggle />
-              {user && <UserNav />}
+              {user ? (
+                <UserNav />
+              ) : (
+                <Link href="/auth/login">
+                  <Button variant="default" className=" ">
+                    Log in
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

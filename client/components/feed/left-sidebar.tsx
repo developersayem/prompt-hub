@@ -39,7 +39,7 @@ export default function LeftSidebar() {
                 Trending
               </Button>
             </Link>
-            <Link href="/feed/saved">
+            <Link href="/dashboard/bookmarks">
               <Button variant="ghost" className="w-full justify-start">
                 <Bookmark className="h-4 w-4 mr-3" />
                 Saved
@@ -51,31 +51,31 @@ export default function LeftSidebar() {
                 Dashboard
               </Button>
             </Link>
-            <Link href="/dashboard?tab=prompts">
+            <Link href="/dashboard/prompts/my-prompts">
               <Button variant="ghost" className="w-full justify-start">
                 <User className="h-4 w-4 mr-3" />
                 My Prompts
               </Button>
             </Link>
-            <Link href="/dashboard?tab=earnings">
+            <Link href="/dashboard/earnings">
               <Button variant="ghost" className="w-full justify-start">
                 <Coins className="h-4 w-4 mr-3" />
                 Earnings
               </Button>
             </Link>
-            <Link href="/dashboard?tab=analytics">
+            <Link href="/dashboard/analytics">
               <Button variant="ghost" className="w-full justify-start">
                 <ChartNoAxesCombined className="h-4 w-4 mr-3" />
                 Analytics
               </Button>
             </Link>
-            <Link href="/dashboard?tab=profile">
+            <Link href="/dashboard/settings/profile">
               <Button variant="ghost" className="w-full justify-start">
                 <UserRoundPen className="h-4 w-4 mr-3" />
                 Profile
               </Button>
             </Link>
-            <Link href="/dashboard?tab=settings">
+            <Link href="/dashboard/settings">
               <Button variant="ghost" className="w-full justify-start">
                 <Settings className="h-4 w-4 mr-3" />
                 Settings
