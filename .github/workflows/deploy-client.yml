@@ -1,15 +1,15 @@
-name: 🚀 Deploy Backend to Webuzo
+name: 🚀 Deploy Client to Webuzo
 
 on:
   push:
     paths:
-      - "server/**"
+      - "client/**"
     branches:
       - main
 
 jobs:
   deploy:
-    name: Deploy Server
+    name: Deploy Client
     runs-on: ubuntu-latest
 
     steps:
@@ -21,13 +21,13 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.WEBUZO_SSH_KEY }}
 
-      - name: 🚀 SSH & Deploy Server
+      - name: 🚀 SSH & Deploy Client
         run: |
           ssh -o StrictHostKeyChecking=no root@your-server-ip << 'EOF'
-            cd /home/shopxetc/prompt-hub/server
+            cd /home/shopxetc/prompt-hub/client
             git pull origin main
             pnpm install
             pnpm build
-            pm2 restart prompt-server || pm2 start dist/index.js --name prompt-server
+            pm2 restart prompt-client || pm2 start server.js --name prompt-client
             pm2 save
           EOF
