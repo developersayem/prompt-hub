@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "sonner";
+import { LoginPromptProvider } from "@/contexts/login-prompt-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -29,7 +30,9 @@ export default function RootLayout({
           disableTransitionOnChange={false}
           storageKey="Prompt Hub-theme"
         >
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <LoginPromptProvider>{children}</LoginPromptProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -26,6 +26,7 @@ import { PublicProfileModal } from "@/components/shared/public-profile-modal";
 import { IPublicUser } from "@/types/publicUser.type";
 import { usePrompts } from "@/hooks/usePrompts";
 import PromptCard from "@/components/shared/prompt-card";
+import { useLoginPrompt } from "@/contexts/login-prompt-context";
 
 export default function FeedPage() {
   const { user, updateUser } = useAuth();
@@ -83,9 +84,17 @@ export default function FeedPage() {
     });
   };
 
+  const { triggerLoginModal } = useLoginPrompt();
+
   const handleCopyPrompt = async (prompt: IPrompt) => {
     try {
       if (!prompt) return;
+
+      // Check if user is logged in
+      if (!user) {
+        triggerLoginModal();
+        return;
+      }
 
       const isOwner = prompt.creator?._id === user?._id;
       const isFree = prompt.paymentStatus === "free";
@@ -137,7 +146,12 @@ export default function FeedPage() {
   // Function for public profile
   const handlePublicProfile = async (userId: string) => {
     try {
-      // if (handleProtectedAction()) return;
+      // Check if user is logged in
+      if (!user) {
+        triggerLoginModal();
+        return;
+      }
+
       setIsLoadingPublicProfile(true);
       setShowPublicProfile(true);
       const response = await fetch(

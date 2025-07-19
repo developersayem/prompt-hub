@@ -30,7 +30,6 @@ import {
 import { IPrompt } from "@/types/prompts.type";
 import { CommentThread } from "./comment-thread";
 import { toast } from "sonner";
-import LoginPromptModal from "../feed/LoginPromptModal";
 import type { KeyedMutator } from "swr";
 import {
   optimisticAddComment,
@@ -43,6 +42,7 @@ import { getEmbeddableVideoUrl } from "@/helper/getEmbeddableVideoUrl";
 import isValidUrl from "@/helper/check-url";
 import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
 import Image from "next/image";
+import { useLoginPrompt } from "@/contexts/login-prompt-context";
 
 interface PromptCardProps {
   prompt: IPrompt;
@@ -67,11 +67,11 @@ const PromptCard: FC<PromptCardProps> = ({
   const [expandedDescriptions, setExpandedDescriptions] = useState<
     Record<string, boolean>
   >({});
-  const [showLoginModal, setShowLoginModal] = useState(false);
+  const { triggerLoginModal } = useLoginPrompt();
 
   const handleProtectedAction = () => {
     if (!user?._id) {
-      setShowLoginModal(true);
+      triggerLoginModal();
       return true; // Block action
     }
     return false; // Allow action
@@ -408,6 +408,11 @@ const PromptCard: FC<PromptCardProps> = ({
               variant="ghost"
               size="sm"
               className="flex-1 flex items-center justify-center min-w-[60px]"
+              onClick={() => {
+                if (handleProtectedAction()) return;
+                // TODO: Handle bookmark function
+                // handleBookmarkPrompt();
+              }}
             >
               <Bookmark className="h-4 w-4" />
             </Button>
@@ -517,12 +522,6 @@ const PromptCard: FC<PromptCardProps> = ({
           )}
         </CardContent>
       </Card>
-      {/* Login Prompt Modal */}
-      {/* Show login modal if user is not logged in */}
-      <LoginPromptModal
-        open={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-      />
     </>
   );
 };
