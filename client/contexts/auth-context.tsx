@@ -281,7 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         register,
         logout,
         updateUser,
-        manualLogin, // add h
+        manualLogin,
       }}
     >
       {children}

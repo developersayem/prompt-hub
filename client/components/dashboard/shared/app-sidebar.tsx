@@ -119,7 +119,7 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader>
@@ -142,7 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser user={user} logout={logout} />
       </SidebarFooter>
     </Sidebar>
   );

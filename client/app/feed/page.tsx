@@ -199,6 +199,15 @@ export default function FeedPage() {
                   >
                     Programming
                   </Button>
+                  <Button
+                    variant={
+                      selectedCategory === "Image" ? "default" : "outline"
+                    }
+                    size="sm"
+                    onClick={() => setSelectedCategory("Image")}
+                  >
+                    Image
+                  </Button>
                   <Dialog
                     open={showFiltersModal}
                     onOpenChange={setShowFiltersModal}
@@ -206,7 +215,7 @@ export default function FeedPage() {
                     <DialogTrigger asChild>
                       <Button variant="outline" size="sm">
                         <Filter className="h-4 w-4 mr-2" />
-                        More Filters
+                        More
                         {(filters.aiModels.length > 0 ||
                           filters.tags.length > 0 ||
                           filters.resultType !== "all") && (

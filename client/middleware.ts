@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
 // Define which routes are protected
-const protectedRoutes = ["/create"];
+const protectedRoutes = ["/dashboard","/dashboard/*"];
 
 // Use a strong secret, set it in your `.env.local`
 const JWT_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET || "your_default_secret";
@@ -62,5 +62,8 @@ function clearTokenAndRedirect(req: NextRequest): NextResponse {
 
 // Apply middleware only to these routes
 export const config = {
-  matcher: ["/create"], // Add more as needed
+  matcher: [
+    "/dashboard",
+    "/dashboard/(.*)", // ✅ this matches all nested paths under /dashboard
+  ],
 };
