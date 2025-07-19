@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'prompt-hub-server',
+      name: 'prompt-server',
       script: './dist/app.js',
       instances: 1,
       autorestart: true,

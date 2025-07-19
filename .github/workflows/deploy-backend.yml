@@ -12,7 +12,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Deploy server via SSH and build
+      - name: Deploy server via SSH, build, and restart
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.WEBUZO_SSH_HOST }}
@@ -24,3 +24,5 @@ jobs:
             git pull origin main
             npm install
             npm run build
+            npm stop
+            npm run start
