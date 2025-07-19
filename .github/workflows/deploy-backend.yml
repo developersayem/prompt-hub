@@ -1,33 +1,26 @@
-name: 🚀 Deploy Backend to Webuzo
+name: Deploy Server Code
 
 on:
   push:
-    paths:
-      - "server/**"
     branches:
       - main
 
 jobs:
-  deploy:
-    name: Deploy Server
+  deploy-server:
     runs-on: ubuntu-latest
-
     steps:
-      - name: ⬇️ Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: 🔐 Setup SSH Agent
-        uses: webfactory/ssh-agent@v0.7.0
+      - name: Deploy server via SSH and build
+        uses: appleboy/ssh-action@v1.0.0
         with:
-          ssh-private-key: ${{ secrets.WEBUZO_SSH_KEY }}
-
-      - name: 🚀 SSH & Deploy Backend
-        run: |
-          ssh -o StrictHostKeyChecking=no shopxetc@161.248.189.80 << 'EOF'
-            source ~/.bashrc || source ~/.bash_profile || true
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.WEBUZO_SSH_KEY }}
+          port: 22
+          script: |
             cd /home/shopxetc/prompt-hub/server
-            ~/.local/share/pnpm/pnpm install
-            ~/.local/share/pnpm/pnpm build
-            ~/.local/share/pnpm/pm2 restart prompt-server || ~/.local/share/pnpm/pm2 start dist/index.js --name prompt-server
-            ~/.local/share/pnpm/pm2 save
-          EOF
+            git pull origin main
+            npm install
+            npm run build
