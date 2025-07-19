@@ -62,7 +62,7 @@ const getServerPing = asyncHandler(async (req: Request, res: Response) => {
 const getDeploymentStats = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json(new ApiResponse(
     200,
-    "Deployment stats",
+    "Deployment stats fetched successfully",
     "Deployment stats"
   ));
 });
