@@ -39,7 +39,7 @@ const data = {
     },
     {
       title: "Prompts",
-      url: `${mainRoute}/prompts/my-prompts`,
+      url: "#",
       icon: Rss,
       isActive: true,
       items: [
@@ -81,7 +81,7 @@ const data = {
     },
     {
       title: "Settings",
-      url: `${mainRoute}/settings/account`,
+      url: "#",
       icon: Settings2,
       isActive: true,
       items: [
