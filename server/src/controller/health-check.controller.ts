@@ -58,9 +58,19 @@ const getServerPing = asyncHandler(async (req: Request, res: Response) => {
   ));
 });
 
+// Deployment stats
+const getDeploymentStats = asyncHandler(async (req: Request, res: Response) => {
+  res.status(200).json(new ApiResponse(
+    200,
+    "Deployment stats",
+    "Deployment stats"
+  ));
+});
+
 
 export { 
     healthCheckController,
     getServerStatus,
-    getServerPing
+    getServerPing,
+    getDeploymentStats
 };
