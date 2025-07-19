@@ -24,10 +24,10 @@ jobs:
       - name: 🚀 SSH & Deploy Backend
         run: |
           ssh -o StrictHostKeyChecking=no shopxetc@161.248.189.80 << 'EOF'
-          cd /home/shopxetc/prompt-hub/server
-          git pull origin main
-          pnpm install
-          pnpm build
-          pm2 restart prompt-server || pm2 start dist/index.js --name prompt-server
-          pm2 save
+            source ~/.bashrc || source ~/.bash_profile || true
+            cd /home/shopxetc/prompt-hub/server
+            ~/.local/share/pnpm/pnpm install
+            ~/.local/share/pnpm/pnpm build
+            ~/.local/share/pnpm/pm2 restart prompt-server || ~/.local/share/pnpm/pm2 start dist/index.js --name prompt-server
+            ~/.local/share/pnpm/pm2 save
           EOF
