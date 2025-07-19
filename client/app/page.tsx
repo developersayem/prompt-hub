@@ -47,7 +47,7 @@ export default function LandingPage() {
           <div className="flex items-center space-x-3">
             <div>
               <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-50 tracking-tight">
-                Prompt Hub
+                Prompt Hub.com
               </h1>
               <div className="text-xs bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent font-medium">
                 AI Prompt Directory
