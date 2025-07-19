@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { UserNav } from "@/components/dashboard/components/profile/user-nav";
+import { UserNav } from "@/components/dashboard/settings/profile/user-nav";
 import MyPromptsTab from "@/components/dashboard/my-prompts-tab";
 import EarningsTab from "@/components/dashboard/earnings-tab";
 import AnalyticsTab from "@/components/dashboard/analytics-tab";

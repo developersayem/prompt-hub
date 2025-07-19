@@ -7,18 +7,15 @@ import {
   Heart,
   MessageCircle,
   Plus,
+  Search,
   Trash2,
 } from "lucide-react";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
-import { TabsContent } from "../ui/tabs";
-import { Card, CardContent } from "../ui/card";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IPrompt } from "@/types/prompts.type";
 import { toast } from "sonner";
 import countAllComments from "@/helper/count-all-nested-comments";
 import Image from "next/image";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,16 +26,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "../ui/alert-dialog";
-import CreatePromptModal from "../shared/create-prompt-modal";
+} from "@/components/ui/alert-dialog";
 import useSWR, { mutate } from "swr";
 import Masonry from "react-masonry-css";
 import { getEmbeddableVideoUrl } from "@/helper/getEmbeddableVideoUrl";
 import isValidUrl from "@/helper/check-url";
 import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
-import EditPromptModal from "./my-prompts/EditPromptModal";
+import LoadingCom from "@/components/shared/loading-com";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import EditPromptModal from "@/components/dashboard/my-prompts/EditPromptModal";
+import CreatePromptModal from "@/components/shared/create-prompt-modal";
+import { Input } from "@/components/ui/input";
 
-// 👉 Masonry responsive breakpoints
 const breakpointColumnsObj = {
   default: 3,
   1024: 2,
@@ -58,8 +59,8 @@ const fetcher = async (url: string) => {
   return Array.isArray(json?.data?.data) ? json.data.data : [];
 };
 
-const MyPromptsTab = ({ value }: { value: string }) => {
-  const { data: myPrompts = [] } = useSWR(
+export default function MyPromptsPage() {
+  const { data: myPrompts = [], isLoading } = useSWR(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/my-prompts`,
     fetcher
   );
@@ -73,6 +74,20 @@ const MyPromptsTab = ({ value }: { value: string }) => {
     Record<string, boolean>
   >({});
   const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (searchQuery.trim() !== "") {
+      setIsSearching(true);
+      const timeout = setTimeout(() => {
+        setIsSearching(false);
+      }, 500);
+      return () => clearTimeout(timeout);
+    } else {
+      setIsSearching(false);
+    }
+  }, [searchQuery]);
 
   const openEdit = (prompt: IPrompt) => {
     setSelectedPrompt(prompt);
@@ -85,6 +100,7 @@ const MyPromptsTab = ({ value }: { value: string }) => {
       [id]: !prev[id],
     }));
   };
+
   const toggleDescription = (id: string) => {
     setExpandedDescriptions((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -100,9 +116,8 @@ const MyPromptsTab = ({ value }: { value: string }) => {
         }
       );
 
-      if (!response.ok) {
+      if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
-      }
 
       const data = await response.json();
       toast.success(data.message || "Prompt deleted successfully");
@@ -116,21 +131,31 @@ const MyPromptsTab = ({ value }: { value: string }) => {
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Escape") {
-      setIsEditOpen(false);
-    }
-  };
+  const filteredPrompts = myPrompts.filter((prompt: IPrompt) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      prompt.title?.toLowerCase().includes(query) ||
+      prompt.description?.toLowerCase().includes(query) ||
+      prompt.tags?.some((tag) => tag.toLowerCase().includes(query))
+    );
+  });
+
+  if (isLoading) return <LoadingCom displayText="Loading your prompts..." />;
 
   return (
-    <TabsContent
-      onKeyDown={handleKeyPress}
-      tabIndex={-1}
-      value={value}
-      className="space-y-6"
-    >
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">My Prompts</h2>
+        <div className="flex-1 max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search prompts..."
+              className="pl-10 w-full"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
         <div className="flex space-x-2">
           <Button variant="outline" size="sm">
             Filter
@@ -141,7 +166,24 @@ const MyPromptsTab = ({ value }: { value: string }) => {
         </div>
       </div>
 
-      {myPrompts.length === 0 && (
+      {isSearching && <LoadingCom displayText="Searching..." />}
+
+      {!isSearching && filteredPrompts.length === 0 && myPrompts.length > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">
+                No prompts match your search.
+              </p>
+              <Button onClick={() => setOpenCreateModal(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Create Prompt
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {filteredPrompts.length === 0 && myPrompts.length === 0 && (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
@@ -154,13 +196,12 @@ const MyPromptsTab = ({ value }: { value: string }) => {
         </Card>
       )}
 
-      {/* Masonry Grid */}
       <Masonry
         breakpointCols={breakpointColumnsObj}
         className="flex gap-6"
         columnClassName="flex flex-col gap-6"
       >
-        {myPrompts.map((prompt: IPrompt) => (
+        {filteredPrompts.map((prompt: IPrompt) => (
           <Card key={prompt._id} className="hover:shadow-lg transition-shadow">
             <CardContent className="space-y-4 flex flex-col h-full">
               {/* Header */}
@@ -418,8 +459,6 @@ const MyPromptsTab = ({ value }: { value: string }) => {
           )
         }
       />
-    </TabsContent>
+    </div>
   );
-};
-
-export default MyPromptsTab;
+}

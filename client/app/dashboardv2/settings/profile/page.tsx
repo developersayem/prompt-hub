@@ -1,13 +1,13 @@
-import { TabsContent } from "../ui/tabs";
+"use client";
+
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "../ui/card";
-import { Badge } from "../ui/badge";
-import { EditProfileModal } from "./settings/profile/edit-profile-modal";
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
   Coins,
@@ -23,15 +23,17 @@ import {
   Twitter,
   User,
 } from "lucide-react";
-import { Button } from "../ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
-import { Separator } from "../ui/separator";
-import { PurchaseCreditsModal } from "./settings/profile/purchase-credits-modal";
-import { GetCertifiedModal } from "./settings/profile/get-certified-modal";
+import { Separator } from "@/components/ui/separator";
+import { EditProfileModal } from "@/components/dashboard/settings/profile/edit-profile-modal";
+import { PurchaseCreditsModal } from "@/components/dashboard/settings/profile/purchase-credits-modal";
+import { GetCertifiedModal } from "@/components/dashboard/settings/profile/get-certified-modal";
+import Link from "next/link";
 
-const ProfileTab = ({ value }: { value: string }) => {
+export default function ProfilePage() {
   const { user } = useAuth();
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [showPurchaseCredits, setShowPurchaseCredits] = useState(false);
@@ -54,7 +56,7 @@ const ProfileTab = ({ value }: { value: string }) => {
     portfolio: Globe,
   };
   return (
-    <TabsContent value={value} className="space-y-6">
+    <div className="space-y-6">
       <div className=" bg-neutral-50 dark:bg-neutral-950">
         {/* Main Content */}
         <div className="px-4 space-y-6">
@@ -157,16 +159,23 @@ const ProfileTab = ({ value }: { value: string }) => {
                         const isConnected = url && url.trim() !== "";
 
                         return (
-                          <Button
+                          <Link
                             key={platform}
-                            variant={isConnected ? "default" : "outline"}
-                            className="justify-start"
-                            disabled={!isConnected}
+                            href={url}
+                            target="_blank"
+                            className="block w-full"
                           >
-                            <IconComponent className="w-4 h-4 mr-2" />
-                            {platform.charAt(0).toUpperCase() +
-                              platform.slice(1)}
-                          </Button>
+                            <Button
+                              key={platform}
+                              variant={isConnected ? "default" : "outline"}
+                              disabled={!isConnected}
+                              className="w-full justify-start"
+                            >
+                              <IconComponent className="w-4 h-4 mr-2" />
+                              {platform.charAt(0).toUpperCase() +
+                                platform.slice(1)}
+                            </Button>
+                          </Link>
                         );
                       }
                     )}
@@ -259,8 +268,6 @@ const ProfileTab = ({ value }: { value: string }) => {
           <GetCertifiedModal onClose={() => setShowGetCertified(false)} />
         )}
       </div>
-    </TabsContent>
+    </div>
   );
-};
-
-export default ProfileTab;
+}

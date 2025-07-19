@@ -11,9 +11,9 @@ import { Separator } from "../ui/separator";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
 
-import { ChangePasswordComponent } from "./components/settings/password-change";
-import { TwoFactorAuthentication } from "./components/settings/two-factor-authentication";
+import { ChangePasswordComponent } from "./settings/security-and-privacy/password-change";
 import { toast } from "sonner";
+import { TwoFactorAuthentication } from "./settings/security-and-privacy/two-factor-authentication";
 const SettingsTab = ({ value }: { value: string }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
