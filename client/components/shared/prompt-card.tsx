@@ -1,6 +1,6 @@
 "use client";
 
-import { FC, useState } from "react";
+import { FC, useEffect, useRef, useState } from "react";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -68,6 +68,27 @@ const PromptCard: FC<PromptCardProps> = ({
     Record<string, boolean>
   >({});
   const { triggerLoginModal } = useLoginPrompt();
+  const commentRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const isOpen = openComments[prompt._id];
+      if (
+        isOpen &&
+        commentRef.current &&
+        !commentRef.current.contains(event.target as Node)
+      ) {
+        setOpenComments((prev) => ({
+          ...prev,
+          [prompt._id]: false,
+        }));
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [openComments, prompt._id]);
 
   const handleProtectedAction = () => {
     if (!user?._id) {
@@ -462,7 +483,10 @@ const PromptCard: FC<PromptCardProps> = ({
 
           {/* Comments Section */}
           {openComments[prompt?._id] && (
-            <div className="mt-4 space-y-3 transition-all duration-500 ease-in-out">
+            <div
+              ref={commentRef}
+              className="mt-4 space-y-3 transition-all duration-500 ease-in-out"
+            >
               <div className="flex items-start space-x-3">
                 <Avatar className="w-8 h-8">
                   <AvatarImage src={user?.avatar || "/placeholder.svg"} />
