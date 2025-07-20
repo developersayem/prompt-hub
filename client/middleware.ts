@@ -1,42 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import { jwtVerify } from "jose";
 
-// Define which routes are protected
-const protectedRoutes = ["/dashboard","/dashboard/*"];
+// Define protected routes
+const protectedRoutes = ["/dashboard", "/dashboard/"];
 
-// Use a strong secret, set it in your `.env.local`
 const JWT_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET || "your_default_secret";
 
-// Extend token structure if needed
-interface MyJwtPayload extends JwtPayload {
-  userId?: string;
-  email?: string;
-}
+// Decode the key properly
+const getSecret = () =>
+  new TextEncoder().encode(JWT_SECRET);
 
-export function middleware(req: NextRequest): NextResponse {
+export async function middleware(req: NextRequest): Promise<NextResponse> {
   const token = req.cookies.get("accessToken")?.value;
+  const url = req.nextUrl;
+  console.log("🔑 JWT_SECRET:", JWT_SECRET);
+
+  console.log("💡 Middleware accessToken:", token);
 
   const isProtected = protectedRoutes.some((route) =>
-    req.nextUrl.pathname.startsWith(route)
+    url.pathname.startsWith(route)
   );
 
-  // Require login for protected routes
   if (isProtected && !token) {
     return redirectToLogin(req);
   }
 
-  // 🧠 Validate the JWT
   if (token) {
     try {
-      const decoded = jwt.verify(token, JWT_SECRET) as MyJwtPayload;
-
-      if (!decoded || !decoded.exp) {
-        throw new Error("Invalid token structure");
-      }
+      const { payload } = await jwtVerify(token, getSecret());
+      console.log("✅ JWT valid:", payload);
 
       return NextResponse.next();
     } catch (err) {
-      console.warn("JWT expired or invalid:", err);
+      console.warn("⛔ JWT invalid:", err);
       return clearTokenAndRedirect(req);
     }
   }
@@ -44,26 +40,21 @@ export function middleware(req: NextRequest): NextResponse {
   return NextResponse.next();
 }
 
-// Helper to redirect to login
 function redirectToLogin(req: NextRequest): NextResponse {
   return NextResponse.redirect(new URL("/auth/login", req.url));
 }
 
-// Helper to clear accessToken cookie and redirect
 function clearTokenAndRedirect(req: NextRequest): NextResponse {
   const res = redirectToLogin(req);
   res.cookies.set("accessToken", "", {
     httpOnly: true,
-    path: "/",
     maxAge: 0,
+    path: "/",
+    domain: ".shopxet.com", // make sure this matches
   });
   return res;
 }
 
-// Apply middleware only to these routes
 export const config = {
-  matcher: [
-    "/dashboard",
-    "/dashboard/(.*)", // ✅ this matches all nested paths under /dashboard
-  ],
+  matcher: ["/dashboard", "/dashboard/(.*)"],
 };
