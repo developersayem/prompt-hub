@@ -7,12 +7,12 @@ import { uploadOnCloudinary } from "../utils/cloudinary";
 import { Prompt } from "../models/prompts.model";
 import { User } from "../models/users.model";
 import mongoose, { Schema, Types } from "mongoose";
-import { Like } from "../models/like.model"; // adjust the path
+import { Like } from "../models/like.model";
 import { Comment } from "../models/comments.model";
 import { populateRepliesRecursively } from "../utils/populateRepliesRecursively";
 import { PurchaseHistory } from "../models/purchaseHistory.model";
 import { RequestWithIP } from "../middlewares/getClientIp.middlewares";
-import { trackPromptView } from "../utils/trackPromptView";
+// import { trackPromptView } from "../utils/trackPromptView";
 import { getAllNestedCommentIds } from "../helper/getAllNestedCommentIds";
 
 // Helper: check if a string is a valid URL
@@ -477,6 +477,7 @@ const getSinglePromptController = asyncHandler(async (req: Request, res: Respons
       .json(new ApiResponse(200, { prompt }, "Prompt fetched successfully"));
   }
 );
+// Controller for update prompt
 const updatePromptController = asyncHandler(async (req: Request, res: Response) => {
   const promptId = req.params.id;
   const userId = (req as any).user?._id;
@@ -825,11 +826,61 @@ if (Array.isArray(req.body.tags)) {
     .status(200)
     .json(new ApiResponse(200, newCreatedPrompt, "Prompt saved as draft"));
 });
+// TODO: Controller for get all draft prompts
+// Controller for toggling prompt bookmark
+const savePromptAsBookmarkController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  const { promptId } = req.body;
+  if (!promptId) throw new ApiError(400, "Prompt ID is required");
+
+  const prompt = await Prompt.findById(promptId);
+  if (!prompt) throw new ApiError(404, "Prompt not found");
+
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, "User not found");
+
+  const isBookmarked = user.bookmarks.includes(promptId);
+
+  let updatedUser;
+
+  if (isBookmarked) {
+    // Remove the bookmark
+    updatedUser = await User.findOneAndUpdate(
+      { _id: userId },
+      { $pull: { bookmarks: promptId } },
+      { new: true }
+    );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { removed: true, bookmarks: updatedUser?.bookmarks },
+        "Prompt removed from bookmarks"
+      )
+    );
+  } else {
+    // Add the bookmark
+    updatedUser = await User.findOneAndUpdate(
+      { _id: userId },
+      { $addToSet: { bookmarks: promptId } },
+      { new: true }
+    );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { added: true, bookmarks: updatedUser?.bookmarks },
+        "Prompt saved as bookmark"
+      )
+    );
+  }
+});
 
 
 
-
-
+// Export the controllers
 export { 
   getAllPromptsController,
   createPromptController,
@@ -846,5 +897,6 @@ export {
   buyPromptController,
   getMyPurchasesController,
   getPromptBySlugController,
-  savePromptAsDraftController
+  savePromptAsDraftController,
+  savePromptAsBookmarkController
 };
