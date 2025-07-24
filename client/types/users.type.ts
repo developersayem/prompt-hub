@@ -26,7 +26,7 @@ export interface IUser {
   isMarketingNotificationEnabled: boolean;
   prompt: [];
   purchasedPrompts: string[];
-  bookmarks: [];
+  bookmarks: string[];
   refreshToken: string;
   createdAt: string;
   address: {

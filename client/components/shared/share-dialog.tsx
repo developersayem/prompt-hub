@@ -39,14 +39,10 @@ export function ShareDialog({ shareUrl }: ShareDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="flex-1 flex items-center justify-center min-w-[60px]"
-        >
+        <button className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md">
           <Share2 className="h-4 w-4 mr-2" />
           Share
-        </Button>
+        </button>
       </DialogTrigger>
 
       <DialogContent className="sm:max-w-md">

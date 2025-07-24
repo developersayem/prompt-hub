@@ -10,10 +10,11 @@ import {
   Eye,
   Heart,
   MessageCircle,
-  Bookmark,
   Clipboard,
   Sparkles,
   Send,
+  BookmarkCheck,
+  BookmarkPlus,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -57,7 +58,7 @@ const PromptCard: FC<PromptCardProps> = ({
   handleCopyPrompt,
   handlePublicProfile,
 }) => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   // All States
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [newComment, setNewComment] = useState<Record<string, string>>({});
@@ -182,6 +183,48 @@ const PromptCard: FC<PromptCardProps> = ({
       setNewComment((prev) => ({ ...prev, [promptId]: "" }));
     } catch (err) {
       console.error("Error posting comment:", err);
+      toast.error("Something went wrong");
+    }
+  };
+  // Function for bookmark prompt
+  const handleBookmarkPrompt = async (promptId: string) => {
+    if (!user) return toast.error("You must be logged in to bookmark");
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/bookmark`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ promptId }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.message || "Something went wrong");
+        return;
+      }
+
+      // Update local bookmarks based on toggle response
+      if (data.data?.added) {
+        const updatedBookmarks = [...(user.bookmarks || []), promptId];
+        updateUser({ bookmarks: updatedBookmarks });
+        toast.success("Bookmark added successfully");
+      } else if (data.data?.removed) {
+        const updatedBookmarks = (user.bookmarks || []).filter(
+          (id) => id !== promptId
+        );
+        updateUser({ bookmarks: updatedBookmarks });
+        toast.info("Bookmark removed");
+      }
+
+      // Optional: re-fetch prompt list or update UI
+      mutatePrompts?.();
+    } catch (err) {
+      console.error("Error bookmarking prompt:", err);
       toast.error("Something went wrong");
     }
   };
@@ -377,14 +420,12 @@ const PromptCard: FC<PromptCardProps> = ({
           {/* Actions buttons section */}
           <div className="flex w-full flex-wrap gap-1">
             {/* Like button */}
-            <Button
+            <button
+              className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md"
               onClick={() => {
                 if (handleProtectedAction()) return;
                 handleLikePrompt();
               }}
-              variant="ghost"
-              size="sm"
-              className="flex-1 flex items-center justify-center min-w-[60px]"
             >
               <Heart
                 className={`h-4 w-4 mr-2 ${
@@ -394,9 +435,10 @@ const PromptCard: FC<PromptCardProps> = ({
                 }`}
               />
               {prompt?.likes.length}
-            </Button>
-            {/*            Comment button */}
-            <Button
+            </button>
+            {/* Comment button */}
+            <button
+              className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md"
               onClick={() => {
                 if (handleProtectedAction()) return;
                 setOpenComments((prev) => ({
@@ -404,46 +446,40 @@ const PromptCard: FC<PromptCardProps> = ({
                   [prompt?._id]: !prev[prompt?._id],
                 }));
               }}
-              variant="ghost"
-              size="sm"
-              className="flex-1 flex items-center justify-center min-w-[60px]"
             >
               <MessageCircle className="h-4 w-4 mr-2" />
               {countAllComments(prompt?.comments)}
-            </Button>
+            </button>
             {/* Share button */}
             <ShareDialog
               shareUrl={`${window.location.origin}/feed/${prompt?.slug}`}
             />
             {/* View button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 flex items-center justify-center min-w-[60px]"
-            >
+            <button className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md">
               <Eye className="h-4 w-4 mr-2" />
               {prompt?.views}
-            </Button>
+            </button>
             {/* Bookmark button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex-1 flex items-center justify-center min-w-[60px]"
+            <button
+              className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md"
               onClick={() => {
                 if (handleProtectedAction()) return;
-                // TODO: Handle bookmark function
-                // handleBookmarkPrompt();
+                handleBookmarkPrompt(prompt?._id);
               }}
             >
-              <Bookmark className="h-4 w-4" />
-            </Button>
+              {user?.bookmarks?.includes(prompt?._id) ? (
+                <BookmarkCheck className="text-red-500" />
+              ) : (
+                <BookmarkPlus />
+              )}
+            </button>
             {/*Copy button */}
             {prompt?.paymentStatus === "free" ||
             prompt.creator._id === user?._id ||
             user?.purchasedPrompts?.includes(prompt._id) ? (
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
                 className="flex-1 flex items-center justify-center min-w-[60px]"
                 onClick={() => handleCopyPrompt(prompt)}
               >
