@@ -18,6 +18,7 @@ export interface IPrompt extends Document {
   resultContent: string;
   aiModel: string;
   price?: number;
+  isDraft: boolean;
   paymentStatus: PaymentStatus;
   creator: Types.ObjectId;
   likes: Types.ObjectId[];
@@ -56,6 +57,7 @@ const promptSchema = new Schema<IPrompt>(
       required: true,
       default: "free",
     },
+    isDraft: { type: Boolean, default: false },
     creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
     likes: [{ type: Schema.Types.ObjectId, ref: "Like" }],
     comments: [{ type: Schema.Types.ObjectId, ref: "Comment" }],

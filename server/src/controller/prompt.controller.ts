@@ -757,6 +757,74 @@ const getPromptBySlugController = asyncHandler(
     );
   }
 );
+// Controller for save prompt as draft
+const savePromptAsDraftController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  const {
+    title,
+    description,
+    category,
+    promptText,
+    resultType,
+    resultContent,
+    aiModel,
+    paymentStatus,
+    price,
+  } = req.body;
+
+  let tags: string[] = [];
+if (Array.isArray(req.body.tags)) {
+  tags = req.body.tags;
+} else if (typeof req.body.tags === "string") {
+  try {
+    tags = JSON.parse(req.body.tags);
+  } catch {
+    tags = [];
+  }
+}
+
+  if (!title || !category || !promptText || !resultType || !aiModel || !paymentStatus) {
+    throw new ApiError(400, "Missing required fields");
+  }
+
+  // Process uploaded file if exists
+  let finalResultContent = resultContent?.trim() || "";
+  if (!finalResultContent && ["image", "video"].includes(resultType)) {
+    const file = (req.files as any)?.promptContent?.[0];
+    if (!file || !file.path) {
+      throw new ApiError(400, `File or URL is required for ${resultType}`);
+    }
+
+    const uploaded: UploadApiResponse | null = await uploadOnCloudinary(file.path);
+    if (!uploaded?.secure_url) {
+      throw new ApiError(500, "Failed to upload file to Cloudinary");
+    }
+    finalResultContent = uploaded.secure_url;
+  }
+
+  const prompt = await Prompt.create({
+    title,
+    description,
+    tags,
+    category,
+    promptText,
+    resultType,
+    resultContent: finalResultContent,
+    aiModel,
+    price: paymentStatus === "paid" ? Number(price) || 0 : 0,
+    paymentStatus,
+    isDraft: true,
+    creator: userId,
+  });
+
+  const newCreatedPrompt = await Prompt.findById(prompt._id).populate("creator", "name email");
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, newCreatedPrompt, "Prompt saved as draft"));
+});
 
 
 
@@ -777,5 +845,6 @@ export {
   deletePromptController,
   buyPromptController,
   getMyPurchasesController,
-  getPromptBySlugController
+  getPromptBySlugController,
+  savePromptAsDraftController
 };

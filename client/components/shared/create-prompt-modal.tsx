@@ -27,7 +27,6 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { ICategory } from "@/types/category.type";
 import Combobox from "./Combobox";
-// import { IAiModel } from "@/types/ai-model.types";
 import { useCategories } from "@/hooks/API/useCategories";
 import { IAiModel } from "@/types/ai-model.types";
 import { useAiModels } from "@/hooks/API/useAiModels";
@@ -35,7 +34,7 @@ import { Separator } from "../ui/separator";
 import isValidUrl from "@/helper/check-url";
 import { getEmbeddableVideoUrl } from "@/helper/getEmbeddableVideoUrl";
 import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
-// import { useAuth } from "@/contexts/auth-context";
+import { savePromptDraft, savePromptFile } from "@/utils/draftStorage";
 
 export default function CreatePromptModal({
   open,
@@ -94,6 +93,98 @@ export default function CreatePromptModal({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) setUploadedFile(file);
+  };
+
+  // Handle save draft
+  const handleSaveDraft = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const {
+      title,
+      description,
+      category,
+      aiModel,
+      promptText,
+      resultType,
+      resultContent,
+      tags,
+      paymentStatus,
+      price,
+    } = formData;
+
+    if (resultType !== "text" && !uploadedFile && !resultContent.trim()) {
+      toast.error("Please upload a file or provide a valid link.");
+      return;
+    }
+
+    const data = new FormData();
+    data.append("title", title);
+    data.append("description", description);
+    data.append("category", category);
+    data.append("aiModel", aiModel);
+    data.append("promptText", promptText);
+    data.append("resultType", resultType);
+    data.append("resultContent", resultContent);
+    data.append("paymentStatus", paymentStatus);
+    if (paymentStatus === "paid") {
+      if (!price || parseFloat(price) <= 0) {
+        toast.error("Enter a valid price");
+        return;
+      }
+      data.append("price", price);
+    }
+    data.append("tags", JSON.stringify(tags));
+
+    if (uploadedFile) {
+      data.append("promptContent", uploadedFile);
+    }
+
+    try {
+      const isOnline = navigator.onLine;
+      if (isOnline) {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/save-draft`,
+          {
+            method: "POST",
+            body: data,
+            credentials: "include",
+          }
+        );
+
+        if (!res.ok) {
+          const error = await res.json();
+          throw new Error(error.message || "Failed to create prompt");
+        }
+
+        setFormData({
+          title: "",
+          description: "",
+          category: "",
+          aiModel: "",
+          promptText: "",
+          resultType: "text",
+          resultContent: "",
+          tags: [],
+          paymentStatus: "free",
+          price: "",
+        });
+        setUploadedFile(null);
+        toast.success("Prompt created successfully");
+        onClose();
+        if (onSuccess) onSuccess();
+      } else {
+        savePromptDraft(formData);
+        if (uploadedFile) await savePromptFile(uploadedFile);
+        toast.success("Offline. Prompt saved locally.");
+        return;
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    }
   };
 
   // Submit handler
@@ -600,7 +691,7 @@ export default function CreatePromptModal({
           </div>
           {/* ACTION BUTTONS */}
           <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline">
+            <Button type="button" variant="outline" onClick={handleSaveDraft}>
               <Save className="h-4 w-4 mr-2" />
               Save Draft
             </Button>

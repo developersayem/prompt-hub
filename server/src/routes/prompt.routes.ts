@@ -16,6 +16,7 @@ import {
     likeCommentController,
     likePromptController,
     replyCommentController,
+    savePromptAsDraftController,
     updateCommentController,
     updatePromptController
 } from "../controller/prompt.controller";
@@ -60,6 +61,8 @@ router.post("/:id/buy", verifyJWT, buyPromptController);
 router.get("/purchase-history", verifyJWT, getMyPurchasesController);
 // Route for get prompt by slug
 router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
+// Route for save prompt draft
+router.post("/save-draft", verifyJWT, upload.fields([{ name: "promptContent", maxCount: 1 }]), savePromptAsDraftController);
 
 
 

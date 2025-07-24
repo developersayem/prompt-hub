@@ -1,13 +1,14 @@
 import type React from "react";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+// import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/shared/theme-provider";
 import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "sonner";
 import { LoginPromptProvider } from "@/contexts/login-prompt-context";
+import DraftSyncProvider from "@/contexts/draft-sync-provider";
 
-const inter = Inter({ subsets: ["latin"] });
+// const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Prompt Hub - AI Prompt Directory",
@@ -21,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body>
         <Toaster />
         <ThemeProvider
           attribute="class"
@@ -31,7 +32,9 @@ export default function RootLayout({
           storageKey="Prompt Hub-theme"
         >
           <AuthProvider>
-            <LoginPromptProvider>{children}</LoginPromptProvider>
+            <LoginPromptProvider>
+              <DraftSyncProvider>{children}</DraftSyncProvider>
+            </LoginPromptProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
