@@ -9,9 +9,8 @@ import { UserNav } from "@/components/dashboard/settings/profile/user-nav";
 import { useState } from "react";
 import RightSidebar from "@/components/feed/right-sidebar";
 import LeftSidebar from "@/components/feed/left-sidebar";
-import CreatePromptModal from "@/components/shared/create-prompt-modal";
-import { usePrompts } from "@/hooks/usePrompts";
 import { useAuth } from "@/contexts/auth-context";
+import { usePromptModal } from "@/contexts/prompt-modal-context";
 
 interface FeedLayoutProps {
   children: React.ReactNode;
@@ -20,11 +19,7 @@ interface FeedLayoutProps {
 export default function FeedLayout({ children }: FeedLayoutProps) {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [openCreateModal, setOpenCreateModal] = useState(false);
-  const filters = { resultType: "all" };
-  const selectedCategory = "all";
-
-  const { key, mutate } = usePrompts(filters, selectedCategory); // ⬅ You must call this
+  const { openModal } = usePromptModal();
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950">
@@ -56,15 +51,10 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
             <div className="flex items-center space-x-4">
               {user && (
                 <>
-                  <Button onClick={() => setOpenCreateModal(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
+                  <Button onClick={openModal}>
+                    <Plus />
                     Create Prompt
                   </Button>
-                  <CreatePromptModal
-                    open={openCreateModal}
-                    onClose={() => setOpenCreateModal(false)}
-                    onSuccess={() => mutate(key)} // Properly refetch
-                  />
                 </>
               )}
               <ThemeToggle />

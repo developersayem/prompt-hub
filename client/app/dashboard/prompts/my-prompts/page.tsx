@@ -569,7 +569,7 @@ export default function MyPromptsPage() {
                 No prompts match your search.
               </p>
               <Button onClick={() => setOpenCreateModal(true)}>
-                <Plus className="h-4 w-4 mr-2" /> Create Prompt
+                <Plus /> Create Prompt
               </Button>
             </div>
           </CardContent>

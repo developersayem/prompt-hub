@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/auth-context";
 import { Toaster } from "sonner";
 import { LoginPromptProvider } from "@/contexts/login-prompt-context";
 import DraftSyncProvider from "@/contexts/draft-sync-provider";
+import { PromptModalProvider } from "@/contexts/prompt-modal-context";
+import PromptModalRenderer from "@/components/shared/prompt-modal-renderer";
 
 // const inter = Inter({ subsets: ["latin"] });
 
@@ -33,7 +35,10 @@ export default function RootLayout({
         >
           <AuthProvider>
             <LoginPromptProvider>
-              <DraftSyncProvider>{children}</DraftSyncProvider>
+              <PromptModalProvider>
+                <PromptModalRenderer />
+                <DraftSyncProvider>{children}</DraftSyncProvider>
+              </PromptModalProvider>
             </LoginPromptProvider>
           </AuthProvider>
         </ThemeProvider>

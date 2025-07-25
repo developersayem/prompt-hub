@@ -18,6 +18,9 @@ import {
 } from "@/components/ui/sidebar";
 import React from "react";
 import { generateBreadcrumbs } from "@/utils/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { usePromptModal } from "@/contexts/prompt-modal-context";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -26,12 +29,13 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
   const breadcrumbs = generateBreadcrumbs(pathname);
+  const { openModal } = usePromptModal();
 
   return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2">
+        <header className="flex justify-between  h-16 shrink-0 items-center gap-2">
           <div className="flex items-center gap-2 px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator
@@ -57,6 +61,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
+          <Button onClick={openModal} className="mr-4">
+            <Plus />
+            Create Prompt
+          </Button>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
       </SidebarInset>

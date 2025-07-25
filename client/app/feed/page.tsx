@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Filter, Plus } from "lucide-react";
-import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -27,6 +26,7 @@ import { IPublicUser } from "@/types/publicUser.type";
 import { usePrompts } from "@/hooks/usePrompts";
 import PromptCard from "@/components/shared/prompt-card";
 import { useLoginPrompt } from "@/contexts/login-prompt-context";
+import { usePromptModal } from "@/contexts/prompt-modal-context";
 
 export default function FeedPage() {
   const { user, updateUser } = useAuth();
@@ -43,6 +43,7 @@ export default function FeedPage() {
   const [isLoadingPublicProfile, setIsLoadingPublicProfile] = useState(false);
   const [showPublicProfile, setShowPublicProfile] = useState(false);
   const [publicUserData, setPublicUserData] = useState<IPublicUser>();
+  const { openModal } = usePromptModal();
 
   const { prompts, isLoading, error, mutate } = usePrompts(
     filters,
@@ -478,12 +479,10 @@ export default function FeedPage() {
                 <CardContent className="pt-6">
                   <div className="text-center py-8">
                     <p className="text-gray-500 mb-4">No prompts found.</p>
-                    <Link href="/create">
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create First Prompt
-                      </Button>
-                    </Link>
+                    <Button onClick={openModal}>
+                      <Plus />
+                      Create Prompt
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
