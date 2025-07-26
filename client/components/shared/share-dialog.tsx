@@ -45,7 +45,7 @@ export function ShareDialogButton({ shareUrl }: ShareDialogProps) {
         </button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-neutral-50 dark:bg-neutral-900">
         <DialogHeader>
           <DialogTitle>Share this link</DialogTitle>
           <DialogDescription>
@@ -98,7 +98,7 @@ export function ShareDialog({ shareUrl }: ShareDialogProps) {
         <div className="flex-1 flex items-center justify-start">Share</div>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md bg-neutral-50 dark:bg-neutral-900">
         <DialogHeader>
           <DialogTitle>Share this link</DialogTitle>
           <DialogDescription>

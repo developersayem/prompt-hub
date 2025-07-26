@@ -240,19 +240,17 @@ export default function MyPromptsPage() {
                   <ul className="space-y-1">
                     <li
                       onClick={() => openEdit(prompt)}
-                      className="hover:bg-neutral-950 rounded px-2 cursor-pointer"
+                      className="hover:bg-neutral-50 hover:text-black rounded px-2 cursor-pointer"
                     >
                       Edit
                     </li>
                     <li
                       onClick={() => console.log("Delete")}
-                      className="hover:bg-red-900 rounded px-2 cursor-pointer"
+                      className="hover:bg-neutral-50 hover:text-black rounded px-2 cursor-pointer"
                     >
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <div className="hover:bg-red-900 rounded cursor-pointer">
-                            Delete
-                          </div>
+                          <div className="cursor-pointer">Delete</div>
                         </AlertDialogTrigger>
                         <AlertDialogContent className="w-96 bg-neutral-900">
                           <AlertDialogHeader>
@@ -276,7 +274,7 @@ export default function MyPromptsPage() {
                         </AlertDialogContent>
                       </AlertDialog>
                     </li>
-                    <li className="hover:bg-green-900 rounded px-2 cursor-pointer">
+                    <li className="hover:bg-neutral-50 hover:text-black rounded px-2 cursor-pointer">
                       <ShareDialog
                         shareUrl={`${window.location.origin}/feed/${prompt?.slug}`}
                       />
