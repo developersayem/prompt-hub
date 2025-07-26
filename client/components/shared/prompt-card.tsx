@@ -38,7 +38,7 @@ import {
 } from "@/utils/swrOptimisticUpdate";
 import countAllComments from "@/helper/count-all-nested-comments";
 import { useAuth } from "@/contexts/auth-context";
-import { ShareDialog } from "./share-dialog";
+import { ShareDialogButton } from "./share-dialog";
 import { getEmbeddableVideoUrl } from "@/helper/getEmbeddableVideoUrl";
 import isValidUrl from "@/helper/check-url";
 import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
@@ -70,6 +70,8 @@ const PromptCard: FC<PromptCardProps> = ({
   >({});
   const { triggerLoginModal } = useLoginPrompt();
   const commentRef = useRef<HTMLDivElement | null>(null);
+
+  // Function for handling comments
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const isOpen = openComments[prompt._id];
@@ -90,7 +92,7 @@ const PromptCard: FC<PromptCardProps> = ({
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [openComments, prompt._id]);
-
+  // Function for handling protected action
   const handleProtectedAction = () => {
     if (!user?._id) {
       triggerLoginModal();
@@ -192,7 +194,7 @@ const PromptCard: FC<PromptCardProps> = ({
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/bookmark`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/bookmarks`,
         {
           method: "POST",
           credentials: "include",
@@ -266,9 +268,8 @@ const PromptCard: FC<PromptCardProps> = ({
             <div className="flex items-center space-x-2 capitalize">
               <Badge variant="secondary">{prompt?.category}</Badge>
               {prompt.paymentStatus === "paid" ? (
-                <Badge className="bg-green-100 text-green-800 flex items-center gap-1">
-                  <Coins className="w-3 h-3" />
-                  Paid
+                <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1 text-xs">
+                  <Coins className="w-3 h-3" /> Paid
                 </Badge>
               ) : (
                 <Badge variant="outline">Free</Badge>
@@ -451,7 +452,7 @@ const PromptCard: FC<PromptCardProps> = ({
               {countAllComments(prompt?.comments)}
             </button>
             {/* Share button */}
-            <ShareDialog
+            <ShareDialogButton
               shareUrl={`${window.location.origin}/feed/${prompt?.slug}`}
             />
             {/* View button */}
@@ -498,7 +499,7 @@ const PromptCard: FC<PromptCardProps> = ({
                     {prompt.price}
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="w-96 bg-neutral-900">
                   <AlertDialogHeader>
                     <AlertDialogTitle>Buy this prompt?</AlertDialogTitle>
                     <AlertDialogDescription>

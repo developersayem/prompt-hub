@@ -242,7 +242,7 @@ export default function BookmarksPage() {
                             Remove
                           </div>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="w-96">
+                        <AlertDialogContent className="w-96 bg-neutral-900">
                           <AlertDialogHeader>
                             <AlertDialogTitle>
                               Are you absolutely sure?
@@ -423,7 +423,7 @@ export default function BookmarksPage() {
                     <Trash2 /> Remove
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent className="w-96">
+                <AlertDialogContent className="w-96 bg-neutral-900">
                   <AlertDialogHeader>
                     <AlertDialogTitle>
                       Are you absolutely sure?

@@ -3,6 +3,7 @@
 import {
   Coins,
   Edit,
+  EllipsisVertical,
   Eye,
   Heart,
   MessageCircle,
@@ -46,6 +47,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { ShareDialog } from "@/components/shared/share-dialog";
 
 const fetcher = async (url: string) => {
   const res = await fetch(url, {
@@ -218,7 +220,7 @@ export default function MyPromptsPage() {
               {prompt.category}
             </Badge>
             {prompt.paymentStatus === "paid" ? (
-              <Badge className="bg-green-100 text-green-800 flex items-center gap-1 text-xs">
+              <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1 text-xs">
                 <Coins className="w-3 h-3" /> Paid
               </Badge>
             ) : (
@@ -226,6 +228,63 @@ export default function MyPromptsPage() {
                 Free
               </Badge>
             )}
+            {/* Three dot menu Dropdown */}
+            <div className="">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="cursor-pointer">
+                    <EllipsisVertical />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-40 p-1">
+                  <ul className="space-y-1">
+                    <li
+                      onClick={() => openEdit(prompt)}
+                      className="hover:bg-neutral-950 rounded px-2 cursor-pointer"
+                    >
+                      Edit
+                    </li>
+                    <li
+                      onClick={() => console.log("Delete")}
+                      className="hover:bg-red-900 rounded px-2 cursor-pointer"
+                    >
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <div className="hover:bg-red-900 rounded cursor-pointer">
+                            Delete
+                          </div>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-96 bg-neutral-900">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Are you absolutely sure?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will
+                              permanently delete your prompt.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deletePrompt(prompt)}
+                              className="bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 transition"
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" /> Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </li>
+                    <li className="hover:bg-green-900 rounded px-2 cursor-pointer">
+                      <ShareDialog
+                        shareUrl={`${window.location.origin}/feed/${prompt?.slug}`}
+                      />
+                    </li>
+                  </ul>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
 
@@ -377,36 +436,6 @@ export default function MyPromptsPage() {
             >
               <Edit className="w-4 h-4 mr-1" /> Edit
             </Button>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="flex-1 sm:flex-none"
-                >
-                  <Trash2 className="w-4 h-4 mr-1" /> Delete
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    your prompt.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => deletePrompt(prompt)}
-                    className="bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 transition"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" /> Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </div>
         </div>
       </CardContent>

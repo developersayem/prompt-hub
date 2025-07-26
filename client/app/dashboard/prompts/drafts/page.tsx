@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import useSWR, { mutate } from "swr";
+import useSWR from "swr";
 import { getEmbeddableVideoUrl } from "@/helper/getEmbeddableVideoUrl";
 import isValidUrl from "@/helper/check-url";
 import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
@@ -70,7 +70,11 @@ export default function DraftsPage() {
     "createdAt"
   );
 
-  const { data: myPrompts = [], isLoading } = useSWR(
+  const {
+    data: myPrompts = [],
+    isLoading,
+    mutate,
+  } = useSWR(
     `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/drafts`,
     fetcher
   );
@@ -86,6 +90,7 @@ export default function DraftsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
+  // Search function
   useEffect(() => {
     if (searchQuery.trim() !== "") {
       setIsSearching(true);
@@ -97,23 +102,23 @@ export default function DraftsPage() {
       setIsSearching(false);
     }
   }, [searchQuery]);
-
+  // Function for open edit modal
   const openEdit = (prompt: IPrompt) => {
     setSelectedPrompt(prompt);
     setIsEditOpen(true);
   };
-
+  // Function for toggle prompt text
   const toggleExpand = (id: string) => {
     setExpandedPrompts((prev) => ({
       ...prev,
       [id]: !prev[id],
     }));
   };
-
+  // Function for toggle description text
   const toggleDescription = (id: string) => {
     setExpandedDescriptions((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-
+  // Function for delete prompt
   const deletePrompt = async (prompt: IPrompt) => {
     try {
       const response = await fetch(
@@ -129,14 +134,36 @@ export default function DraftsPage() {
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      toast.success(data.message || "Prompt deleted successfully");
-
-      await mutate(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/my-prompts`
-      );
+      toast.success(data.message || "Prompt deleted from drafts");
+      // Revalidate the data
+      await mutate();
     } catch (error) {
       console.error("Error deleting prompt:", error);
       toast.error("Failed to delete prompt.");
+    }
+  };
+  // Function for delete prompt
+  const publishPrompt = async (prompt: IPrompt) => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/drafts/${prompt._id}/publish`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok)
+        throw new Error(`HTTP error! status: ${response.status}`);
+
+      const data = await response.json();
+      toast.success(data.message || "Prompt published successfully");
+      // Revalidate the data
+      await mutate();
+    } catch (error) {
+      console.error("Error publishing prompt:", error);
+      toast.error("Failed to publish prompt.");
     }
   };
 
@@ -216,7 +243,7 @@ export default function DraftsPage() {
               {prompt.category}
             </Badge>
             {prompt.paymentStatus === "paid" ? (
-              <Badge className="bg-green-100 text-green-800 flex items-center gap-1 text-xs">
+              <Badge className="bg-yellow-100 text-yellow-800 flex items-center gap-1 text-xs">
                 <Coins className="w-3 h-3" /> Paid
               </Badge>
             ) : (
@@ -224,6 +251,7 @@ export default function DraftsPage() {
                 Free
               </Badge>
             )}
+            {/* Three dot menu Dropdown */}
             <div className="">
               <Popover>
                 <PopoverTrigger asChild>
@@ -235,21 +263,19 @@ export default function DraftsPage() {
                   <ul className="space-y-1">
                     <li
                       onClick={() => openEdit(prompt)}
-                      className="hover:bg-neutral-950 rounded px-2 cursor-pointer"
+                      className="hover:bg-neutral-50 hover:text-black rounded px-2 cursor-pointer"
                     >
                       Edit
                     </li>
                     <li
                       onClick={() => console.log("Delete")}
-                      className="hover:bg-red-900 rounded px-2 cursor-pointer"
+                      className="hover:bg-neutral-50 hover:text-black rounded px-2 cursor-pointer"
                     >
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <div className="hover:bg-red-900 rounded cursor-pointer">
-                            Delete
-                          </div>
+                          <div className="cursor-pointer">Delete</div>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="w-96 bg-neutral-900">
                           <AlertDialogHeader>
                             <AlertDialogTitle>
                               Are you absolutely sure?
@@ -265,17 +291,37 @@ export default function DraftsPage() {
                               onClick={() => deletePrompt(prompt)}
                               className="bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 transition"
                             >
-                              <Trash2 className="w-4 h-4 mr-1" /> Delete
+                              <Trash2 /> Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
                     </li>
-                    <li
-                      onClick={() => console.log("Delete")}
-                      className="hover:bg-green-900 rounded px-2 cursor-pointer"
-                    >
-                      Publish
+                    <li className="hover:bg-neutral-50 hover:text-black rounded px-2 cursor-pointer">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <div className="cursor-pointer">Publish</div>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="w-96 bg-neutral-900">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Are you absolutely sure?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will publish
+                              your prompt.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => publishPrompt(prompt)}
+                            >
+                              <BookCheck /> Publish
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </li>
                   </ul>
                 </PopoverContent>
@@ -425,13 +471,32 @@ export default function DraftsPage() {
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             {/* Publish button */}
-            <Button
-              onClick={() => openEdit(prompt)}
-              variant="default"
-              size="sm"
-              className="flex-1 sm:flex-none"
-            >
-              <BookCheck className="w-4 h-4 mr-1" /> Publish
+            <Button variant="default" size="sm" className="flex-1 sm:flex-none">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <div className="flex items-center gap-1 cursor-pointer">
+                    <BookCheck />
+                    Publish
+                  </div>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="w-96 bg-neutral-900">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will publish your
+                      prompt.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => publishPrompt(prompt)}>
+                      <BookCheck /> Publish
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </Button>
           </div>
         </div>
@@ -447,9 +512,7 @@ export default function DraftsPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
-              <p className="text-gray-500 mb-4">
-                You haven’t any draft prompts yet.
-              </p>
+              <p className="text-gray-500 mb-4">You haven’t any draft yet.</p>
             </div>
           </CardContent>
         </Card>
@@ -608,7 +671,7 @@ export default function DraftsPage() {
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <p className="text-gray-500 mb-4">
-                No prompts match your search.Try changing your filters.or create
+                No prompts match your search.Try changing your filters or create
                 a new prompt
               </p>
             </div>
