@@ -56,12 +56,8 @@ const data = {
           url: `${mainRoute}/prompts/drafts`,
         },
         {
-          title: "Liked Prompts",
-          url: `${mainRoute}/prompts/liked-prompts`,
-        },
-        {
-          title: "Purchased Prompts",
-          url: `${mainRoute}/prompts/purchased-prompts`,
+          title: "Reported Prompts",
+          url: `${mainRoute}/prompts/reported-prompts`,
         },
       ],
     },
