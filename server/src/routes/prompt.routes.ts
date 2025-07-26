@@ -22,7 +22,8 @@ import {
     updatePromptController,
     getAllMyDraftPromptsController,
     getAllMyBookmarkedPromptsController,
-    removePromptFromBookmarksController
+    removePromptFromBookmarksController,
+    publishPromptFromDraftsController
 } from "../controller/prompt.controller";
 
 const router = Router();
@@ -49,22 +50,25 @@ router.post("/comment/like", verifyJWT, likeCommentController);
 
 // Route for user's prompts
 router.get("/my-prompts", verifyJWT, getMyPromptsController);
-router.get("/drafts", verifyJWT, getAllMyDraftPromptsController); 
+router.post("/save-draft", verifyJWT, upload.fields([{ name: "promptContent", maxCount: 1 }]), savePromptAsDraftController);
+router.get("/drafts", verifyJWT, getAllMyDraftPromptsController);
+router.patch("/drafts/:id/publish", verifyJWT, publishPromptFromDraftsController); 
 router.get("/purchase-history", verifyJWT, getMyPurchasesController);
 
 // Route for prompt actions
-router.post("/save-draft", verifyJWT, upload.fields([{ name: "promptContent", maxCount: 1 }]), savePromptAsDraftController);
+
 router.post("/bookmarks", verifyJWT, savePromptAsBookmarkController);
 router.get("/bookmarks", verifyJWT, getAllMyBookmarkedPromptsController);
 router.delete("/bookmarks/:id", verifyJWT, removePromptFromBookmarksController);
-
-// Route for slug-based prompt
-router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
 
 // Dynamic routes last
 router.get("/:id", verifyJWT, getSinglePromptController);
 router.put("/:id", upload.fields([{ name: "promptContent", maxCount: 1 }]), verifyJWT, updatePromptController);
 router.delete("/:id", verifyJWT, deletePromptController);
 router.post("/:id/buy", verifyJWT, buyPromptController);
+
+
+// Route for slug-based prompt
+router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
 
 export default router;

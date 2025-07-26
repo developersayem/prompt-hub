@@ -967,6 +967,38 @@ const getAllMyDraftPromptsController = asyncHandler(async (req: Request, res: Re
     new ApiResponse(200, { data: promptsWithLikes }, "Prompts fetched successfully")
   );
 });
+// Controller for publish prompt from draft
+const publishPromptFromDraftsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
+    if (!userId) throw new ApiError(401, "Unauthorized");
+
+    const promptId = req.params.id;
+    if (!promptId || !mongoose.Types.ObjectId.isValid(promptId)) {
+      throw new ApiError(400, "Valid Prompt ID is required");
+    }
+
+    const prompt = await Prompt.findById(promptId);
+    if (!prompt) throw new ApiError(404, "Prompt not found");
+
+    if (String(prompt.creator) !== String(userId)) {
+      throw new ApiError(403, "You are not authorized to publish this prompt");
+    }
+
+    if (!prompt.isDraft) {
+      throw new ApiError(400, "Prompt is already published");
+    }
+
+    prompt.isDraft = false;
+    prompt.createdAt = new Date(); // Refresh the createdAt timestamp
+    await prompt.save();
+
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { data: null }, "Prompt published successfully"));
+  }
+);
 // Controller for toggling prompt bookmark
 const savePromptAsBookmarkController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
@@ -1116,7 +1148,7 @@ const getAllMyBookmarkedPromptsController = asyncHandler(
     );
   }
 );
-// Controller for remove prompt from draft
+// Controller for remove prompt from bookmarks
 const removePromptFromBookmarksController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
@@ -1153,6 +1185,7 @@ const removePromptFromBookmarksController = asyncHandler(
 
 
 
+
 // Export the controllers
 export { 
   getAllPromptsController,
@@ -1172,6 +1205,7 @@ export {
   getPromptBySlugController,
   savePromptAsDraftController,
   getAllMyDraftPromptsController,
+  publishPromptFromDraftsController,
   savePromptAsBookmarkController,
   getAllMyBookmarkedPromptsController,
   removePromptFromBookmarksController

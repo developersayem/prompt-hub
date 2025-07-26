@@ -34,6 +34,8 @@ export interface IPrompt extends Document {
     users: Types.ObjectId[];
     ips: string[];
   };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const promptSchema = new Schema<IPrompt>(
