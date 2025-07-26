@@ -86,10 +86,9 @@ export default function Combobox<T>({
       <button
         ref={buttonRef}
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full text-left px-3 py-2 border rounded-md flex items-center justify-between transition 
-          bg-white text-black border-gray-300 
-          hover:border-gray-400 
-          dark:bg-[#171616] dark:text-white dark:border-gray-700 dark:hover:border-gray-500"
+        className="w-full text-left px-3 py-1.5 border rounded-md flex items-center justify-between transition-all duration-150
+          bg-white text-black
+          dark:bg-[#171616] dark:text-white"
       >
         <span>
           {value
@@ -104,7 +103,7 @@ export default function Combobox<T>({
           className={cn(
             "absolute z-50 w-full max-h-60 mt-2 border rounded-md shadow-lg overflow-hidden transition-all duration-150",
             dropUp ? "bottom-full mb-2" : "top-full",
-            "bg-white dark:bg-[#272627] text-black dark:text-white border-gray-200 dark:border-gray-700"
+            "bg-white dark:bg-neutral-900 text-black dark:text-white border"
           )}
         >
           <input
@@ -138,7 +137,7 @@ export default function Combobox<T>({
                 setOpen(false);
               }
             }}
-            className="w-full px-3 py-2 border-b text-sm outline-none bg-white dark:bg-[#272627] dark:text-white dark:border-gray-700 border-gray-200"
+            className="w-full px-3 py-2 border-b text-sm outline-none bg-white dark:bg-neutral-900 text-black dark:text-white"
           />
 
           <ul className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-neutral-700 text-sm">

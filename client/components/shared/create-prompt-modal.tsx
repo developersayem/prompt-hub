@@ -26,7 +26,6 @@ import { toast } from "sonner";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { ICategory } from "@/types/category.type";
-import Combobox from "./Combobox";
 import { useCategories } from "@/hooks/API/useCategories";
 import { IAiModel } from "@/types/ai-model.types";
 import { useAiModels } from "@/hooks/API/useAiModels";
@@ -35,6 +34,7 @@ import isValidUrl from "@/helper/check-url";
 import { getEmbeddableVideoUrl } from "@/helper/getEmbeddableVideoUrl";
 import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
 import { savePromptDraft, savePromptFile } from "@/utils/draftStorage";
+import Combobox from "./Combobox";
 
 export default function CreatePromptModal({
   open,
@@ -457,10 +457,7 @@ export default function CreatePromptModal({
                     <SelectTrigger
                       size="default"
                       className={cn(
-                        "text-white border bg-neutral-900"
-                        // formData.paymentStatus === "paid"
-                        //   ? "bg-yellow-500 hover:bg-yellow-900"
-                        //   : "bg-green-500 hover:bg-green-900"
+                        "text-black dark:text-white border dark:bg-neutral-900"
                       )}
                     >
                       <Coins />
@@ -577,7 +574,7 @@ export default function CreatePromptModal({
                       )}
                     </div>
 
-                    <div className="border border-dashed rounded-lg p-4 text-center min-h-[326px] flex items-center justify-center">
+                    <div className="border border-dashed rounded-lg p-4 text-center min-h-[336px] flex items-center justify-center">
                       <input
                         type="file"
                         accept={
@@ -722,7 +719,7 @@ export default function CreatePromptModal({
                       })
                     }
                     required
-                    className="min-h-[440px]"
+                    className="min-h-[450px]"
                   />
                 </div>
               )}
