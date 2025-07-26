@@ -441,6 +441,19 @@ export default function MyPromptsPage() {
   );
 
   if (isLoading) return <LoadingCom displayText="Loading your prompts..." />;
+  if (!isLoading && myPrompts.length === 0) {
+    return (
+      <div className="w-full max-w-full">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">You haven’t any prompts yet.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-full">
