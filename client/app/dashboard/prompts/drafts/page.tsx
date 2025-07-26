@@ -7,7 +7,6 @@ import {
   Eye,
   Heart,
   MessageCircle,
-  Plus,
   Search,
   Trash2,
 } from "lucide-react";
@@ -37,7 +36,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import EditPromptModal from "@/components/dashboard/prompts/my-prompts/EditPromptModal";
-import CreatePromptModal from "@/components/shared/create-prompt-modal";
 import { Input } from "@/components/ui/input";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import {
@@ -85,7 +83,6 @@ export default function DraftsPage() {
   const [expandedDescriptions, setExpandedDescriptions] = useState<
     Record<string, boolean>
   >({});
-  const [openCreateModal, setOpenCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
 
@@ -444,6 +441,22 @@ export default function DraftsPage() {
 
   if (isLoading) return <LoadingCom displayText="Loading your prompts..." />;
 
+  if (!isLoading && myPrompts.length === 0) {
+    return (
+      <div className="w-full max-w-full">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-4">
+                You haven’t any draft prompts yet.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full max-w-full">
       {/* Search & Controls */}
@@ -595,11 +608,9 @@ export default function DraftsPage() {
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <p className="text-gray-500 mb-4">
-                No prompts match your search.
+                No prompts match your search.Try changing your filters.or create
+                a new prompt
               </p>
-              <Button onClick={() => setOpenCreateModal(true)}>
-                <Plus /> Create Prompt
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -634,16 +645,6 @@ export default function DraftsPage() {
           }
         />
       )}
-
-      <CreatePromptModal
-        open={openCreateModal}
-        onClose={() => setOpenCreateModal(false)}
-        onSuccess={() =>
-          mutate(
-            `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/my-prompts`
-          )
-        }
-      />
     </div>
   );
 }
