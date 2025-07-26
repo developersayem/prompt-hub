@@ -227,6 +227,11 @@ export default function BookmarksPage() {
                 </PopoverTrigger>
                 <PopoverContent className="w-40 p-1">
                   <ul className="space-y-1">
+                    <li className="hover:bg-green-900 rounded px-2 cursor-pointer">
+                      <ShareDialog
+                        shareUrl={`${window.location.origin}/feed/${prompt?.slug}`}
+                      />
+                    </li>
                     <li
                       onClick={() => console.log("Delete")}
                       className="hover:bg-red-900 rounded px-2 cursor-pointer"
@@ -237,7 +242,7 @@ export default function BookmarksPage() {
                             Remove
                           </div>
                         </AlertDialogTrigger>
-                        <AlertDialogContent>
+                        <AlertDialogContent className="w-96">
                           <AlertDialogHeader>
                             <AlertDialogTitle>
                               Are you absolutely sure?
@@ -258,11 +263,6 @@ export default function BookmarksPage() {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
-                    </li>
-                    <li className="hover:bg-green-900 rounded px-2 cursor-pointer">
-                      <ShareDialog
-                        shareUrl={`${window.location.origin}/feed/${prompt?.slug}`}
-                      />
                     </li>
                   </ul>
                 </PopoverContent>
@@ -412,14 +412,39 @@ export default function BookmarksPage() {
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             {/* Publish button */}
-            <Button
-              onClick={() => removePrompt(prompt._id as string)}
-              variant="default"
-              size="sm"
-              className="flex-1 sm:flex-none"
-            >
-              <Trash2 className="w-4 h-4 mr-1" /> Remove
-            </Button>
+            <div className="cursor-pointer">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="flex-1 sm:flex-none"
+                  >
+                    <Trash2 /> Remove
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent className="w-96">
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently remove
+                      your prompt.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => removePrompt(prompt._id)}
+                      className="bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 transition"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" /> Remove
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
         </div>
       </CardContent>
