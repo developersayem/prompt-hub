@@ -20,7 +20,9 @@ import {
     savePromptAsDraftController,
     updateCommentController,
     updatePromptController,
-    getAllMyDraftPromptsController
+    getAllMyDraftPromptsController,
+    getAllMyBookmarkedPromptsController,
+    removePromptFromBookmarksController
 } from "../controller/prompt.controller";
 
 const router = Router();
@@ -52,7 +54,9 @@ router.get("/purchase-history", verifyJWT, getMyPurchasesController);
 
 // Route for prompt actions
 router.post("/save-draft", verifyJWT, upload.fields([{ name: "promptContent", maxCount: 1 }]), savePromptAsDraftController);
-router.post("/bookmark", verifyJWT, savePromptAsBookmarkController);
+router.post("/bookmarks", verifyJWT, savePromptAsBookmarkController);
+router.get("/bookmarks", verifyJWT, getAllMyBookmarkedPromptsController);
+router.delete("/bookmarks/:id", verifyJWT, removePromptFromBookmarksController);
 
 // Route for slug-based prompt
 router.get("/slug/:slug", extractClientIP, getPromptBySlugController);

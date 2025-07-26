@@ -884,56 +884,6 @@ if (Array.isArray(req.body.tags)) {
     .status(200)
     .json(new ApiResponse(200, newCreatedPrompt, "Prompt saved as draft"));
 });
-// Controller for toggling prompt bookmark
-const savePromptAsBookmarkController = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user?._id;
-  if (!userId) throw new ApiError(401, "Unauthorized");
-
-  const { promptId } = req.body;
-  if (!promptId) throw new ApiError(400, "Prompt ID is required");
-
-  const prompt = await Prompt.findById(promptId);
-  if (!prompt) throw new ApiError(404, "Prompt not found");
-
-  const user = await User.findById(userId);
-  if (!user) throw new ApiError(404, "User not found");
-
-  const isBookmarked = user.bookmarks.includes(promptId);
-
-  let updatedUser;
-
-  if (isBookmarked) {
-    // Remove the bookmark
-    updatedUser = await User.findOneAndUpdate(
-      { _id: userId },
-      { $pull: { bookmarks: promptId } },
-      { new: true }
-    );
-
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        { removed: true, bookmarks: updatedUser?.bookmarks },
-        "Prompt removed from bookmarks"
-      )
-    );
-  } else {
-    // Add the bookmark
-    updatedUser = await User.findOneAndUpdate(
-      { _id: userId },
-      { $addToSet: { bookmarks: promptId } },
-      { new: true }
-    );
-
-    return res.status(200).json(
-      new ApiResponse(
-        200,
-        { added: true, bookmarks: updatedUser?.bookmarks },
-        "Prompt saved as bookmark"
-      )
-    );
-  }
-});
 // Controller for get all draft prompts
 const getAllMyDraftPromptsController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
@@ -1017,6 +967,189 @@ const getAllMyDraftPromptsController = asyncHandler(async (req: Request, res: Re
     new ApiResponse(200, { data: promptsWithLikes }, "Prompts fetched successfully")
   );
 });
+// Controller for toggling prompt bookmark
+const savePromptAsBookmarkController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  const { promptId } = req.body;
+  if (!promptId) throw new ApiError(400, "Prompt ID is required");
+
+  const prompt = await Prompt.findById(promptId);
+  if (!prompt) throw new ApiError(404, "Prompt not found");
+
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, "User not found");
+
+  const isBookmarked = user.bookmarks.includes(promptId);
+
+  let updatedUser;
+
+  if (isBookmarked) {
+    // Remove the bookmark
+    updatedUser = await User.findOneAndUpdate(
+      { _id: userId },
+      { $pull: { bookmarks: promptId } },
+      { new: true }
+    );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { removed: true, bookmarks: updatedUser?.bookmarks },
+        "Prompt removed from bookmarks"
+      )
+    );
+  } else {
+    // Add the bookmark
+    updatedUser = await User.findOneAndUpdate(
+      { _id: userId },
+      { $addToSet: { bookmarks: promptId } },
+      { new: true }
+    );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { added: true, bookmarks: updatedUser?.bookmarks },
+        "Prompt saved as bookmark"
+      )
+    );
+  }
+});
+// Controller for getting all draft prompts created by the logged-in user
+const getAllMyBookmarkedPromptsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
+    if (!userId) throw new ApiError(401, "Unauthorized");
+
+    const { category, isPaid, searchString } = req.query;
+
+    // Step 1: Get user's bookmarks
+    const user = await User.findById(userId).select("bookmarks").lean();
+    if (!user || user.bookmarks.length === 0) {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { data: [] }, "No bookmarked prompts found"));
+    }
+
+    // Step 2: Build query
+    const query: any = {
+      _id: { $in: user.bookmarks },
+      isDraft: false,
+    };
+    if (category) query.category = category;
+    if (isPaid === "true") query.paymentStatus = "paid";
+    if (typeof searchString === "string" && searchString.trim() !== "") {
+      query.$or = [
+        { title: { $regex: new RegExp(searchString, "i") } },
+        { description: { $regex: new RegExp(searchString, "i") } },
+      ];
+    }
+
+    // Step 3: Aggregate prompts
+    const prompts = await Prompt.aggregate([
+      { $match: query },
+      { $sort: { createdAt: -1 } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "creator",
+          foreignField: "_id",
+          as: "creator",
+          pipeline: [{ $project: { password: 0, refreshToken: 0 } }],
+        },
+      },
+      {
+        $unwind: {
+          path: "$creator",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: "comments",
+          localField: "_id",
+          foreignField: "prompt",
+          as: "comments",
+          pipeline: [
+            { $match: { parentComment: null } },
+            {
+              $project: {
+                text: 1,
+                createdAt: 1,
+                user: 1,
+                replies: 1,
+                likes: 1,
+              },
+            },
+          ],
+        },
+      },
+    ]);
+
+    // Step 4: Populate replies recursively
+    for (const prompt of prompts) {
+      for (const comment of prompt.comments) {
+        await populateRepliesRecursively(comment);
+      }
+    }
+
+    // Step 5: Attach likes
+    const allLikes = await Like.find({ prompt: { $in: user.bookmarks } });
+    const likeMap: Record<string, string[]> = {};
+    for (const like of allLikes) {
+      const pid = String(like.prompt);
+      const uid = String(like.user);
+      if (!likeMap[pid]) likeMap[pid] = [];
+      likeMap[pid].push(uid);
+    }
+
+    const promptsWithLikes = prompts.map((prompt) => ({
+      ...prompt,
+      likes: likeMap[String(prompt._id)] || [],
+    }));
+
+    // Step 6: Return response
+    res.status(200).json(
+      new ApiResponse(200, { data: promptsWithLikes }, "Bookmarked prompts fetched successfully")
+    );
+  }
+);
+// Controller for remove prompt from draft
+const removePromptFromBookmarksController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
+    if (!userId) throw new ApiError(401, "Unauthorized");
+
+    const promptId = req.params.id;
+    if (!promptId || !mongoose.Types.ObjectId.isValid(promptId)) {
+      throw new ApiError(400, "Valid Prompt ID is required");
+    }
+
+    const prompt = await Prompt.findById(promptId).lean();
+    if (!prompt) throw new ApiError(404, "Prompt not found");
+
+    const user = await User.findById(userId);
+    if (!user) throw new ApiError(404, "User not found");
+
+    const isBookmarked = user.bookmarks.some(
+      (id) => id.toString() === promptId.toString()
+    );
+    if (!isBookmarked) {
+      throw new ApiError(404, "Prompt not found in your bookmarks");
+    }
+
+    await User.findByIdAndUpdate(userId, {
+      $pull: { bookmarks: promptId },
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, null, "Prompt removed from bookmarks"));
+  }
+);
+
 
 
 
@@ -1038,6 +1171,8 @@ export {
   getMyPurchasesController,
   getPromptBySlugController,
   savePromptAsDraftController,
+  getAllMyDraftPromptsController,
   savePromptAsBookmarkController,
-  getAllMyDraftPromptsController
+  getAllMyBookmarkedPromptsController,
+  removePromptFromBookmarksController
 };
