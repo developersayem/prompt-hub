@@ -269,7 +269,7 @@ export default function CreatePromptModal({
           <DialogHeader className="w-full justify-evenly">
             <div className="flex justify-baseline items-center space-x-2">
               <DialogTitle>Create Prompt</DialogTitle>
-              <Select
+              {/* <Select
                 value={formData.paymentStatus}
                 onValueChange={(value) =>
                   setFormData({
@@ -302,7 +302,7 @@ export default function CreatePromptModal({
                   <SelectItem value="free">Free</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>
                 </SelectContent>
-              </Select>
+              </Select> */}
             </div>
             <DialogDescription>
               Fill in the details and preview will appear inside the upload
@@ -442,25 +442,64 @@ export default function CreatePromptModal({
                 </div>
               </div>
               {/* CREDITS */}
-              <div className="w-full space-y-2">
+              <>
                 <Label>Credits</Label>
-                <div className="relative">
-                  <Coins className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    type="number"
-                    className="pl-10"
-                    min="1"
-                    step="0.01"
-                    placeholder="Enter credits"
-                    value={formData.price}
-                    onChange={(e) =>
-                      setFormData({ ...formData, price: e.target.value })
+                <div className="flex items-center gap-2">
+                  <Select
+                    value={formData.paymentStatus}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        paymentStatus: value as "free" | "paid",
+                      })
                     }
-                    required={formData.paymentStatus === "paid"}
-                    disabled={formData.paymentStatus === "free"}
-                  />
+                  >
+                    <SelectTrigger
+                      size="default"
+                      className={cn(
+                        "text-white border bg-neutral-900"
+                        // formData.paymentStatus === "paid"
+                        //   ? "bg-yellow-500 hover:bg-yellow-900"
+                        //   : "bg-green-500 hover:bg-green-900"
+                      )}
+                    >
+                      <Coins />
+                      <SelectValue
+                        placeholder="Select"
+                        className={cn(
+                          formData.paymentStatus === "paid"
+                            ? "text-yellow-900"
+                            : "text-green-900"
+                        )}
+                      />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      <SelectItem value="free">Free</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div className="w-full space-y-2">
+                    <div className="relative">
+                      <Coins className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="number"
+                        className="pl-10"
+                        min="1"
+                        step="0.01"
+                        placeholder="Enter credits"
+                        value={formData.price}
+                        onChange={(e) =>
+                          setFormData({ ...formData, price: e.target.value })
+                        }
+                        required={formData.paymentStatus === "paid"}
+                        disabled={formData.paymentStatus === "free"}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </>
+
               {/* TAGS */}
               <div className="w-full">
                 <Label>Tags</Label>
