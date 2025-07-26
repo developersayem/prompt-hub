@@ -14,6 +14,7 @@ import { PurchaseHistory } from "../models/purchaseHistory.model";
 import { RequestWithIP } from "../middlewares/getClientIp.middlewares";
 // import { trackPromptView } from "../utils/trackPromptView";
 import { getAllNestedCommentIds } from "../helper/getAllNestedCommentIds";
+import { cleanInvalidPromptReferences } from "../utils/cleanInvalidPromptReferences";
 
 // Helper: check if a string is a valid URL
 const isValidUrl = (urlString: string) => {
@@ -418,8 +419,9 @@ const likeCommentController = asyncHandler(async (req: Request, res: Response) =
 // Controller for my prompts
 const getMyPromptsController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
-
   if (!userId) throw new ApiError(401, "Unauthorized");
+  // Clean up invalid prompt references
+  await cleanInvalidPromptReferences(userId);
 
   const query = { creator: userId };
 
@@ -1063,6 +1065,8 @@ const getAllMyBookmarkedPromptsController = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
     if (!userId) throw new ApiError(401, "Unauthorized");
+    // Clean up invalid prompt references
+  await cleanInvalidPromptReferences(userId);
 
     const { category, isPaid, searchString } = req.query;
 
