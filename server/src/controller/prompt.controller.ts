@@ -41,39 +41,46 @@ const getAllPromptsController = asyncHandler(async (req: Request, res: Response)
     ];
   }
 
-  const prompts = await Prompt.aggregate([
-    { $match: { ...query, isDraft: false } },
-    { $sort: { createdAt: -1 } },
-    {
-      $lookup: {
-        from: "users",
-        foreignField: "_id",
-        localField: "creator",
-        as: "creator",
-        pipeline: [{ $project: { password: 0, refreshToken: 0 } }],
-      },
+const prompts = await Prompt.aggregate([
+  { $match: { ...query, isDraft: false } },
+  { $sort: { createdAt: -1 } },
+  {
+    $lookup: {
+      from: "users",
+      foreignField: "_id",
+      localField: "creator",
+      as: "creator",
+      pipeline: [{ $project: { password: 0, refreshToken: 0 } }],
     },
-    {
-      $lookup: {
-        from: "comments",
-        foreignField: "prompt",
-        localField: "_id",
-        as: "comments",
-        pipeline: [
-          { $match: { parentComment: null } },
-          {
-            $project: {
-              text: 1,
-              createdAt: 1,
-              user: 1,
-              replies: 1,
-              likes: 1,
-            },
+  },
+  {
+    $unwind: {
+      path: "$creator",
+      preserveNullAndEmptyArrays: true,
+    },
+  },
+  {
+    $lookup: {
+      from: "comments",
+      foreignField: "prompt",
+      localField: "_id",
+      as: "comments",
+      pipeline: [
+        { $match: { parentComment: null } },
+        {
+          $project: {
+            text: 1,
+            createdAt: 1,
+            user: 1,
+            replies: 1,
+            likes: 1,
           },
-        ],
-      },
+        },
+      ],
     },
-  ]);
+  },
+]);
+
 
   // Recursively populate nested replies + user data
   for (const prompt of prompts) {
@@ -311,7 +318,8 @@ const updateCommentController = asyncHandler(async (req: Request, res: Response)
 });
 // Controller for delete comments
 const deleteCommentController = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user?._id?.toString();
+   const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
+  if (!userId) throw new ApiError(401, "Unauthorized");
   const { commentId } = req.params;
 
   if (!mongoose.Types.ObjectId.isValid(commentId)) {
@@ -427,6 +435,12 @@ const getMyPromptsController = asyncHandler(async (req: Request, res: Response) 
         pipeline: [{ $project: { password: 0, refreshToken: 0 } }],
       },
     },
+    {
+    $unwind: {
+      path: "$creator",
+      preserveNullAndEmptyArrays: true,
+    },
+  },
     {
       $lookup: {
         from: "comments",
@@ -921,11 +935,12 @@ const savePromptAsBookmarkController = asyncHandler(async (req: Request, res: Re
   }
 });
 // Controller for get all draft prompts
-const getAllDraftPromptsController = asyncHandler(async (req: Request, res: Response) => {
-  console.log("getAllDraftPromptsController");
+const getAllMyDraftPromptsController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
+  if (!userId) throw new ApiError(401, "Unauthorized");
   const { category, isPaid, searchString } = req.query;
 
-  const query: any = {};
+  const query: any = { creator: userId };
   if (category) query.category = category;
   if (isPaid === "true") query.isPaid = true;
   if (typeof searchString === "string" && searchString.trim() !== "") {
@@ -947,6 +962,12 @@ const getAllDraftPromptsController = asyncHandler(async (req: Request, res: Resp
         pipeline: [{ $project: { password: 0, refreshToken: 0 } }],
       },
     },
+    {
+    $unwind: {
+      path: "$creator",
+      preserveNullAndEmptyArrays: true,
+    },
+  },
     {
       $lookup: {
         from: "comments",
@@ -1018,5 +1039,5 @@ export {
   getPromptBySlugController,
   savePromptAsDraftController,
   savePromptAsBookmarkController,
-  getAllDraftPromptsController
+  getAllMyDraftPromptsController
 };

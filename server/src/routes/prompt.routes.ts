@@ -20,7 +20,7 @@ import {
     savePromptAsDraftController,
     updateCommentController,
     updatePromptController,
-    getAllDraftPromptsController
+    getAllMyDraftPromptsController
 } from "../controller/prompt.controller";
 
 const router = Router();
@@ -47,7 +47,7 @@ router.post("/comment/like", verifyJWT, likeCommentController);
 
 // Route for user's prompts
 router.get("/my-prompts", verifyJWT, getMyPromptsController);
-router.get("/drafts", verifyJWT, getAllDraftPromptsController); 
+router.get("/drafts", verifyJWT, getAllMyDraftPromptsController); 
 router.get("/purchase-history", verifyJWT, getMyPurchasesController);
 
 // Route for prompt actions
@@ -57,7 +57,7 @@ router.post("/bookmark", verifyJWT, savePromptAsBookmarkController);
 // Route for slug-based prompt
 router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
 
-// ✅ Dynamic routes last
+// Dynamic routes last
 router.get("/:id", verifyJWT, getSinglePromptController);
 router.put("/:id", upload.fields([{ name: "promptContent", maxCount: 1 }]), verifyJWT, updatePromptController);
 router.delete("/:id", verifyJWT, deletePromptController);
