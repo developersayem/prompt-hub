@@ -56,6 +56,10 @@ const data = {
           url: `${mainRoute}/prompts/drafts`,
         },
         {
+          title: "Purchased Prompts",
+          url: `${mainRoute}/prompts/purchased-prompts`,
+        },
+        {
           title: "Reported Prompts",
           url: `${mainRoute}/prompts/reported-prompts`,
         },

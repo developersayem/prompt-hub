@@ -121,7 +121,7 @@ export function NavMain({ items }: { items: NavItem[] }) {
                                   className={`block px-3 py-1.5 rounded-md text-sm transition-all ${
                                     isSubActive
                                       ? "bg-muted text-primary font-medium"
-                                      : "text-muted-foreground hover:bg-accent hover:text-primary"
+                                      : "text-zinc-400/100 hover:bg-accent hover:text-primary"
                                   }`}
                                 >
                                   {subItem.title}
