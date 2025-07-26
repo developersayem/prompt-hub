@@ -227,20 +227,18 @@ export default function BookmarksPage() {
                 </PopoverTrigger>
                 <PopoverContent className="w-40 p-1">
                   <ul className="space-y-1">
-                    <li className="hover:bg-green-900 rounded px-2 cursor-pointer">
+                    <li className="hover:bg-neutral-50 hover:text-black rounded px-2 cursor-pointer">
                       <ShareDialog
                         shareUrl={`${window.location.origin}/feed/${prompt?.slug}`}
                       />
                     </li>
                     <li
                       onClick={() => console.log("Delete")}
-                      className="hover:bg-red-900 rounded px-2 cursor-pointer"
+                      className="hover:bg-neutral-50 hover:text-black rounded px-2 cursor-pointer"
                     >
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
-                          <div className="hover:bg-red-900 rounded cursor-pointer">
-                            Remove
-                          </div>
+                          <div className="cursor-pointer">Remove</div>
                         </AlertDialogTrigger>
                         <AlertDialogContent className="w-96 bg-neutral-900">
                           <AlertDialogHeader>
