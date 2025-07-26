@@ -989,10 +989,19 @@ const publishPromptFromDraftsController = asyncHandler(
       throw new ApiError(400, "Prompt is already published");
     }
 
-    prompt.isDraft = false;
-    prompt.createdAt = new Date(); // Refresh the createdAt timestamp
-    await prompt.save();
-
+    await Prompt.updateOne(
+      { _id: promptId },
+      {
+        $set: {
+          isDraft: false,
+          createdAt: new Date(),
+        },
+      },
+      {
+        timestamps: false,
+        overwriteImmutable: true,
+      } as any
+    );
 
     return res
       .status(200)
