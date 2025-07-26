@@ -1,8 +1,9 @@
 "use client";
 
 import {
+  BookCheck,
   Coins,
-  Edit,
+  EllipsisVertical,
   Eye,
   Heart,
   MessageCircle,
@@ -72,7 +73,7 @@ export default function DraftsPage() {
   );
 
   const { data: myPrompts = [], isLoading } = useSWR(
-    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/my-prompts`,
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/drafts`,
     fetcher
   );
 
@@ -226,6 +227,63 @@ export default function DraftsPage() {
                 Free
               </Badge>
             )}
+            <div className="">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="cursor-pointer">
+                    <EllipsisVertical />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-40 p-1">
+                  <ul className="space-y-1">
+                    <li
+                      onClick={() => openEdit(prompt)}
+                      className="hover:bg-neutral-950 rounded px-2 cursor-pointer"
+                    >
+                      Edit
+                    </li>
+                    <li
+                      onClick={() => console.log("Delete")}
+                      className="hover:bg-red-900 rounded px-2 cursor-pointer"
+                    >
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <div className="hover:bg-red-900 rounded cursor-pointer">
+                            Delete
+                          </div>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>
+                              Are you absolutely sure?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will
+                              permanently delete your prompt.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deletePrompt(prompt)}
+                              className="bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 transition"
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" /> Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </li>
+                    <li
+                      onClick={() => console.log("Delete")}
+                      className="hover:bg-green-900 rounded px-2 cursor-pointer"
+                    >
+                      Publish
+                    </li>
+                  </ul>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </div>
 
@@ -369,44 +427,15 @@ export default function DraftsPage() {
             </div>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
+            {/* Publish button */}
             <Button
               onClick={() => openEdit(prompt)}
-              variant="outline"
+              variant="default"
               size="sm"
               className="flex-1 sm:flex-none"
             >
-              <Edit className="w-4 h-4 mr-1" /> Edit
+              <BookCheck className="w-4 h-4 mr-1" /> Publish
             </Button>
-
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="default"
-                  size="sm"
-                  className="flex-1 sm:flex-none"
-                >
-                  <Trash2 className="w-4 h-4 mr-1" /> Delete
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone. This will permanently delete
-                    your prompt.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={() => deletePrompt(prompt)}
-                    className="bg-red-500 text-white hover:bg-transparent hover:text-red-500 border border-red-500 transition"
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" /> Delete
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
           </div>
         </div>
       </CardContent>
