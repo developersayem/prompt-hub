@@ -19,54 +19,48 @@ import {
     savePromptAsBookmarkController,
     savePromptAsDraftController,
     updateCommentController,
-    updatePromptController
+    updatePromptController,
+    getAllDraftPromptsController
 } from "../controller/prompt.controller";
 
-
-const router = Router()
-
+const router = Router();
 
 // Route for get all prompts with filters options
-router.get("/", getAllPromptsController)
+router.get("/", getAllPromptsController);
+
 // Route for create prompt
 router.post("/create",
     verifyJWT,
     upload.fields([{ name: "promptContent", maxCount: 1 }]),
     createPromptController
 );
+
 // Route for like prompt
-router.post("/like", verifyJWT,likePromptController)
-//Route for create comment
-router.post("/comment", verifyJWT, createCommentController)
-// Route for update comment
+router.post("/like", verifyJWT, likePromptController);
+
+// Route for comment actions
+router.post("/comment", verifyJWT, createCommentController);
 router.put("/comment/:commentId", verifyJWT, updateCommentController);
-// Route for delete comment
 router.delete("/comment/:commentId", verifyJWT, deleteCommentController);
-// Route for replies
 router.post("/comment/reply", verifyJWT, replyCommentController);
-//Route for like comment
 router.post("/comment/like", verifyJWT, likeCommentController);
-// Route for my prompts
-router.get("/my-prompts", verifyJWT, getMyPromptsController)
-// Route for get single
-router.get("/:id", verifyJWT, getSinglePromptController);
-// Route for update prompt
-router.put("/:id", 
-    upload.fields([{ name: "promptContent", maxCount: 1 }]),
-    verifyJWT, updatePromptController);
-// Route for delete prompt
-router.delete("/:id", verifyJWT, deletePromptController);
-// Route for buy prompt
-router.post("/:id/buy", verifyJWT, buyPromptController);
-// Route for get my purchases
+
+// Route for user's prompts
+router.get("/my-prompts", verifyJWT, getMyPromptsController);
+router.get("/drafts", verifyJWT, getAllDraftPromptsController); 
 router.get("/purchase-history", verifyJWT, getMyPurchasesController);
-// Route for get prompt by slug
-router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
-// Route for save prompt draft
+
+// Route for prompt actions
 router.post("/save-draft", verifyJWT, upload.fields([{ name: "promptContent", maxCount: 1 }]), savePromptAsDraftController);
-//TODO  // Route for get all draft prompts
-// route for save prompt as bookmark
 router.post("/bookmark", verifyJWT, savePromptAsBookmarkController);
 
+// Route for slug-based prompt
+router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
 
-export default router
+// ✅ Dynamic routes last
+router.get("/:id", verifyJWT, getSinglePromptController);
+router.put("/:id", upload.fields([{ name: "promptContent", maxCount: 1 }]), verifyJWT, updatePromptController);
+router.delete("/:id", verifyJWT, deletePromptController);
+router.post("/:id/buy", verifyJWT, buyPromptController);
+
+export default router;

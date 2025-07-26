@@ -27,7 +27,7 @@ const isValidUrl = (urlString: string) => {
 
 
 
-// Controller for show all prompts
+// Controller for get all prompts
 const getAllPromptsController = asyncHandler(async (req: Request, res: Response) => {
   const { category, isPaid, searchString } = req.query;
 
@@ -41,19 +41,39 @@ const getAllPromptsController = asyncHandler(async (req: Request, res: Response)
     ];
   }
 
-  const prompts = await Prompt.find(query)
-    .sort({ createdAt: -1 })
-    .populate({
-    path: "creator",
-    select: "-password -refreshToken",
-    options: { strictPopulate: false },
-    })
-    .populate({
-      path: "comments",
-      match: { parentComment: null },
-      select: "text createdAt user replies likes",
-    })
-    .lean();
+  const prompts = await Prompt.aggregate([
+    { $match: { ...query, isDraft: false } },
+    { $sort: { createdAt: -1 } },
+    {
+      $lookup: {
+        from: "users",
+        foreignField: "_id",
+        localField: "creator",
+        as: "creator",
+        pipeline: [{ $project: { password: 0, refreshToken: 0 } }],
+      },
+    },
+    {
+      $lookup: {
+        from: "comments",
+        foreignField: "prompt",
+        localField: "_id",
+        as: "comments",
+        pipeline: [
+          { $match: { parentComment: null } },
+          {
+            $project: {
+              text: 1,
+              createdAt: 1,
+              user: 1,
+              replies: 1,
+              likes: 1,
+            },
+          },
+        ],
+      },
+    },
+  ]);
 
   // Recursively populate nested replies + user data
   for (const prompt of prompts) {
@@ -395,15 +415,39 @@ const getMyPromptsController = asyncHandler(async (req: Request, res: Response) 
 
   const query = { creator: userId };
 
-  const prompts = await Prompt.find(query)
-    .sort({ createdAt: -1 })
-    .populate("creator", "-password -refreshToken")
-    .populate({
-      path: "comments",
-      match: { parentComment: null },
-      select: "text createdAt user replies likes",
-    })
-    .lean();
+  const prompts = await Prompt.aggregate([
+    { $match: { ...query, isDraft: false } },
+    { $sort: { createdAt: -1 } },
+    {
+      $lookup: {
+        from: "users",
+        foreignField: "_id",
+        localField: "creator",
+        as: "creator",
+        pipeline: [{ $project: { password: 0, refreshToken: 0 } }],
+      },
+    },
+    {
+      $lookup: {
+        from: "comments",
+        foreignField: "prompt",
+        localField: "_id",
+        as: "comments",
+        pipeline: [
+          { $match: { parentComment: null } },
+          {
+            $project: {
+              text: 1,
+              createdAt: 1,
+              user: 1,
+              replies: 1,
+              likes: 1,
+            },
+          },
+        ],
+      },
+    },
+  ]).exec();
 
   // Recursively populate nested replies + user data
   for (const prompt of prompts) {
@@ -826,7 +870,6 @@ if (Array.isArray(req.body.tags)) {
     .status(200)
     .json(new ApiResponse(200, newCreatedPrompt, "Prompt saved as draft"));
 });
-// TODO: Controller for get all draft prompts
 // Controller for toggling prompt bookmark
 const savePromptAsBookmarkController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
@@ -877,6 +920,82 @@ const savePromptAsBookmarkController = asyncHandler(async (req: Request, res: Re
     );
   }
 });
+// Controller for get all draft prompts
+const getAllDraftPromptsController = asyncHandler(async (req: Request, res: Response) => {
+  console.log("getAllDraftPromptsController");
+  const { category, isPaid, searchString } = req.query;
+
+  const query: any = {};
+  if (category) query.category = category;
+  if (isPaid === "true") query.isPaid = true;
+  if (typeof searchString === "string" && searchString.trim() !== "") {
+    query.$or = [
+      { title: { $regex: new RegExp(searchString, "i") } },
+      { description: { $regex: new RegExp(searchString, "i") } },
+    ];
+  }
+
+  const prompts = await Prompt.aggregate([
+    { $match: { ...query, isDraft: true } },
+    { $sort: { createdAt: -1 } },
+    {
+      $lookup: {
+        from: "users",
+        foreignField: "_id",
+        localField: "creator",
+        as: "creator",
+        pipeline: [{ $project: { password: 0, refreshToken: 0 } }],
+      },
+    },
+    {
+      $lookup: {
+        from: "comments",
+        foreignField: "prompt",
+        localField: "_id",
+        as: "comments",
+        pipeline: [
+          { $match: { parentComment: null } },
+          {
+            $project: {
+              text: 1,
+              createdAt: 1,
+              user: 1,
+              replies: 1,
+              likes: 1,
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
+  // Recursively populate nested replies + user data
+  for (const prompt of prompts) {
+    for (const comment of prompt.comments) {
+      await populateRepliesRecursively(comment);
+    }
+  }
+
+  // Attach likes for prompts
+  const promptLikes = await Like.find({ prompt: { $ne: null } }).lean();
+
+  const likeMap: Record<string, string[]> = {};
+  for (const like of promptLikes) {
+    const promptId = String(like.prompt);
+    const userId = String(like.user);
+    if (!likeMap[promptId]) likeMap[promptId] = [];
+    likeMap[promptId].push(userId);
+  }
+
+  const promptsWithLikes = prompts.map((prompt) => ({
+    ...prompt,
+    likes: likeMap[String(prompt._id)] || [],
+  }));
+
+  res.status(200).json(
+    new ApiResponse(200, { data: promptsWithLikes }, "Prompts fetched successfully")
+  );
+});
 
 
 
@@ -898,5 +1017,6 @@ export {
   getMyPurchasesController,
   getPromptBySlugController,
   savePromptAsDraftController,
-  savePromptAsBookmarkController
+  savePromptAsBookmarkController,
+  getAllDraftPromptsController
 };
