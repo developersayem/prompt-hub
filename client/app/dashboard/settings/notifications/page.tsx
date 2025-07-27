@@ -116,6 +116,7 @@ export default function NotificationsPage() {
                 <p className="text-sm text-muted-foreground">{desc}</p>
               </div>
               <Switch
+                className="cursor-pointer"
                 checked={!!settings[key as keyof typeof settings]}
                 onCheckedChange={(v) => handleSettingChange(key, v)}
               />
@@ -156,6 +157,7 @@ export default function NotificationsPage() {
                 <p className="text-sm text-muted-foreground">{desc}</p>
               </div>
               <Switch
+                className="cursor-pointer"
                 checked={!!settings[key as keyof typeof settings]}
                 onCheckedChange={(v) => handleSettingChange(key, v)}
               />
@@ -176,6 +178,7 @@ export default function NotificationsPage() {
           <div className="flex justify-between items-center">
             <Label>Play sound on notifications</Label>
             <Switch
+              className="cursor-pointer"
               checked={settings.inAppSound}
               onCheckedChange={(v) => handleSettingChange("inAppSound", v)}
             />
@@ -205,14 +208,14 @@ export default function NotificationsPage() {
               type="time"
               value={settings.dndStart}
               onChange={(e) => handleSettingChange("dndStart", e.target.value)}
-              className="max-w-[120px]"
+              className="max-w-[120px] cursor-pointer"
             />
             <Label>To</Label>
             <Input
               type="time"
               value={settings.dndEnd}
               onChange={(e) => handleSettingChange("dndEnd", e.target.value)}
-              className="max-w-[120px]"
+              className="max-w-[120px] cursor-pointer"
             />
           </div>
         </CardContent>
@@ -252,7 +255,7 @@ export default function NotificationsPage() {
           <Button
             onClick={resetToDefault}
             variant="outline"
-            className="text-red-600 border-red-500 hover:bg-red-50"
+            className="text-red-600 border-red-500 hover:bg-red-50 cursor-pointer"
           >
             Reset to Default
           </Button>

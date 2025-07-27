@@ -4,12 +4,10 @@ import {
   Bookmark,
   ChartNoAxesCombined,
   Coins,
-  Home,
   LayoutDashboard,
   Settings,
   TrendingUp,
   User,
-  UserRoundPen,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import Link from "next/link";
@@ -19,6 +17,49 @@ import { useAuth } from "@/contexts/auth-context";
 export default function LeftSidebar() {
   const { user } = useAuth();
 
+  const navItems = [
+    {
+      name: "tradings",
+      href: "/feed/trending",
+      icon: TrendingUp,
+    },
+    {
+      name: "dashboard",
+      href: "/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      name: "my prompts",
+      href: "/dashboard/prompts/my-prompts",
+      icon: User,
+    },
+    {
+      name: "bookmarks",
+      href: "/dashboard/prompts/bookmarks",
+      icon: Bookmark,
+    },
+    {
+      name: "earnings",
+      href: "/dashboard/earnings",
+      icon: Coins,
+    },
+    {
+      name: "analytics",
+      href: "/dashboard/analytics",
+      icon: ChartNoAxesCombined,
+    },
+    {
+      name: "profile",
+      href: "/dashboard/settings/profile",
+      icon: ChartNoAxesCombined,
+    },
+    {
+      name: "settings",
+      href: "/dashboard/settings/account",
+      icon: Settings,
+    },
+  ];
+
   return (
     <div className="lg:col-span-1">
       <div className="sticky top-24 space-y-6">
@@ -26,61 +67,18 @@ export default function LeftSidebar() {
           <CardHeader>
             <CardTitle className="text-lg">Navigation</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <Link href="/feed">
-              <Button variant="ghost" className="w-full justify-start">
-                <Home className="h-4 w-4 mr-3" />
-                Home Feed
-              </Button>
-            </Link>
-            <Link href="/feed/trending">
-              <Button variant="ghost" className="w-full justify-start">
-                <TrendingUp className="h-4 w-4 mr-3" />
-                Trending
-              </Button>
-            </Link>
-            <Link href="/dashboard/bookmarks">
-              <Button variant="ghost" className="w-full justify-start">
-                <Bookmark className="h-4 w-4 mr-3" />
-                Saved
-              </Button>
-            </Link>
-            <Link href="/dashboard">
-              <Button variant="ghost" className="w-full justify-start">
-                <LayoutDashboard className="h-4 w-4 mr-3" />
-                Dashboard
-              </Button>
-            </Link>
-            <Link href="/dashboard/prompts/my-prompts">
-              <Button variant="ghost" className="w-full justify-start">
-                <User className="h-4 w-4 mr-3" />
-                My Prompts
-              </Button>
-            </Link>
-            <Link href="/dashboard/earnings">
-              <Button variant="ghost" className="w-full justify-start">
-                <Coins className="h-4 w-4 mr-3" />
-                Earnings
-              </Button>
-            </Link>
-            <Link href="/dashboard/analytics">
-              <Button variant="ghost" className="w-full justify-start">
-                <ChartNoAxesCombined className="h-4 w-4 mr-3" />
-                Analytics
-              </Button>
-            </Link>
-            <Link href="/dashboard/settings/profile">
-              <Button variant="ghost" className="w-full justify-start">
-                <UserRoundPen className="h-4 w-4 mr-3" />
-                Profile
-              </Button>
-            </Link>
-            <Link href="/dashboard/settings">
-              <Button variant="ghost" className="w-full justify-start">
-                <Settings className="h-4 w-4 mr-3" />
-                Settings
-              </Button>
-            </Link>
+          <CardContent className="space-y-2 py-0 my-0">
+            {navItems.map((item) => (
+              <Link key={item.name} href={item.href}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start capitalize cursor-pointer"
+                >
+                  <item.icon />
+                  {item.name}
+                </Button>
+              </Link>
+            ))}
           </CardContent>
         </Card>
         {/* user credits Card */}

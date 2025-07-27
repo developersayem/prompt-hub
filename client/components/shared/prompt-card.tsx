@@ -293,7 +293,7 @@ const PromptCard: FC<PromptCardProps> = ({
               {prompt?.description && prompt.description.length > 150 && (
                 <button
                   onClick={() => toggleDescription(prompt?._id)}
-                  className="text-white hover:underline ml-1 text-sm"
+                  className="text-white hover:underline ml-1 text-sm cursor-pointer"
                 >
                   {expandedDescriptions[prompt?._id] ? "See less" : "See more"}
                 </button>
@@ -390,7 +390,7 @@ const PromptCard: FC<PromptCardProps> = ({
                 {prompt.resultContent.length > 200 && (
                   <button
                     onClick={() => toggleExpand(prompt._id)}
-                    className="text-blue-500 hover:underline mt-2 text-sm"
+                    className="text-blue-500 hover:underline mt-2 text-sm cursor-pointer"
                   >
                     {expandedPrompts[prompt._id] ? "See less" : "See more"}
                   </button>
@@ -422,7 +422,7 @@ const PromptCard: FC<PromptCardProps> = ({
           <div className="flex w-full flex-wrap gap-1">
             {/* Like button */}
             <button
-              className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md"
+              className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md cursor-pointer"
               onClick={() => {
                 if (handleProtectedAction()) return;
                 handleLikePrompt();
@@ -439,7 +439,7 @@ const PromptCard: FC<PromptCardProps> = ({
             </button>
             {/* Comment button */}
             <button
-              className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md"
+              className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md cursor-pointer"
               onClick={() => {
                 if (handleProtectedAction()) return;
                 setOpenComments((prev) => ({
@@ -456,13 +456,13 @@ const PromptCard: FC<PromptCardProps> = ({
               shareUrl={`${window.location.origin}/feed/${prompt?.slug}`}
             />
             {/* View button */}
-            <button className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md">
+            <button className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md cursor-pointer">
               <Eye className="h-4 w-4 mr-2" />
               {prompt?.views}
             </button>
             {/* Bookmark button */}
             <button
-              className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md"
+              className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md cursor-pointer"
               onClick={() => {
                 if (handleProtectedAction()) return;
                 handleBookmarkPrompt(prompt?._id);
@@ -481,7 +481,7 @@ const PromptCard: FC<PromptCardProps> = ({
               <Button
                 variant="outline"
                 size="icon"
-                className="flex-1 flex items-center justify-center min-w-[60px]"
+                className="flex-1 flex items-center justify-center min-w-[60px] cursor-pointer"
                 onClick={() => handleCopyPrompt(prompt)}
               >
                 <Clipboard className="h-4 w-4 mr-2" />
@@ -489,7 +489,7 @@ const PromptCard: FC<PromptCardProps> = ({
               </Button>
             ) : (
               <AlertDialog>
-                <AlertDialogTrigger asChild>
+                <AlertDialogTrigger asChild className="cursor-pointer">
                   <Button
                     variant="default"
                     size="sm"
@@ -508,8 +508,13 @@ const PromptCard: FC<PromptCardProps> = ({
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => handleCopyPrompt(prompt)}>
+                    <AlertDialogCancel className="cursor-pointer">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleCopyPrompt(prompt)}
+                      className="cursor-pointer"
+                    >
                       Buy & Copy
                     </AlertDialogAction>
                   </AlertDialogFooter>
@@ -557,7 +562,7 @@ const PromptCard: FC<PromptCardProps> = ({
                       placeholder="Write a comment..."
                       className="w-full px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
                     />
-                    <Button size="lg" type="submit">
+                    <Button size="lg" type="submit" className="cursor-pointer">
                       <Send />
                     </Button>
                   </form>

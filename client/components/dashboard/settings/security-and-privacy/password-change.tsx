@@ -144,7 +144,7 @@ export function ChangePasswordComponent() {
       {step === "initial" && (
         <Button
           variant="outline"
-          className="w-full justify-start"
+          className="w-full justify-start cursor-pointer"
           onClick={() => setStep("password")}
         >
           <Key className="w-4 h-4 mr-2" />
@@ -217,7 +217,9 @@ export function ChangePasswordComponent() {
             </div>
           </div>
 
-          <Button onClick={handleSendOtp}>Send Code</Button>
+          <Button onClick={handleSendOtp} className="cursor-pointer">
+            Send Code
+          </Button>
         </div>
       )}
 
@@ -242,6 +244,7 @@ export function ChangePasswordComponent() {
           <Button
             onClick={handleVerifyAndChangePassword}
             disabled={otp.length !== 6}
+            className="cursor-pointer"
           >
             Verify & Change Password
           </Button>

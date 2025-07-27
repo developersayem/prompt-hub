@@ -171,7 +171,7 @@ export default function SecurityAndPrivacyPage() {
               </div>
               {!device.isCurrent && (
                 <button
-                  className="mt-3 text-sm text-red-500 hover:underline self-start"
+                  className="mt-3 text-sm text-red-500 hover:underline self-start cursor-pointer"
                   onClick={() => alert(`Logging out device: ${device.name}`)}
                 >
                   Log out

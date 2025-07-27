@@ -51,7 +51,7 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
             <div className="flex items-center space-x-4">
               {user && (
                 <>
-                  <Button onClick={openModal}>
+                  <Button onClick={openModal} className="cursor-pointer">
                     <Plus />
                     Create Prompt
                   </Button>
@@ -62,7 +62,7 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
                 <UserNav />
               ) : (
                 <Link href="/auth/login">
-                  <Button variant="default" className=" ">
+                  <Button variant="default" className="cursor-pointer">
                     Log in
                   </Button>
                 </Link>

@@ -283,7 +283,7 @@ export default function BookmarksPage() {
             {(prompt.description ?? "").length > 150 && (
               <button
                 onClick={() => toggleDescription(prompt._id)}
-                className="text-blue-500 hover:underline ml-1"
+                className="text-blue-500 hover:underline ml-1 cursor-pointer"
               >
                 {expandedDescriptions[prompt._id] ? "See less" : "See more"}
               </button>
@@ -376,7 +376,7 @@ export default function BookmarksPage() {
               {prompt.resultContent.length > 200 && (
                 <button
                   onClick={() => toggleExpand(prompt._id)}
-                  className="text-blue-500 hover:underline mt-2 text-sm block"
+                  className="text-blue-500 hover:underline mt-2 text-sm block cursor-pointer"
                 >
                   {expandedPrompts[prompt._id] ? "See less" : "See more"}
                 </button>
@@ -416,7 +416,7 @@ export default function BookmarksPage() {
                   <Button
                     variant="default"
                     size="sm"
-                    className="flex-1 sm:flex-none"
+                    className="flex-1 sm:flex-none cursor-pointer"
                   >
                     <Trash2 /> Remove
                   </Button>
@@ -485,7 +485,7 @@ export default function BookmarksPage() {
         <div className="flex space-x-2">
           {/* Filter Popover */}
           <Popover>
-            <PopoverTrigger asChild>
+            <PopoverTrigger asChild className="cursor-pointer">
               <Button variant="outline" size="sm">
                 Filter
               </Button>
@@ -498,6 +498,7 @@ export default function BookmarksPage() {
                   {["ai", "code", "design"].map((cat) => (
                     <div key={cat} className="flex items-center gap-2">
                       <Checkbox
+                        className="cursor-pointer"
                         checked={filters.categories.includes(cat)}
                         onCheckedChange={(checked) => {
                           setFilters((prev) => ({
@@ -518,6 +519,7 @@ export default function BookmarksPage() {
                   {["text", "image", "video"].map((type) => (
                     <div key={type} className="flex items-center gap-2">
                       <Checkbox
+                        className="cursor-pointer"
                         checked={filters.resultType.includes(type)}
                         onCheckedChange={(checked) => {
                           setFilters((prev) => ({
@@ -538,6 +540,7 @@ export default function BookmarksPage() {
                   {["paid", "free"].map((status) => (
                     <div key={status} className="flex items-center gap-2">
                       <Checkbox
+                        className="cursor-pointer"
                         checked={filters.paymentStatus.includes(status)}
                         onCheckedChange={(checked) => {
                           setFilters((prev) => ({
@@ -559,7 +562,7 @@ export default function BookmarksPage() {
                 <Button
                   variant="default"
                   size="sm"
-                  className="text-red-500 hover:text-red-600 w-full"
+                  className="text-red-500 hover:text-red-600 w-full cursor-pointer"
                   onClick={() =>
                     setFilters({
                       categories: [],
@@ -577,7 +580,7 @@ export default function BookmarksPage() {
           {/* Sort Popover */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="cursor-pointer">
                 Sort
               </Button>
             </PopoverTrigger>
@@ -587,7 +590,7 @@ export default function BookmarksPage() {
                   key={val}
                   variant={sortBy === val ? "default" : "ghost"}
                   size="sm"
-                  className="w-full justify-start"
+                  className="w-full justify-start cursor-pointer"
                   onClick={() => setSortBy(val)}
                 >
                   {val === "createdAt" && "Newest"}
@@ -595,15 +598,6 @@ export default function BookmarksPage() {
                   {val === "views" && "Most Viewed"}
                 </Button>
               ))}
-
-              <Button
-                variant="default"
-                size="sm"
-                className="w-full"
-                onClick={() => setSortBy("createdAt")}
-              >
-                Show All
-              </Button>
             </PopoverContent>
           </Popover>
         </div>

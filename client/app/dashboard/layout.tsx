@@ -21,6 +21,7 @@ import { generateBreadcrumbs } from "@/utils/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { usePromptModal } from "@/contexts/prompt-modal-context";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -61,10 +62,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               </BreadcrumbList>
             </Breadcrumb>
           </div>
-          <Button onClick={openModal} className="mr-4">
-            <Plus />
-            Create Prompt
-          </Button>
+          <div className="mr-4 space-x-4">
+            <Button onClick={openModal} className="cursor-pointer">
+              <Plus />
+              Create Prompt
+            </Button>
+            <ThemeToggle />
+          </div>
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
       </SidebarInset>

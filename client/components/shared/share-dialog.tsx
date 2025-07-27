@@ -39,7 +39,7 @@ export function ShareDialogButton({ shareUrl }: ShareDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md">
+        <button className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md cursor-pointer">
           <Share2 className="h-4 w-4 mr-2" />
           Share
         </button>
@@ -62,12 +62,12 @@ export function ShareDialogButton({ shareUrl }: ShareDialogProps) {
             className="flex-grow"
             aria-label="Shareable link"
           />
-          <Button onClick={copyToClipboard} aria-label="Copy link to clipboard">
-            {copied ? (
-              <Check className="w-5 h-5 text-green-500" />
-            ) : (
-              <Clipboard className="w-5 h-5" />
-            )}
+          <Button
+            onClick={copyToClipboard}
+            aria-label="Copy link to clipboard"
+            className="cursor-pointer"
+          >
+            {copied ? <Check className="text-green-500" /> : <Clipboard />}
           </Button>
         </div>
       </DialogContent>
@@ -115,12 +115,12 @@ export function ShareDialog({ shareUrl }: ShareDialogProps) {
             className="flex-grow"
             aria-label="Shareable link"
           />
-          <Button onClick={copyToClipboard} aria-label="Copy link to clipboard">
-            {copied ? (
-              <Check className="w-5 h-5 text-green-500" />
-            ) : (
-              <Clipboard className="w-5 h-5" />
-            )}
+          <Button
+            onClick={copyToClipboard}
+            aria-label="Copy link to clipboard"
+            className="cursor-pointer"
+          >
+            {copied ? <Check className="text-green-500" /> : <Clipboard />}
           </Button>
         </div>
       </DialogContent>

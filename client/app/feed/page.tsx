@@ -184,6 +184,7 @@ export default function FeedPage() {
                     variant={selectedCategory === "all" ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedCategory("all")}
+                    className="cursor-pointer"
                   >
                     All
                   </Button>
@@ -193,6 +194,7 @@ export default function FeedPage() {
                     }
                     size="sm"
                     onClick={() => setSelectedCategory("marketing")}
+                    className="cursor-pointer"
                   >
                     Marketing
                   </Button>
@@ -202,6 +204,7 @@ export default function FeedPage() {
                     }
                     size="sm"
                     onClick={() => setSelectedCategory("design")}
+                    className="cursor-pointer"
                   >
                     Design
                   </Button>
@@ -211,6 +214,7 @@ export default function FeedPage() {
                     }
                     size="sm"
                     onClick={() => setSelectedCategory("programming")}
+                    className="cursor-pointer"
                   >
                     Programming
                   </Button>
@@ -220,6 +224,7 @@ export default function FeedPage() {
                     }
                     size="sm"
                     onClick={() => setSelectedCategory("Image")}
+                    className="cursor-pointer"
                   >
                     Image
                   </Button>
@@ -228,7 +233,11 @@ export default function FeedPage() {
                     onOpenChange={setShowFiltersModal}
                   >
                     <DialogTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="cursor-pointer"
+                      >
                         <Filter className="h-4 w-4 mr-2" />
                         More
                         {(filters.aiModels.length > 0 ||

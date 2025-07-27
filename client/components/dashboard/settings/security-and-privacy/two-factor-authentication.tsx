@@ -146,7 +146,7 @@ export const TwoFactorAuthentication = () => {
             isEnabled
               ? "bg-green-500 peer-checked:bg-green-500"
               : "bg-gray-300 peer-checked:bg-red-500"
-          } `}
+          } cursor-pointer`}
           checked={isEnabled}
           disabled={isLoading}
           onCheckedChange={handleToggleChange}
@@ -185,7 +185,7 @@ export const TwoFactorAuthentication = () => {
           </InputOTP>
 
           <Button
-            className="w-full"
+            className="w-full cursor-pointer"
             onClick={handleVerify}
             disabled={isLoading || otp.length !== 6}
           >

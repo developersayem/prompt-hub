@@ -91,8 +91,9 @@ export default function ProfilePage() {
                         variant="outline"
                         size="sm"
                         onClick={() => setShowEditProfile(true)}
+                        className="cursor-pointer"
                       >
-                        <Edit className="w-4 h-4 mr-2" />
+                        <Edit />
                         Edit Profile
                       </Button>
                     </div>
@@ -229,23 +230,29 @@ export default function ProfilePage() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <Button
-                    className="w-full justify-start"
+                    className="w-full justify-start cursor-pointer"
                     variant="outline"
                     onClick={() => setShowPurchaseCredits(true)}
                   >
-                    <Coins className="w-4 h-4 mr-2" />
+                    <Coins />
                     Purchase Credits
                   </Button>
                   <Button
-                    className="w-full justify-start"
+                    className="w-full justify-start cursor-pointer"
                     variant="outline"
                     onClick={() => setShowGetCertified(true)}
                   >
-                    <Shield className="w-4 h-4 mr-2" />
+                    <Shield />
                     Get Certified
                   </Button>
-                  <Button className="w-full justify-start" variant="outline">
-                    <Settings className="w-4 h-4 mr-2" />
+                  <Button
+                    className="w-full justify-start cursor-pointer"
+                    variant="outline"
+                    onClick={() =>
+                      (window.location.href = "/dashboard/settings/account")
+                    }
+                  >
+                    <Settings />
                     Account Settings
                   </Button>
                 </CardContent>
