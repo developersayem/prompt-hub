@@ -87,7 +87,7 @@ export default function Combobox<T>({
         type="button"
         ref={buttonRef}
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full text-left px-3 py-1.5 border rounded-md flex items-center justify-between transition-all duration-150 bg-white text-black dark:bg-[#171616] dark:text-white capitalize"
+        className="w-full text-left px-3 py-1.5 border rounded-md flex items-center justify-between transition-all duration-150 bg-white text-black dark:bg-[#171616] dark:text-white capitalize cursor-pointer"
       >
         <span>
           {value

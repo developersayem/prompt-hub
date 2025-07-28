@@ -203,14 +203,7 @@ export default function EditPromptModal({
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                <div
-                  // onKeyDown={(e) => {
-                  //   if (e.key === "Enter") {
-                  //     e.stopPropagation();
-                  //   }
-                  // }}
-                  className="space-y-2"
-                >
+                <div className="space-y-2">
                   <Label>Category</Label>
                   <Combobox<ICategory>
                     options={categories}
@@ -260,14 +253,7 @@ export default function EditPromptModal({
                     }}
                   />
                 </div>
-                <div
-                  // onKeyDown={(e) => {
-                  //   if (e.key === "Enter") {
-                  //     e.stopPropagation();
-                  //   }
-                  // }}
-                  className="space-y-2"
-                >
+                <div className="space-y-2">
                   <Label>AI Model</Label>
                   <Combobox<IAiModel>
                     options={aiModels}
@@ -380,7 +366,11 @@ export default function EditPromptModal({
                       e.key === "Enter" && (e.preventDefault(), handleAddTag())
                     }
                   />
-                  <Button type="button" onClick={handleAddTag}>
+                  <Button
+                    type="button"
+                    className="cursor-pointer"
+                    onClick={handleAddTag}
+                  >
                     Add
                   </Button>
                 </div>
@@ -408,15 +398,27 @@ export default function EditPromptModal({
                 <Label>Result Type *</Label>
                 <RadioGroup
                   value={formData.resultType}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, resultType: value })
-                  }
+                  onValueChange={(value) => {
+                    setUploadedFile(null); // remove any existing file
+                    setFormData({
+                      ...formData,
+                      resultType: value, // update to image/video/text
+                      resultContent: "", // clear text or URL
+                    });
+                  }}
                   className="flex gap-4"
                 >
                   {["text", "image", "video"].map((type) => (
                     <div key={type} className="flex items-center gap-2">
-                      <RadioGroupItem value={type} id={type} />
-                      <Label htmlFor={type} className="capitalize">
+                      <RadioGroupItem
+                        value={type}
+                        id={type}
+                        className="cursor-pointer"
+                      />
+                      <Label
+                        htmlFor={type}
+                        className="capitalize cursor-pointer"
+                      >
                         {type}
                       </Label>
                     </div>
@@ -599,8 +601,8 @@ export default function EditPromptModal({
           </div>
           {/* ACTION BUTTONS */}
           <div className="flex justify-end space-x-4">
-            <Button type="submit">
-              <Save className="h-4 w-4 mr-2" />
+            <Button type="submit" className="cursor-pointer">
+              <Save />
               Save
             </Button>
           </div>

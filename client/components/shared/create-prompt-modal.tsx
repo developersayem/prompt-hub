@@ -92,7 +92,10 @@ export default function CreatePromptModal({
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) setUploadedFile(file);
+    if (file) {
+      setUploadedFile(file);
+      setFormData((prev) => ({ ...prev, resultContent: "" }));
+    }
   };
 
   // Handle save draft
@@ -269,40 +272,6 @@ export default function CreatePromptModal({
           <DialogHeader className="w-full justify-evenly">
             <div className="flex justify-baseline items-center space-x-2">
               <DialogTitle>Create Prompt</DialogTitle>
-              {/* <Select
-                value={formData.paymentStatus}
-                onValueChange={(value) =>
-                  setFormData({
-                    ...formData,
-                    paymentStatus: value as "free" | "paid",
-                  })
-                }
-              >
-                <SelectTrigger
-                  size="xs"
-                  className={cn(
-                    "text-white border-0",
-                    formData.paymentStatus === "paid"
-                      ? "bg-blue-900 hover:bg-blue-500"
-                      : "bg-green-900 hover:bg-green-500"
-                  )}
-                >
-                  <Coins />
-                  <SelectValue
-                    placeholder="Select"
-                    className={cn(
-                      formData.paymentStatus === "paid"
-                        ? "text-yellow-900"
-                        : "text-green-900"
-                    )}
-                  />
-                </SelectTrigger>
-
-                <SelectContent>
-                  <SelectItem value="free">Free</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                </SelectContent>
-              </Select> */}
             </div>
             <DialogDescription>
               Fill in the details and preview will appear inside the upload
@@ -508,7 +477,11 @@ export default function CreatePromptModal({
                       e.key === "Enter" && (e.preventDefault(), handleAddTag())
                     }
                   />
-                  <Button type="button" onClick={handleAddTag}>
+                  <Button
+                    type="button"
+                    className="cursor-pointer"
+                    onClick={handleAddTag}
+                  >
                     Add
                   </Button>
                 </div>
@@ -536,15 +509,27 @@ export default function CreatePromptModal({
                 <Label>Result Type *</Label>
                 <RadioGroup
                   value={formData.resultType}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, resultType: value })
-                  }
+                  onValueChange={(value) => {
+                    setUploadedFile(null); // remove any existing file
+                    setFormData({
+                      ...formData,
+                      resultType: value, // update to image/video/text
+                      resultContent: "", // clear text or URL
+                    });
+                  }}
                   className="flex gap-4"
                 >
                   {["text", "image", "video"].map((type) => (
                     <div key={type} className="flex items-center gap-2">
-                      <RadioGroupItem value={type} id={type} />
-                      <Label htmlFor={type} className="capitalize">
+                      <RadioGroupItem
+                        value={type}
+                        id={type}
+                        className="cursor-pointer"
+                      />
+                      <Label
+                        htmlFor={type}
+                        className="capitalize cursor-pointer"
+                      >
                         {type}
                       </Label>
                     </div>
@@ -727,12 +712,17 @@ export default function CreatePromptModal({
           </div>
           {/* ACTION BUTTONS */}
           <div className="flex justify-end space-x-4">
-            <Button type="button" variant="outline" onClick={handleSaveDraft}>
-              <Save className="h-4 w-4 mr-2" />
+            <Button
+              type="button"
+              variant="outline"
+              className="cursor-pointer"
+              onClick={handleSaveDraft}
+            >
+              <Save />
               Save Draft
             </Button>
-            <Button type="submit">
-              <Send className="h-4 w-4 mr-2" />
+            <Button type="submit" className="cursor-pointer">
+              <Send />
               Publish Prompt
             </Button>
           </div>
