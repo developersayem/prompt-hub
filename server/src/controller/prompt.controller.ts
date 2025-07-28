@@ -541,6 +541,16 @@ const getSinglePromptController = asyncHandler(async (req: Request, res: Respons
 const updatePromptController = asyncHandler(async (req: Request, res: Response) => {
   const promptId = req.params.id;
   const userId = (req as any).user?._id;
+
+  if (!promptId) throw new ApiError(400, "Prompt ID is required");
+
+  const existingPrompt = await Prompt.findById(promptId);
+  if (!existingPrompt) throw new ApiError(404, "Prompt not found");
+
+  if (String(existingPrompt.creator) !== String(userId)) {
+    throw new ApiError(403, "You are not authorized to update this prompt");
+  }
+
   const {
     title,
     description,
@@ -548,48 +558,75 @@ const updatePromptController = asyncHandler(async (req: Request, res: Response) 
     aiModel,
     promptText,
     resultType,
-    resultContent,
+    resultContent: rawResultContent,
     paymentStatus,
     price,
     tags,
   } = req.body;
-   if (!req.body) {
-    throw new ApiError(400, "Request body is missing. Did you forget to use multer middleware?");
-  }
 
-  if (!promptId) throw new ApiError(400, "Prompt ID is required");
+  // ✅ Log everything for debug
+  console.log("---- UPDATE PROMPT INPUT ----");
+  console.log("Body:", req.body);
+  console.log("Files:", req.files);
+  console.log("File:", req.file);
 
-  const prompt = await Prompt.findById(promptId);
-  if (!prompt) throw new ApiError(404, "Prompt not found");
-
-  if (String(prompt.creator) !== String(userId)) {
-    throw new ApiError(403, "You are not authorized to update this prompt");
-  }
-
-  // Update fields
-  if (title) prompt.title = title;
-  if (description) prompt.description = description;
-  if (category) prompt.category = category;
-  if (aiModel) prompt.aiModel = aiModel;
-  if (promptText) prompt.promptText = promptText;
-  if (resultType) prompt.resultType = resultType;
-  if (resultContent) prompt.resultContent = resultContent;
-
+  // ✅ Normalize tags
+  let normalizedTags = existingPrompt.tags;
   if (tags) {
-    prompt.tags = Array.isArray(tags) ? tags : [tags]; // Handles both single and multi tags
+    try {
+      const parsed = typeof tags === "string" ? JSON.parse(tags) : tags;
+      normalizedTags = Array.isArray(parsed)
+        ? parsed.flatMap((tag: string) => tag.split(",").map((t) => t.trim()))
+        : [];
+    } catch {
+      console.warn("❌ Failed to parse tags JSON:", tags);
+      normalizedTags = [];
+    }
   }
+
+  // ✅ Decide result content
+  let finalResultContent = existingPrompt.resultContent;
+
+  if (resultType === "text") {
+    if (!rawResultContent?.trim()) {
+      throw new ApiError(400, "Text result content is required");
+    }
+    finalResultContent = rawResultContent.trim();
+  } else if (["image", "video"].includes(resultType)) {
+    const file = (req.files as any)?.promptContent?.[0] || req.file;
+
+    if (file?.path) {
+      const uploaded: UploadApiResponse | null = await uploadOnCloudinary(file.path);
+      if (!uploaded?.secure_url) {
+        throw new ApiError(500, "Failed to upload media to Cloudinary");
+      }
+      finalResultContent = uploaded.secure_url;
+    } else if (rawResultContent?.trim()) {
+      if (!isValidUrl(rawResultContent.trim())) {
+        throw new ApiError(400, "Invalid media URL provided");
+      }
+      finalResultContent = rawResultContent.trim();
+    } else {
+      throw new ApiError(400, "Please upload a file or provide a valid media link");
+    }
+  }
+
+  // ✅ Apply updates
+  if (title) existingPrompt.title = title;
+  if (description) existingPrompt.description = description;
+  if (category) existingPrompt.category = category;
+  if (aiModel) existingPrompt.aiModel = aiModel;
+  if (promptText) existingPrompt.promptText = promptText;
+  if (resultType) existingPrompt.resultType = resultType;
+  if (finalResultContent) existingPrompt.resultContent = finalResultContent;
+  if (normalizedTags) existingPrompt.tags = normalizedTags;
 
   if (paymentStatus === "free" || paymentStatus === "paid") {
-    prompt.paymentStatus = paymentStatus;
-    prompt.price = paymentStatus === "paid" ? price : undefined;
+    existingPrompt.paymentStatus = paymentStatus;
+    existingPrompt.price = paymentStatus === "paid" ? Number(price) || 0 : 0;
   }
 
-  // Handle file upload if exists (Multer middleware must be used)
-  if (req.file) {
-    prompt.resultContent = req.file.path; // or filename, URL, etc.
-  }
-
-  const updatedPrompt = await prompt.save();
+  const updatedPrompt = await existingPrompt.save();
 
   res.status(200).json(
     new ApiResponse(200, { prompt: updatedPrompt }, "Prompt updated successfully")
