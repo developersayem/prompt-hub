@@ -84,6 +84,7 @@ export default function Combobox<T>({
   return (
     <div ref={wrapperRef} className="relative w-full">
       <button
+        type="button"
         ref={buttonRef}
         onClick={() => setOpen((prev) => !prev)}
         className="w-full text-left px-3 py-1.5 border rounded-md flex items-center justify-between transition-all duration-150
@@ -146,6 +147,7 @@ export default function Combobox<T>({
                 <span>No items found</span>
                 {onCreateOption && (
                   <button
+                    type="button"
                     onClick={handleCreate}
                     className="text-blue-500 hover:underline"
                   >
