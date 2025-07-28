@@ -82,14 +82,12 @@ export default function Combobox<T>({
     return <p className="text-center text-red-500">Error loading options</p>;
 
   return (
-    <div ref={wrapperRef} className="relative w-full">
+    <div ref={wrapperRef} className="relative w-full capitalize">
       <button
         type="button"
         ref={buttonRef}
         onClick={() => setOpen((prev) => !prev)}
-        className="w-full text-left px-3 py-1.5 border rounded-md flex items-center justify-between transition-all duration-150
-          bg-white text-black
-          dark:bg-[#171616] dark:text-white"
+        className="w-full text-left px-3 py-1.5 border rounded-md flex items-center justify-between transition-all duration-150 bg-white text-black dark:bg-[#171616] dark:text-white capitalize"
       >
         <span>
           {value
@@ -143,7 +141,7 @@ export default function Combobox<T>({
 
           <ul className="max-h-48 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-neutral-700 text-sm">
             {filtered.length === 0 ? (
-              <li className="px-3 py-2 text-gray-500 dark:text-gray-400 flex justify-between items-center">
+              <li className="px-3 py-2 text-gray-500 dark:text-gray-400 flex justify-between items-center capitalize">
                 <span>No items found</span>
                 {onCreateOption && (
                   <button
@@ -169,7 +167,7 @@ export default function Combobox<T>({
                       "px-3 py-2 cursor-pointer flex items-center justify-between transition",
                       isHighlighted && "bg-neutral-100 dark:bg-neutral-700",
                       isSelected &&
-                        "bg-neutral-200 dark:bg-neutral-800 font-medium"
+                        "bg-neutral-200 dark:bg-neutral-800 font-medium capitalize"
                     )}
                   >
                     {getLabel(item)}
