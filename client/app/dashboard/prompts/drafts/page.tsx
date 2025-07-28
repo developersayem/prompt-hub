@@ -538,7 +538,7 @@ export default function DraftsPage() {
         <div className="flex space-x-2">
           {/* Filter Popover */}
           <Popover>
-            <PopoverTrigger asChild>
+            <PopoverTrigger asChild className="cursor-pointer">
               <Button variant="outline" size="sm">
                 Filter
               </Button>
@@ -551,6 +551,7 @@ export default function DraftsPage() {
                   {["ai", "code", "design"].map((cat) => (
                     <div key={cat} className="flex items-center gap-2">
                       <Checkbox
+                        className="cursor-pointer"
                         checked={filters.categories.includes(cat)}
                         onCheckedChange={(checked) => {
                           setFilters((prev) => ({
@@ -571,6 +572,7 @@ export default function DraftsPage() {
                   {["text", "image", "video"].map((type) => (
                     <div key={type} className="flex items-center gap-2">
                       <Checkbox
+                        className="cursor-pointer"
                         checked={filters.resultType.includes(type)}
                         onCheckedChange={(checked) => {
                           setFilters((prev) => ({
@@ -591,6 +593,7 @@ export default function DraftsPage() {
                   {["paid", "free"].map((status) => (
                     <div key={status} className="flex items-center gap-2">
                       <Checkbox
+                        className="cursor-pointer"
                         checked={filters.paymentStatus.includes(status)}
                         onCheckedChange={(checked) => {
                           setFilters((prev) => ({
@@ -612,7 +615,7 @@ export default function DraftsPage() {
                 <Button
                   variant="default"
                   size="sm"
-                  className="text-red-500 hover:text-red-600 w-full"
+                  className="text-red-500 hover:text-red-600 w-full cursor-pointer"
                   onClick={() =>
                     setFilters({
                       categories: [],
@@ -630,7 +633,7 @@ export default function DraftsPage() {
           {/* Sort Popover */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" className="cursor-pointer">
                 Sort
               </Button>
             </PopoverTrigger>
@@ -640,7 +643,7 @@ export default function DraftsPage() {
                   key={val}
                   variant={sortBy === val ? "default" : "ghost"}
                   size="sm"
-                  className="w-full justify-start"
+                  className="w-full justify-start cursor-pointer"
                   onClick={() => setSortBy(val)}
                 >
                   {val === "createdAt" && "Newest"}
@@ -648,15 +651,6 @@ export default function DraftsPage() {
                   {val === "views" && "Most Viewed"}
                 </Button>
               ))}
-
-              <Button
-                variant="default"
-                size="sm"
-                className="w-full"
-                onClick={() => setSortBy("createdAt")}
-              >
-                Show All
-              </Button>
             </PopoverContent>
           </Popover>
         </div>
