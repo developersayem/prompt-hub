@@ -66,7 +66,7 @@ const createCategoryController = asyncHandler(async (req: Request, res: Response
   }
 
   const newCategory = await Category.create({
-    name: name.trim(),
+    name: name.trim().toLowerCase(),
     isUserCreated,
     creator: userId,
   });

@@ -66,7 +66,7 @@ const createAiModelController = asyncHandler(async (req: Request, res: Response)
   }
   // Create ai model
   const newAiModel = await AiModel.create({
-    name: name.trim(),
+    name: name.trim().toLowerCase(),
     isUserCreated,
     creator: userId,
   });
