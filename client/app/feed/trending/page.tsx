@@ -17,7 +17,6 @@ import { useTradingsPrompts } from "@/hooks/useTradingsPrompts";
 export default function FeedPage() {
   const { user, updateUser } = useAuth();
   const { prompts, isLoading, error, mutate } = useTradingsPrompts();
-  console.log(prompts);
   const { triggerLoginModal } = useLoginPrompt();
   const { openModal } = usePromptModal();
 

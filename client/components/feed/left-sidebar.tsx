@@ -4,6 +4,7 @@ import {
   Bookmark,
   ChartNoAxesCombined,
   Coins,
+  Home,
   LayoutDashboard,
   Settings,
   TrendingUp,
@@ -18,6 +19,11 @@ export default function LeftSidebar() {
   const { user } = useAuth();
 
   const navItems = [
+    {
+      name: "home",
+      href: "/feed",
+      icon: Home,
+    },
     {
       name: "tradings",
       href: "/feed/trending",
