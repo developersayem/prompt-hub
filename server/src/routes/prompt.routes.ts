@@ -1,74 +1,98 @@
 import { Router } from "express";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import { extractClientIP } from './../middlewares/getClientIp.middlewares';
+import { extractClientIP } from "../middlewares/getClientIp.middlewares";
+
 import {
-    buyPromptController,
-    createCommentController,
-    createPromptController,
-    deleteCommentController,
-    deletePromptController,
-    getAllPromptsController,
-    getMyPromptsController,
-    getMyPurchasesController,
-    getPromptBySlugController,
-    getSinglePromptController,
-    likeCommentController,
-    likePromptController,
-    replyCommentController,
-    savePromptAsBookmarkController,
-    savePromptAsDraftController,
-    updateCommentController,
-    updatePromptController,
-    getAllMyDraftPromptsController,
-    getAllMyBookmarkedPromptsController,
-    removePromptFromBookmarksController,
-    publishPromptFromDraftsController
+  createPromptController,
+  getAllPromptsController,
+  getMyPromptsController,
+  getSinglePromptController,
+  getPromptBySlugController,
+  updatePromptController,
+  deletePromptController,
+  likePromptController,
+  savePromptAsDraftController,
+  getAllMyDraftPromptsController,
+  publishPromptFromDraftsController,
+  savePromptAsBookmarkController,
+  getAllMyBookmarkedPromptsController,
+  removePromptFromBookmarksController,
+  createCommentController,
+  updateCommentController,
+  deleteCommentController,
+  replyCommentController,
+  likeCommentController,
+  getMyPurchasesController,
+  buyPromptController,
+  getTrendingPrompts,
 } from "../controller/prompt.controller";
 
 const router = Router();
 
-// Route for get all prompts with filters options
-router.get("/", getAllPromptsController);
-
-// Route for create prompt
-router.post("/create",
-    verifyJWT,
-    upload.fields([{ name: "promptContent", maxCount: 1 }]),
-    createPromptController
+// Create prompt
+router.post(
+  "/create",
+  verifyJWT,
+  upload.fields([{ name: "promptContent", maxCount: 1 }]),
+  createPromptController
 );
 
-// Route for like prompt
-router.post("/like", verifyJWT, likePromptController);
+// Get all prompts with filters
+router.get("/", getAllPromptsController);
 
-// Route for comment actions
-router.post("/comment", verifyJWT, createCommentController);
-router.put("/comment/:commentId", verifyJWT, updateCommentController);
-router.delete("/comment/:commentId", verifyJWT, deleteCommentController);
-router.post("/comment/reply", verifyJWT, replyCommentController);
-router.post("/comment/like", verifyJWT, likeCommentController);
+// Get aLl trending Prompts
+router.get("/trending", getTrendingPrompts);
 
-// Route for user's prompts
+// Get my prompts
 router.get("/my-prompts", verifyJWT, getMyPromptsController);
-router.post("/save-draft", verifyJWT, upload.fields([{ name: "promptContent", maxCount: 1 }]), savePromptAsDraftController);
+
+// Get single prompt by ID
+router.get("/:id", verifyJWT, getSinglePromptController);
+
+// Update prompt
+router.put(
+  "/:id",
+  verifyJWT,
+  upload.fields([{ name: "promptContent", maxCount: 1 }]),
+  updatePromptController
+);
+
+// Delete prompt
+router.delete("/:id", verifyJWT, deletePromptController);
+
+// Get prompt by slug (for see prompt details by share link without login)
+router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
+
+
+//  Drafts Routes
+router.post(
+  "/save-draft",
+  verifyJWT,
+  upload.fields([{ name: "promptContent", maxCount: 1 }]),
+  savePromptAsDraftController
+);
 router.get("/drafts", verifyJWT, getAllMyDraftPromptsController);
-router.patch("/drafts/:id/publish", verifyJWT, publishPromptFromDraftsController); 
-router.get("/purchase-history", verifyJWT, getMyPurchasesController);
+router.patch("/drafts/:id/publish", verifyJWT, publishPromptFromDraftsController);
 
-// Route for prompt actions
-
+// Bookmarks Routes
 router.post("/bookmarks", verifyJWT, savePromptAsBookmarkController);
 router.get("/bookmarks", verifyJWT, getAllMyBookmarkedPromptsController);
 router.delete("/bookmarks/:id", verifyJWT, removePromptFromBookmarksController);
 
-// Dynamic routes last
-router.get("/:id", verifyJWT, getSinglePromptController);
-router.put("/:id", upload.fields([{ name: "promptContent", maxCount: 1 }]), verifyJWT, updatePromptController);
-router.delete("/:id", verifyJWT, deletePromptController);
+// Likes Routes
+router.post("/like", verifyJWT, likePromptController);
+router.post("/comment/like", verifyJWT, likeCommentController);
+
+// Comments Routes
+router.post("/comment", verifyJWT, createCommentController);
+router.put("/comment/:commentId", verifyJWT, updateCommentController);
+router.delete("/comment/:commentId", verifyJWT, deleteCommentController);
+router.post("/comment/reply", verifyJWT, replyCommentController);
+
+// Purchases Routes
+router.get("/purchase-history", verifyJWT, getMyPurchasesController);
 router.post("/:id/buy", verifyJWT, buyPromptController);
 
-
-// Route for slug-based prompt
-router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
 
 export default router;
