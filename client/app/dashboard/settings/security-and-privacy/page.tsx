@@ -203,7 +203,13 @@ export default function SecurityAndPrivacyPage() {
                     {device.location}
                   </p>
                   <p className="text-xs text-gray-500">
-                    Last active: {new Date(device.lastActive).toLocaleString()}
+                    {new Intl.DateTimeFormat(undefined, {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(device.lastActive))}
                   </p>
                   <p className="text-xs text-gray-500">IP: {device.ip}</p>
                 </div>
