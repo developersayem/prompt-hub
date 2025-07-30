@@ -3,7 +3,7 @@ import mongoose, { Schema, Types, Document } from "mongoose";
 
 export interface ISecurityEvent extends Document {
   userId: Types.ObjectId;
-  type: "PASSWORD_CHANGED" | "2FA_ENABLED" | "2FA_DISABLED" | "NEW_DEVICE_LOGIN";
+  type: "NEW_DEVICE_LOGIN" | "PASSWORD_CHANGED" | "2FA_ENABLED" | "2FA_DISABLED" | "NEW_DEVICE_LOGIN";
   message: string;
   date: Date;
 }

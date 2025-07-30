@@ -20,6 +20,9 @@ import { CODE_EXPIRES_MINUTES } from "../constants";
 import { sendTwoFactorCodeEmail } from "../utils/emails/sendTwoFactorCodeEmail";
 import crypto from "crypto";
 import { SecurityEvent } from "../models/security-event.model";
+import { getGeoLocationFromIP } from "../utils/ipGeolocation";
+import { ConnectedDevice } from "../models/connected-device.model";
+import { trackConnectedDevice } from "../utils/trackConnectedDevice";
 
 
 interface TokenResponse {
@@ -129,72 +132,120 @@ const userRegistrationController = asyncHandler(
     }
   }
 );
-// Controller for login user
-const loginUserController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { email, password } = req.body;
+// Controller for login user (user login)
+const loginUserController = asyncHandler(async (req: Request, res: Response) => {
+  const { email, password } = req.body;
 
-    if (!email || !password) {
-      throw new ApiError(400, "All fields are required");
-    }
-
-    const user = await User.findOne({ email });
-    if (!user) throw new ApiError(404, "User not found");
-
-    const isPasswordCorrect = await user.isPasswordCorrect(password);
-    if (!isPasswordCorrect) throw new ApiError(401, "Password is incorrect");
-
-    if (!user.isVerified) {
-      throw new ApiError(401, "Please verify your email before logging in.");
-    }
-
-    //   If 2FA is enabled
-    if (user.isTwoFactorEnabled) {
-      const twoFactorCode = crypto.randomInt(100000, 999999).toString();
-      const twoFactorExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-      user.twoFactorCode = twoFactorCode;
-      user.twoFactorCodeExpires = twoFactorExpires;
-      await user.save();
-
-      await sendTwoFactorCodeEmail(user.email, twoFactorCode);
-
-      return res.status(200).json(
-        new ApiResponse(200, {
-          requiresTwoFactor: true,
-          user: {
-            email:user.email
-          },
-          message: "2FA code sent to your email",
-        })
-      );
-    }
-
-    // If no 2FA, proceed to issue tokens
-    const { accessToken, refreshToken } =
-      await generateAccessTokenAndRefreshToken(user._id as string);
-
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
-    if (!loggedInUser) throw new ApiError(404, "User not found");
-
-
-    return res
-      .status(200)
-      .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
-      .json(
-        new ApiResponse(
-          200,
-          {
-            user: loggedInUser,
-            accessToken,
-            refreshToken,
-          },
-          "User logged in successfully"
-        )
-      );
+  // Validate credentials
+  if (!email || !password) {
+    throw new ApiError(400, "All fields are required");
   }
-);
+
+  const user = await User.findOne({ email });
+  if (!user) throw new ApiError(404, "User not found");
+
+  // Check password
+  const isPasswordCorrect = await user.isPasswordCorrect(password);
+  if (!isPasswordCorrect) throw new ApiError(401, "Password is incorrect");
+
+  // Ensure email is verified
+  if (!user.isVerified) {
+    throw new ApiError(401, "Please verify your email before logging in.");
+  }
+
+  // 2FA flow — send code and wait for verification
+  if (user.isTwoFactorEnabled) {
+    const twoFactorCode = crypto.randomInt(100000, 999999).toString();
+    const twoFactorExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.twoFactorCode = twoFactorCode;
+    user.twoFactorCodeExpires = twoFactorExpires;
+    await user.save();
+
+    await sendTwoFactorCodeEmail(user.email, twoFactorCode);
+
+    return res.status(200).json(
+      new ApiResponse(200, {
+        requiresTwoFactor: true,
+        user: { email: user.email },
+        message: "2FA code sent to your email",
+      })
+    );
+  }
+
+  // If no 2FA, proceed to issue tokens
+  const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id as string);
+  const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+  if (!loggedInUser) throw new ApiError(404, "User not found");
+
+  // Track current device login info
+  await trackConnectedDevice(user?._id as string, req);
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        200,
+        { user: loggedInUser, accessToken, refreshToken },
+        "User logged in successfully"
+      )
+    );
+});
+// Controller for verify user  (user login if 2fa is enabled)
+const verifyUserController = asyncHandler(async (req: Request, res: Response) => {
+  const { email, code } = req.body;
+
+  // Validate input
+  if (!email || !code) throw new ApiError(400, "Email and code required");
+
+  const user = await User.findOne({ email });
+  if (!user) throw new ApiError(404, "User not found");
+
+  // Check if already verified
+  if (user.isVerified) {
+    return res
+      .status(400)
+      .json(new ApiResponse(400, {}, "User already verified"));
+  }
+
+  // Check code match and expiration
+  const now = new Date();
+  if (!user.verificationCode || user.verificationCode !== code) {
+    throw new ApiError(400, "Invalid verification code");
+  }
+  if (!user.verificationCodeExpires || user.verificationCodeExpires < now) {
+    throw new ApiError(400, "Verification code has expired");
+  }
+
+  // Mark as verified and clear verification data
+  user.isVerified = true;
+  user.verificationCode = "";
+  user.verificationCodeExpires = null;
+  await user.save();
+
+  const verifiedUser = await User.findById(user._id).select("-password -refreshToken");
+  if (!verifiedUser) throw new ApiError(404, "User not found");
+
+  // Track current device login info
+  await trackConnectedDevice(user._id as string, req);
+
+  // Issue auth tokens
+  const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id as string);
+
+  res
+    .status(200)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+      new ApiResponse(
+        200,
+        { user: verifiedUser },
+        "Email verified successfully"
+      )
+    );
+});
 // Controller for user login out
 const logoutUser = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
@@ -324,51 +375,6 @@ const getUserProfileController = asyncHandler(async (req: Request, res: Response
   res.status(200).json(
     new ApiResponse(200, { profile: publicProfile }, "User profile fetched successfully")
   );
-});
-// Controller for verify user 
-const verifyUserController = asyncHandler(async (req: Request, res: Response) => {
-  const { email, code } = req.body;
-
-  if (!email || !code) throw new ApiError(400, "Email and code required");
-
-  const user = await User.findOne({ email });
-  if (!user) throw new ApiError(404, "User not found");
-
-  if (user.isVerified) {
-    return res
-      .status(400)
-      .json(new ApiResponse(400, {}, "User already verified"));
-  }
-
-  const now = new Date();
-
-  if (!user.verificationCode || user.verificationCode !== code) {
-    throw new ApiError(400, "Invalid verification code");
-  }
-
-  if (!user.verificationCodeExpires || user.verificationCodeExpires < now) {
-    throw new ApiError(400, "Verification code has expired");
-  }
-
-  user.isVerified = true;
-  user.verificationCode = "";
-  user.verificationCodeExpires = null;
-
-  await user.save();
-
-  // get user data without sensitive info
-  const verifiedUser = await User.findById(user._id).select("-password -refreshToken");
-  if (!verifiedUser) throw new ApiError(404, "User not found");
-
-  // proceed to issue tokens
-    const { accessToken, refreshToken } =
-      await generateAccessTokenAndRefreshToken(user._id as string);
-
-  res
-    .status(200)
-    .cookie("accessToken", accessToken, cookieOptions)
-    .cookie("refreshToken", refreshToken, cookieOptions)
-    .json(new ApiResponse(200, { user: verifiedUser }, "Email verified successfully"));
 });
 
 // TODO: add those controllers to separate file ---Start from here
