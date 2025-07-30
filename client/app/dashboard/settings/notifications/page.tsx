@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Bell, History, Volume2, Moon, ShieldCheck, Undo2 } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Bell, Volume2, Moon, ShieldCheck, Undo2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import LoadingCom from "@/components/shared/loading-com";
+import NotificationHistory, {
+  NotificationHistoryRef,
+} from "@/components/dashboard/settings/security-and-privacy/notifications-histories";
 
 type NotificationSettings = {
   isEmailNotificationEnabled: boolean;
@@ -42,12 +45,7 @@ export default function NotificationsPage() {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] =
     useState<NotificationSettings>(defaultSettings);
-
-  const [history] = useState([
-    { message: "Login from new device", date: "July 19, 2025" },
-    { message: "Password changed", date: "July 18, 2025" },
-    { message: "2FA enabled", date: "July 17, 2025" },
-  ]);
+  const notificationHistoryRef = useRef<NotificationHistoryRef>(null);
 
   // Fetch backend settings and map to frontend state
   useEffect(() => {
@@ -90,11 +88,11 @@ export default function NotificationsPage() {
     if (user) fetchSettings();
   }, [user]);
 
+  // Function to handle setting changes
   const handleSettingChange = async (
     key: keyof NotificationSettings,
     value: string | boolean
   ) => {
-    setSettings((prev) => ({ ...prev, [key]: value }));
     // Add display labels for more readable toast messages
     const settingLabels: Record<keyof NotificationSettings, string> = {
       isEmailNotificationEnabled: "Email Notifications",
@@ -108,8 +106,11 @@ export default function NotificationsPage() {
       dndStart: "DND Start Time",
       dndEnd: "DND End Time",
     };
+
+    console.log(`Making API call for ${key} with value:`, value);
+
     try {
-      await fetch(
+      const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/toggle-notification`,
         {
           method: "PATCH",
@@ -118,14 +119,32 @@ export default function NotificationsPage() {
           body: JSON.stringify({ setting: key, value }),
         }
       );
-      const label = settingLabels[key];
-      const isToggle = typeof value === "boolean";
-      if (isToggle) {
-        toast.success(`${label} turned ${value ? "ON" : "OFF"}`);
+
+      if (response.ok) {
+        // Only update local state after successful API call
+        setSettings((prev) => ({ ...prev, [key]: value }));
+
+        const label = settingLabels[key];
+        const isToggle = typeof value === "boolean";
+        if (isToggle) {
+          toast.success(`${label} turned ${value ? "ON" : "OFF"}`);
+        } else {
+          toast.success(`${label} updated to ${value}`);
+        }
+
+        // Refresh notification history after successful update
+        setTimeout(() => {
+          notificationHistoryRef.current?.refreshHistory();
+        }, 100); // Small delay to ensure backend has processed
+
+        console.log(`Successfully updated ${key} to ${value}`);
       } else {
-        toast.success(`${label} updated to ${value}`);
+        const errorData = await response.json();
+        console.error("API Error:", errorData);
+        toast.error("Failed to update setting");
       }
-    } catch {
+    } catch (error) {
+      console.error("Network Error:", error);
       toast.error("Failed to update setting");
     }
   };
@@ -280,24 +299,6 @@ export default function NotificationsPage() {
         </CardContent>
       </Card>
 
-      {/* Notification History */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <History className="w-5 h-5" />
-            Notification History
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm text-muted-foreground">
-          {history.map((h, i) => (
-            <div key={i} className="border-b pb-2">
-              <p>{h.message}</p>
-              <p className="text-xs text-gray-400">{h.date}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
       {/* Preferences Summary */}
       <Card>
         <CardHeader>
@@ -320,6 +321,8 @@ export default function NotificationsPage() {
           </Button>
         </CardContent>
       </Card>
+      {/* Notification History */}
+      <NotificationHistory ref={notificationHistoryRef} />
     </div>
   );
 }
