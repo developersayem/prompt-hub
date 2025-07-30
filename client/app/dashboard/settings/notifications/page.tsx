@@ -1,32 +1,47 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { Bell, History, Volume2, Moon, ShieldCheck, Undo2 } from "lucide-react";
+import { toast } from "sonner";
+import { useAuth } from "@/contexts/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import LoadingCom from "@/components/shared/loading-com";
-import { useAuth } from "@/contexts/auth-context";
-import { toast } from "sonner";
-import { Bell, History, Volume2, Moon, ShieldCheck, Undo2 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import LoadingCom from "@/components/shared/loading-com";
+
+type NotificationSettings = {
+  isEmailNotificationEnabled: boolean;
+  isPushNotificationEnabled: boolean;
+  isMarketingNotificationEnabled: boolean;
+  loginAlerts: boolean;
+  passwordChangeAlerts: boolean;
+  twoFactorAlerts: boolean;
+  inAppSound: boolean;
+  doNotDisturb: boolean;
+  dndStart: string;
+  dndEnd: string;
+};
+
+const defaultSettings: NotificationSettings = {
+  isEmailNotificationEnabled: true,
+  isPushNotificationEnabled: true,
+  isMarketingNotificationEnabled: false,
+  loginAlerts: true,
+  passwordChangeAlerts: true,
+  twoFactorAlerts: true,
+  inAppSound: true,
+  doNotDisturb: false,
+  dndStart: "22:00",
+  dndEnd: "07:00",
+};
 
 export default function NotificationsPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-
-  const [settings, setSettings] = useState({
-    emailNotifications: false,
-    pushNotifications: false,
-    marketingEmails: false,
-    loginAlerts: true,
-    passwordChangeAlerts: true,
-    twoFactorAlerts: true,
-    inAppSound: true,
-    doNotDisturb: false,
-    dndStart: "22:00",
-    dndEnd: "07:00",
-  });
+  const [settings, setSettings] =
+    useState<NotificationSettings>(defaultSettings);
 
   const [history] = useState([
     { message: "Login from new device", date: "July 19, 2025" },
@@ -34,23 +49,68 @@ export default function NotificationsPage() {
     { message: "2FA enabled", date: "July 17, 2025" },
   ]);
 
+  // Fetch backend settings and map to frontend state
   useEffect(() => {
-    if (user) {
-      setSettings((prev) => ({
-        ...prev,
-        emailNotifications: !!user.isEmailNotificationEnabled,
-        pushNotifications: !!user.isPushNotificationEnabled,
-        marketingEmails: !!user.isMarketingNotificationEnabled,
-      }));
-      setLoading(false);
-    }
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/notification-settings`,
+          {
+            method: "GET",
+            credentials: "include",
+          }
+        );
+        const result = await res.json();
+        if (res.ok && result.data) {
+          const s = result.data;
+          setSettings({
+            isEmailNotificationEnabled: s.isEmailNotificationEnabled ?? false,
+            isPushNotificationEnabled: s.isPushNotificationEnabled ?? false,
+            isMarketingNotificationEnabled:
+              s.isMarketingNotificationEnabled ?? false,
+            loginAlerts: s.loginAlerts ?? true,
+            passwordChangeAlerts: s.passwordChangeAlerts ?? true,
+            twoFactorAlerts: s.twoFactorAlerts ?? true,
+            inAppSound: s.inAppSound ?? true,
+            doNotDisturb: s.doNotDisturb ?? false,
+            dndStart: s.dndStart || "22:00",
+            dndEnd: s.dndEnd || "07:00",
+          });
+        } else {
+          toast.error("Failed to load settings");
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error("Error fetching notification settings");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) fetchSettings();
   }, [user]);
 
-  const handleSettingChange = async (key: string, value: string | boolean) => {
+  const handleSettingChange = async (
+    key: keyof NotificationSettings,
+    value: string | boolean
+  ) => {
     setSettings((prev) => ({ ...prev, [key]: value }));
+    // Add display labels for more readable toast messages
+    const settingLabels: Record<keyof NotificationSettings, string> = {
+      isEmailNotificationEnabled: "Email Notifications",
+      isPushNotificationEnabled: "Push Notifications",
+      isMarketingNotificationEnabled: "Marketing Emails",
+      loginAlerts: "Login Alerts",
+      passwordChangeAlerts: "Password Change Alerts",
+      twoFactorAlerts: "2FA Alerts",
+      inAppSound: "In-App Sound",
+      doNotDisturb: "Do Not Disturb",
+      dndStart: "DND Start Time",
+      dndEnd: "DND End Time",
+    };
     try {
       await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/toggle-notification`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/toggle-notification`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -58,25 +118,20 @@ export default function NotificationsPage() {
           body: JSON.stringify({ setting: key, value }),
         }
       );
-      toast.success(`Updated ${key.replace(/([A-Z])/g, " $1")}`);
+      const label = settingLabels[key];
+      const isToggle = typeof value === "boolean";
+      if (isToggle) {
+        toast.success(`${label} turned ${value ? "ON" : "OFF"}`);
+      } else {
+        toast.success(`${label} updated to ${value}`);
+      }
     } catch {
-      toast.error("Failed to update settings");
+      toast.error("Failed to update setting");
     }
   };
 
   const resetToDefault = () => {
-    setSettings({
-      emailNotifications: true,
-      pushNotifications: true,
-      marketingEmails: false,
-      loginAlerts: true,
-      passwordChangeAlerts: true,
-      twoFactorAlerts: true,
-      inAppSound: true,
-      doNotDisturb: false,
-      dndStart: "22:00",
-      dndEnd: "07:00",
-    });
+    setSettings(defaultSettings);
     toast.success("Reset to default preferences");
   };
 
@@ -84,7 +139,7 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Main Notification Settings */}
+      {/* Notification Preferences */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -97,17 +152,17 @@ export default function NotificationsPage() {
             {
               label: "Email Notifications",
               desc: "Receive important updates via email",
-              key: "emailNotifications",
+              key: "isEmailNotificationEnabled",
             },
             {
               label: "Push Notifications",
               desc: "Get real-time browser alerts",
-              key: "pushNotifications",
+              key: "isPushNotificationEnabled",
             },
             {
               label: "Marketing Emails",
               desc: "Receive promotional content & offers",
-              key: "marketingEmails",
+              key: "isMarketingNotificationEnabled",
             },
           ].map(({ label, desc, key }) => (
             <div key={key} className="flex justify-between items-center">
@@ -117,8 +172,10 @@ export default function NotificationsPage() {
               </div>
               <Switch
                 className="cursor-pointer"
-                checked={!!settings[key as keyof typeof settings]}
-                onCheckedChange={(v) => handleSettingChange(key, v)}
+                checked={!!settings[key as keyof NotificationSettings]}
+                onCheckedChange={(v) =>
+                  handleSettingChange(key as keyof NotificationSettings, v)
+                }
               />
             </div>
           ))}
@@ -158,8 +215,10 @@ export default function NotificationsPage() {
               </div>
               <Switch
                 className="cursor-pointer"
-                checked={!!settings[key as keyof typeof settings]}
-                onCheckedChange={(v) => handleSettingChange(key, v)}
+                checked={!!settings[key as keyof NotificationSettings]}
+                onCheckedChange={(v) =>
+                  handleSettingChange(key as keyof NotificationSettings, v)
+                }
               />
             </div>
           ))}
@@ -239,7 +298,7 @@ export default function NotificationsPage() {
         </CardContent>
       </Card>
 
-      {/* Summary / Reset */}
+      {/* Preferences Summary */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

@@ -24,11 +24,19 @@ export interface IUser {
   isEmailNotificationEnabled: boolean;
   isPushNotificationEnabled: boolean;
   isMarketingNotificationEnabled: boolean;
+  loginAlerts?: boolean;
+  passwordChangeAlerts?: boolean;
+  twoFactorAlerts?: boolean;
+  inAppSound?: boolean;
+  doNotDisturb?: boolean;
+  dndStart?: string; // "HH:mm"
+  dndEnd?: string;   // "HH:mm"
   prompt: [];
   purchasedPrompts: string[];
   bookmarks: string[];
   refreshToken: string;
   createdAt: string;
+  updatedAt: string;
   address: {
     street: string;
     city: string;
@@ -38,9 +46,7 @@ export interface IUser {
   };
   phone: string;
   countryCode: string;
-  updatedAt: string;
   isTwoFactorEnabled: boolean;
   twoFactorCode: string;
   twoFactorCodeExpires: Date | null;
-
 }
