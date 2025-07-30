@@ -33,6 +33,19 @@ const settingLabels: Record<AllowedSettingKey, string> = {
   dndStart: "DND Start Time",
   dndEnd: "DND End Time",
 };
+// Default settings
+const defaultSettings = {
+  isEmailNotificationEnabled: true,
+  isPushNotificationEnabled: true,
+  isMarketingNotificationEnabled: false,
+  loginAlerts: true,
+  passwordChangeAlerts: true,
+  twoFactorAlerts: true,
+  inAppSound: true,
+  doNotDisturb: false,
+  dndStart: "22:00",
+  dndEnd: "07:00",
+};
 
 // Helper function to create a notification message
 function createNotificationMessage(key: AllowedSettingKey, value: any) {
@@ -121,11 +134,43 @@ const getNotificationHistories = asyncHandler(async (req: Request, res: Response
 
   return res.status(200).json(new ApiResponse(200, histories, "Notification histories fetched"));
 });
+// Controller for reset all notification histories
+const resetNotificationSettings = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+
+  if (!userId) throw new ApiError(401, "Unauthorized.");
+
+  const user = await User.findById(userId);
+  if (!user) throw new ApiError(404, "User not found.");
+
+  // Reset all settings to defaults
+  Object.entries(defaultSettings).forEach(([key, value]) => {
+    (user as any)[key] = value;
+  });
+
+  await user.save();
+
+  // Log history
+  try {
+    await NotificationHistory.create({
+      userId,
+      message: "Notification settings reset to default.",
+      date: new Date(),
+    });
+  } catch (err) {
+    console.error("Failed to create reset history:", err);
+  }
+
+  return res.status(200).json(
+    new ApiResponse(200, defaultSettings, "Notification settings have been reset to default.")
+  );
+});
 
 
 
 export {
     toggleNotificationSetting,
     getNotificationSettings,
-    getNotificationHistories
+    getNotificationHistories,
+    resetNotificationSettings
 }
