@@ -21,7 +21,7 @@ const NotificationHistory = forwardRef<NotificationHistoryRef>((props, ref) => {
     try {
       setLoading(true);
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/notification-histories`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/notifications/notification-histories`,
         {
           credentials: "include", // if cookies/session needed
         }

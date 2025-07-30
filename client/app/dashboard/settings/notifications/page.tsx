@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import LoadingCom from "@/components/shared/loading-com";
 import NotificationHistory, {
   NotificationHistoryRef,
-} from "@/components/dashboard/settings/security-and-privacy/notifications-histories";
+} from "@/components/dashboard/settings/notifications/notifications-histories";
 
 type NotificationSettings = {
   isEmailNotificationEnabled: boolean;
@@ -52,7 +52,7 @@ export default function NotificationsPage() {
     const fetchSettings = async () => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/notification-settings`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/notifications/notification-settings`,
           {
             method: "GET",
             credentials: "include",
@@ -109,7 +109,7 @@ export default function NotificationsPage() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/toggle-notification`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/notifications/toggle-notification`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -148,7 +148,7 @@ export default function NotificationsPage() {
   const resetToDefault = async () => {
     setSettings(defaultSettings);
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/reset-notification-settings`,
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/notifications/reset-notification-settings`,
       {
         method: "POST",
         credentials: "include",
