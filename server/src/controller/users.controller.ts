@@ -647,57 +647,7 @@ const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Res
 //     );
 // });
 // Controller for toggle notifications settings on/off
-const toggleNotificationSetting = asyncHandler(
-  async (req: Request, res: Response) => {
-    try {
-      const userId = (req as any).user?._id;
-      const setting = req.body.setting as string;
 
-      // Map of human-readable labels to IUser keys
-      const settingMap = {
-        "Email Notification": "isEmailNotificationEnabled",
-        "Push Notification": "isPushNotificationEnabled",
-        "Marketing Notification": "isMarketingNotificationEnabled",
-      } as const;
-
-      type SettingLabel = keyof typeof settingMap; // "Email Notification" | "Push Notification" | "Marketing Notification"
-      type SettingKey = typeof settingMap[SettingLabel]; // "isEmailNotificationEnabled" | "isPushNotificationEnabled" | "isMarketingNotificationEnabled"
-
-      // Runtime check: ensure `setting` is a valid key of settingMap
-      if (!(setting in settingMap)) {
-        return res.status(400).json({ message: "Invalid setting key." });
-      }
-
-      // TS now knows setting is SettingLabel
-      const safeSetting = setting as SettingLabel;
-      const fieldKey: SettingKey = settingMap[safeSetting];
-
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found." });
-      }
-
-      // Toggle the current value safely with type checking
-      const currentValue = user[fieldKey] as boolean;
-      user[fieldKey] = !currentValue;
-
-      await user.save();
-
-      const statusText = user[fieldKey] ? "enabled" : "disabled";
-
-      return res.status(200).json(
-        new ApiResponse(
-          200,
-          { [fieldKey]: user[fieldKey] },
-          `${setting} has been ${statusText}.`
-        )
-      );
-    } catch (error) {
-      console.error("Toggle notification setting error:", error);
-      return res.status(500).json({ message: "Something went wrong." });
-    }
-  }
-);
 
 
 
@@ -719,5 +669,4 @@ export {
   verifyTwoFactorCodeController,
   toggleTwoFactorAuthController,
   // softDeleteUserAccount,
-  toggleNotificationSetting
 };

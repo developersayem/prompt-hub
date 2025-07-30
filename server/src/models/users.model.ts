@@ -50,6 +50,13 @@ export interface IUser extends Document {
   twoFactorCodeExpires: Date | null;
   aiModels: mongoose.Schema.Types.ObjectId[];
   categories: mongoose.Schema.Types.ObjectId[];
+  dndStart: string;
+  dndEnd: string;
+  loginAlerts: boolean;
+  passwordChangeAlerts: boolean;
+  twoFactorAlerts: boolean;
+  inAppSound: boolean;
+  doNotDisturb: boolean;
 
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): string;
@@ -94,18 +101,19 @@ const userSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
-    isEmailNotificationEnabled: {
-      type: Boolean,
-      default: true,
-    },
-    isPushNotificationEnabled: {
-      type: Boolean,
-      default: true,
-    },
-    isMarketingNotificationEnabled: {
-      type: Boolean,
-      default: true,
-    },
+    // existing fields...
+  isEmailNotificationEnabled: { type: Boolean, default: true },
+  isPushNotificationEnabled: { type: Boolean, default: true },
+  isMarketingNotificationEnabled: { type: Boolean, default: false },
+
+  loginAlerts: { type: Boolean, default: true },
+  passwordChangeAlerts: { type: Boolean, default: true },
+  twoFactorAlerts: { type: Boolean, default: true },
+
+  inAppSound: { type: Boolean, default: true },
+  doNotDisturb: { type: Boolean, default: false },
+  dndStart: { type: String, default: "22:00" },
+  dndEnd: { type: String, default: "07:00" },
     verificationCode: {
       type: String,
       default: "",
