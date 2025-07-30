@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import { getNotificationSettings, toggleNotificationSetting } from "../controller/settings.controller";
+import { getNotificationHistories, getNotificationSettings, toggleNotificationSetting } from "../controller/settings.controller";
 
 
 const router = Router()
@@ -9,5 +9,6 @@ const router = Router()
 router.patch("/toggle-notification", verifyJWT, toggleNotificationSetting);
 // Routes for get all settings
 router.get("/notification-settings", verifyJWT, getNotificationSettings);
+router.get("/notification-histories", verifyJWT, getNotificationHistories);
 
 export default router
