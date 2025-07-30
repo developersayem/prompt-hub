@@ -107,8 +107,6 @@ export default function NotificationsPage() {
       dndEnd: "DND End Time",
     };
 
-    console.log(`Making API call for ${key} with value:`, value);
-
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/toggle-notification`,
@@ -136,8 +134,6 @@ export default function NotificationsPage() {
         setTimeout(() => {
           notificationHistoryRef.current?.refreshHistory();
         }, 100); // Small delay to ensure backend has processed
-
-        console.log(`Successfully updated ${key} to ${value}`);
       } else {
         const errorData = await response.json();
         console.error("API Error:", errorData);
@@ -148,10 +144,21 @@ export default function NotificationsPage() {
       toast.error("Failed to update setting");
     }
   };
-
-  const resetToDefault = () => {
+  // Function to reset settings
+  const resetToDefault = async () => {
     setSettings(defaultSettings);
-    toast.success("Reset to default preferences");
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/reset-notification-settings`,
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
+    if (!res.ok) {
+      toast.error("Failed to reset settings");
+      return;
+    }
+    toast.success("Settings reset to default");
   };
 
   if (loading || !user) return <LoadingCom />;
