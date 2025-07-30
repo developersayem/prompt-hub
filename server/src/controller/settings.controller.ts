@@ -117,7 +117,7 @@ const getNotificationHistories = asyncHandler(async (req: Request, res: Response
 
   const histories = await NotificationHistory.find({ userId })
     .sort({ date: -1 }) // newest first
-    .limit(100); // optional limit
+    .limit(10); // optional limit
 
   return res.status(200).json(new ApiResponse(200, histories, "Notification histories fetched"));
 });
