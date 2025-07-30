@@ -19,6 +19,7 @@ import { RESEND_VERIFICATION_CODE_INTERVAL_MINUTES } from "../constants";
 import { CODE_EXPIRES_MINUTES } from "../constants";
 import { sendTwoFactorCodeEmail } from "../utils/emails/sendTwoFactorCodeEmail";
 import crypto from "crypto";
+import { SecurityEvent } from "../models/security-event.model";
 
 
 interface TokenResponse {
@@ -68,7 +69,6 @@ const getMeController = asyncHandler(async (req: Request, res: Response) => {
 
   res.json({ data: { user } });
 });
-
 //get user data 
 const userController = asyncHandler(async (req: Request, res: Response) => {
   console.log(req)
@@ -370,6 +370,8 @@ const verifyUserController = asyncHandler(async (req: Request, res: Response) =>
     .cookie("refreshToken", refreshToken, cookieOptions)
     .json(new ApiResponse(200, { user: verifiedUser }, "Email verified successfully"));
 });
+
+// TODO: add those controllers to separate file ---Start from here
 // Controller for resend verification code
 const resendVerificationCodeController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -460,6 +462,53 @@ const changePasswordController = asyncHandler(
     // Update password
     user.password = newPassword;
     await user.save();
+
+    // Create security event
+    await SecurityEvent.create({
+    userId: user._id,
+    type: "PASSWORD_CHANGED",
+    message: "Password changed",
+    });
+
+
+    res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
+  }
+);
+// Controller for change password
+const setPasswordController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = (req as any).user._id;
+    if (!userId) throw new ApiError(401, "Unauthorized");
+
+    const { newPassword } = req.body;
+
+    // Validate input
+    if (!newPassword) {
+      throw new ApiError(400, "New password are required to set");
+    }
+
+    if (newPassword.length < 6) {
+      throw new ApiError(400, "New password must be at least 6 characters long");
+    }
+
+    // Find user
+    const user = await User.findOne({ userId });
+    if (!user) throw new ApiError(404, "User not found");
+
+    // check user is using google account and there was not password filed in data base then set password
+  const isGoogleAuthenticated = user.isGoogleAuthenticated;
+
+  if (isGoogleAuthenticated && !user.password) {
+    user.password = newPassword;
+    await user.save();
+  }
+
+    // Create security event
+    await SecurityEvent.create({
+    userId: user._id,
+    type: "PASSWORD_CHANGED",
+    message: "Set a new password",
+    });
 
     res.status(200).json(new ApiResponse(200, {}, "Password changed successfully"));
   }
@@ -562,12 +611,12 @@ const send2FACodeController = asyncHandler(async (req: Request, res: Response) =
 });
 // Controller for verify-2fa
 const verifyTwoFactorCodeController = asyncHandler(async (req: Request, res: Response) => {
-  const {email, code } = req.body;
+  const { email, code } = req.body;
   if (!code || code.length !== 6) {
     throw new ApiError(400, "2FA code must be a 6-digit number");
   }
 
-  const user = await User.findOne({email});
+  const user = await User.findOne({ email });
   if (!user) throw new ApiError(404, "User not found");
 
   if (!user.twoFactorCode || !user.twoFactorCodeExpires) {
@@ -582,21 +631,28 @@ const verifyTwoFactorCodeController = asyncHandler(async (req: Request, res: Res
     throw new ApiError(401, "2FA code has expired");
   }
 
-  // Clear code after verification
+  // Clear the code & enable 2FA
   user.twoFactorCode = "";
   user.twoFactorCodeExpires = null;
+  user.isTwoFactorEnabled = true;
   await user.save({ validateBeforeSave: false });
+
+  // Log security event
+  await SecurityEvent.create({
+    userId: user._id,
+    type: "2FA_ENABLED",
+    message: "2FA enabled successfully",
+  });
 
   const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id as string);
 
   const freshUser = await User.findById(user._id).select("-password -refreshToken");
   if (!freshUser) throw new ApiError(404, "User not found");
 
-
   return res
     .status(200)
     .cookie("accessToken", accessToken, cookieOptions)
-      .cookie("refreshToken", refreshToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
     .json(
       new ApiResponse(200, { user: freshUser, accessToken, refreshToken }, "2FA verified successfully")
     );
@@ -609,18 +665,27 @@ const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Res
 
   const user = await User.findById(userId);
   if (!user) throw new ApiError(404, "User not found");
-  if (!user) throw new ApiError(401, "Unauthorized");
-  if (typeof enable !== "boolean") {
-    throw new ApiError(400, "Enable flag (boolean) is required");
+
+  if (enable !== false) {
+    throw new ApiError(400, "Use /verify-2fa to enable 2FA after verification");
   }
 
-  user.isTwoFactorEnabled = enable;
+  user.isTwoFactorEnabled = false;
   await user.save({ validateBeforeSave: false });
 
+  // Log security event
+  await SecurityEvent.create({
+    userId,
+    type: "2FA_DISABLED",
+    message: "2FA disabled successfully",
+  });
+
   return res.status(200).json(
-    new ApiResponse(200, { isTwoFactorEnabled: enable }, `2FA ${enable ? "enabled" : "disabled"}`)
+    new ApiResponse(200, { isTwoFactorEnabled: false }, "2FA disabled successfully")
   );
 });
+
+// TODO: add those controllers to separate file  ---End here
 // TODO: Implement in future Controller for delete user
 // const softDeleteUserAccount = asyncHandler(async (req: Request, res: Response) => {
 //   const userId = (req as any).user?._id;
@@ -663,6 +728,7 @@ export {
   verifyUserController,
   resendVerificationCodeController,
   changePasswordController,
+  setPasswordController,
   resetPasswordController,
   verifyOTPController,
   send2FACodeController,

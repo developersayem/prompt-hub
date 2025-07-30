@@ -1,6 +1,6 @@
 import { Router } from "express";
 import passport from "passport";
-import { userRegistrationController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController, verifyTwoFactorCodeController, toggleTwoFactorAuthController, send2FACodeController, getMeController } from "../controller/users.controller";
+import { userRegistrationController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController, verifyTwoFactorCodeController, toggleTwoFactorAuthController, send2FACodeController, getMeController, setPasswordController } from "../controller/users.controller";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
 import { sendCodeLimiter } from "../middlewares/ratelimit.middlewares";
@@ -52,6 +52,8 @@ router.post("/resend", sendCodeLimiter, resendVerificationCodeController);
 router.post("/verify-otp", sendCodeLimiter, verifyOTPController);
 // Route for change password
 router.post("/change-password", changePasswordController);
+// Route for change password
+router.post("/set-password", verifyJWT, setPasswordController);
 // Route for reset password
 router.post("/reset-password", resetPasswordController);
 // Route for login
