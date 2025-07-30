@@ -10,11 +10,18 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/auth-context";
 import { REGEXP_ONLY_DIGITS_AND_CHARS } from "input-otp";
-import { useEffect, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { KeyedMutator } from "swr";
+import { ISecurityEvent } from "@/app/dashboard/settings/security-and-privacy/page";
 
-export const TwoFactorAuthentication = () => {
+interface TwoFactorAuthenticationProps {
+  securityEventsMutate: KeyedMutator<ISecurityEvent>;
+}
+export const TwoFactorAuthentication: FC<TwoFactorAuthenticationProps> = ({
+  securityEventsMutate,
+}) => {
   const { user, updateUser } = useAuth();
 
   const [step, setStep] = useState<"initial" | "otp">("initial");
@@ -24,6 +31,13 @@ export const TwoFactorAuthentication = () => {
     user?.isTwoFactorEnabled ?? false
   );
   const [remainingTime, setRemainingTime] = useState(600); // 10 minutes
+
+  // Sync switch state with user data
+  useEffect(() => {
+    if (typeof user?.isTwoFactorEnabled === "boolean") {
+      setIsEnabled(user.isTwoFactorEnabled);
+    }
+  }, [user?.isTwoFactorEnabled]);
 
   // ⏱ Countdown for OTP expiration
   useEffect(() => {
@@ -96,6 +110,8 @@ export const TwoFactorAuthentication = () => {
         setIsLoading(false);
       }
     }
+    // Update security events
+    securityEventsMutate();
   };
 
   //   Verify 2FA code
@@ -142,11 +158,7 @@ export const TwoFactorAuthentication = () => {
           </p>
         </div>
         <Switch
-          className={`${
-            isEnabled
-              ? "bg-green-500 peer-checked:bg-green-500"
-              : "bg-gray-300 peer-checked:bg-red-500"
-          } cursor-pointer`}
+          className={`cursor-pointer`}
           checked={isEnabled}
           disabled={isLoading}
           onCheckedChange={handleToggleChange}

@@ -2,20 +2,71 @@
 
 import { ChangePasswordComponent } from "@/components/dashboard/settings/security-and-privacy/password-change";
 import { TwoFactorAuthentication } from "@/components/dashboard/settings/security-and-privacy/two-factor-authentication";
-import DashboardHeader from "@/components/dashboard/shared/dashboard-page-header";
+import LoadingCom from "@/components/shared/loading-com";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Key, Shield, Smartphone, AlertTriangle } from "lucide-react";
+import { fetcher } from "@/utils/fetcher";
+import { Bell, Key, Smartphone, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
+import useSWR from "swr";
+
+export interface IConnectedDevice {
+  _id: string;
+  userId: string;
+  ip: string;
+  userAgent: string;
+  deviceName: string;
+  os: string;
+  browser: string;
+  location: string;
+  isCurrent: boolean;
+  lastActive: Date;
+}
+
+export interface ISecurityEvent {
+  message: string;
+  date: string;
+  type:
+    | "NEW_DEVICE_LOGIN"
+    | "PASSWORD_CHANGED"
+    | "2FA_ENABLED"
+    | "2FA_DISABLED"
+    | "NEW_DEVICE_LOGIN";
+}
 
 export default function SecurityAndPrivacyPage() {
+  // get all security events
+  const {
+    data: securityEvents = [],
+    isLoading,
+    mutate: securityEventsMutate,
+  } = useSWR(
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/security-and-privacy/security-events`,
+    fetcher
+  );
+  // get all connected devices
+  const {
+    data: connectedDevices = [],
+    isLoading: isLoadingDevices,
+    mutate: devicesMutate,
+  } = useSWR<IConnectedDevice[]>(
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/security-and-privacy/devices`,
+    fetcher
+  );
+  // logout specific device
+  const handleLogoutDevice = async (id: string) => {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/settings/security-and-privacy/devices/${id}`,
+      { method: "GET", credentials: "include" }
+    );
+    const data = await res.json();
+    toast.success(data.message);
+    if (res.ok) {
+      devicesMutate();
+    }
+  };
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <DashboardHeader
-        title="Security & Privacy"
-        description="Manage your account security and privacy settings."
-        icon={<Shield className="w-5 h-5" />}
-      />
       {/* Security Alerts */}
       <Card>
         <CardHeader className="flex flex-row items-center">
@@ -23,23 +74,33 @@ export default function SecurityAndPrivacyPage() {
             <AlertTriangle className="w-5 h-5 text-yellow-500" />
             Security Alerts
           </CardTitle>
-          <Badge variant="outline" className="ml-auto text-red-500">
-            Coming soon
-          </Badge>
         </CardHeader>
         <CardContent className="space-y-3">
-          <ul className="text-sm space-y-2">
-            <li>
-              <strong>Password changed</strong> on July 18, 2025
-            </li>
-            <li>
-              <strong>2FA Enabled</strong> on July 15, 2025
-            </li>
-            <li>
-              <strong>Login from new device</strong> (MacBook Pro · IP:
-              103.123.45.68) on July 14, 2025
-            </li>
-          </ul>
+          {isLoading && <LoadingCom displayText="Loading security alerts..." />}
+          {securityEvents.length ? (
+            <ul className="text-sm space-y-2">
+              {securityEvents.map((event: ISecurityEvent, i: number) => (
+                <li key={i}>
+                  <strong>{event.message}</strong>
+                  <br />
+                  <span className="text-sm text-muted-foreground">
+                    on{" "}
+                    {new Intl.DateTimeFormat(undefined, {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }).format(new Date(event.date))}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No recent security events.
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -52,7 +113,9 @@ export default function SecurityAndPrivacyPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <TwoFactorAuthentication />
+          <TwoFactorAuthentication
+            securityEventsMutate={securityEventsMutate}
+          />
         </CardContent>
       </Card>
 
@@ -75,21 +138,32 @@ export default function SecurityAndPrivacyPage() {
             <Key className="w-5 h-5" />
             Password Change History
           </CardTitle>
-          <Badge variant="outline" className="ml-auto text-red-500">
-            Coming soon
-          </Badge>
         </CardHeader>
         <CardContent className="space-y-2">
           <ul className="text-sm space-y-2">
-            <li>
-              Changed on: July 18, 2025
-              <Badge className="ml-2 bg-green-100 text-green-800">Recent</Badge>
-            </li>
-            <li>Changed on: April 12, 2025</li>
-            <li>Changed on: December 2, 2024</li>
+            {securityEvents.filter(
+              (e: ISecurityEvent) => e.type === "PASSWORD_CHANGED" && e.date
+            ).length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                No recent password changes.
+              </p>
+            )}
+            {securityEvents
+              .filter((e: ISecurityEvent) => e.type === "PASSWORD_CHANGED")
+              .map((e: ISecurityEvent, i: number) => (
+                <li key={i}>
+                  Changed on: {new Date(e.date).toLocaleDateString()}
+                  {i === 0 && (
+                    <Badge className="ml-2 bg-green-100 text-green-800">
+                      Recent
+                    </Badge>
+                  )}
+                </li>
+              ))}
           </ul>
         </CardContent>
       </Card>
+
       {/* Connected Devices */}
       <Card>
         <CardHeader className="flex flex-row items-center">
@@ -97,88 +171,67 @@ export default function SecurityAndPrivacyPage() {
             <Smartphone className="w-5 h-5" />
             Connected Devices
           </CardTitle>
-          <Badge variant="outline" className="ml-auto text-red-500">
-            Coming soon
-          </Badge>
         </CardHeader>
         <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            {
-              name: "iPhone 15 Pro",
-              os: "iOS 17",
-              browser: "Safari",
-              lastActive: "5 minutes ago",
-              location: "Dhaka, Bangladesh",
-              ip: "103.123.45.67",
-              isCurrent: true,
-            },
-            {
-              name: "MacBook Pro M3",
-              os: "macOS 14",
-              browser: "Chrome",
-              lastActive: "1 hour ago",
-              location: "Dhaka, Bangladesh",
-              ip: "103.123.45.68",
-              isCurrent: false,
-            },
-            {
-              name: "Windows PC",
-              os: "Windows 11",
-              browser: "Edge",
-              lastActive: "Yesterday",
-              location: "Chittagong, Bangladesh",
-              ip: "103.123.45.69",
-              isCurrent: false,
-            },
-          ].map((device, idx) => (
-            <div
-              key={idx}
-              className="border rounded-xl p-4 shadow-sm bg-white dark:bg-neutral-950 flex flex-col justify-between gap-3"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-base">{device.name}</h4>
-                  {device.isCurrent && (
-                    <Badge
-                      className="bg-green-100 text-green-800"
-                      variant="default"
-                    >
-                      This Device
-                    </Badge>
-                  )}
+          {isLoadingDevices ? (
+            <LoadingCom displayText="Loading connected devices..." />
+          ) : connectedDevices.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No devices connected yet.
+            </p>
+          ) : (
+            connectedDevices.map((device) => (
+              <div
+                key={device._id}
+                className="border rounded-xl p-4 shadow-sm bg-white dark:bg-neutral-950 flex flex-col justify-between gap-3"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-base">
+                      {device.deviceName || "Unknown Device"}
+                    </h4>
+                    {device.isCurrent && (
+                      <Badge
+                        className="bg-green-100 text-green-800"
+                        variant="default"
+                      >
+                        This Device
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {device.location}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Last active: {new Date(device.lastActive).toLocaleString()}
+                  </p>
+                  <p className="text-xs text-gray-500">IP: {device.ip}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {device.location}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Last active: {device.lastActive}
-                </p>
-                <p className="text-xs text-gray-500">IP: {device.ip}</p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                  <Badge
+                    variant="outline"
+                    className="rounded-full px-2 py-0.5 text-xs"
+                  >
+                    {device.os}
+                  </Badge>
+                  <Badge
+                    variant="outline"
+                    className="rounded-full px-2 py-0.5 text-xs"
+                  >
+                    {device.browser}
+                  </Badge>
+                </div>
+                {!device.isCurrent && (
+                  <button
+                    className="mt-3 text-sm text-red-500 hover:underline self-start cursor-pointer"
+                    onClick={() => handleLogoutDevice(device._id)}
+                  >
+                    Log out
+                  </button>
+                )}
               </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                <Badge
-                  variant="outline"
-                  className="rounded-full px-2 py-0.5 text-xs"
-                >
-                  {device.os}
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="rounded-full px-2 py-0.5 text-xs"
-                >
-                  {device.browser}
-                </Badge>
-              </div>
-              {!device.isCurrent && (
-                <button
-                  className="mt-3 text-sm text-red-500 hover:underline self-start cursor-pointer"
-                  onClick={() => alert(`Logging out device: ${device.name}`)}
-                >
-                  Log out
-                </button>
-              )}
-            </div>
-          ))}
+            ))
+          )}
         </CardContent>
       </Card>
     </div>

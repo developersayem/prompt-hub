@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Eye, EyeOff, Key } from "lucide-react";
+import { CheckCircle, Eye, EyeOff } from "lucide-react";
 import {
   InputOTP,
   InputOTPGroup,
@@ -19,11 +19,12 @@ export function ChangePasswordComponent() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const [step, setStep] = useState<"initial" | "password" | "otp" | "success">(
-    "initial"
-  );
+  const [step, setStep] = useState<"password" | "otp" | "success">("password");
   const [otp, setOtp] = useState("");
   const [remainingTime, setRemainingTime] = useState(600); // 10 minutes
+  const isPasswordChangeAllowed = !(
+    user?.isGoogleAuthenticated && !user?.password
+  );
 
   const [form, setForm] = useState({
     currentPassword: "",
@@ -114,6 +115,28 @@ export function ChangePasswordComponent() {
         throw new Error(verifyData.message || "Invalid OTP");
       }
 
+      // TODO: in future if user is authenticated with google and has no password set new password
+      // if (user?.isGoogleAuthenticated === true && !user?.password) {
+      //   const changeRes = await fetch(
+      //     `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/set-password`,
+      //     {
+      //       method: "POST",
+      //       headers: { "Content-Type": "application/json" },
+      //       credentials: "include",
+      //       body: JSON.stringify({
+      //         newPassword,
+      //       }),
+      //     }
+      //   );
+
+      //   const changeData = await changeRes.json();
+      //   if (!changeRes.ok)
+      //     throw new Error(changeData.message || "Failed to change password");
+
+      //   toast.success("Password changed successfully");
+      //   setStep("success");
+      // }
+
       const changeRes = await fetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/change-password`,
         {
@@ -141,22 +164,12 @@ export function ChangePasswordComponent() {
 
   return (
     <div className="space-y-3">
-      {step === "initial" && (
-        <Button
-          variant="outline"
-          className="w-full justify-start cursor-pointer"
-          onClick={() => setStep("password")}
-        >
-          <Key className="w-4 h-4 mr-2" />
-          Change Password
-        </Button>
-      )}
-
       {step === "password" && (
         <div className="space-y-3">
           {/* Current Password */}
           <div className="relative">
             <Input
+              disabled={!isPasswordChangeAllowed}
               name="currentPassword"
               type={showCurrentPassword ? "text" : "password"}
               placeholder="Current Password"
@@ -174,10 +187,10 @@ export function ChangePasswordComponent() {
               )}
             </div>
           </div>
-
           {/* New Password */}
           <div className="relative">
             <Input
+              disabled={!isPasswordChangeAllowed}
               name="newPassword"
               type={showNewPassword ? "text" : "password"}
               placeholder="New Password"
@@ -195,10 +208,10 @@ export function ChangePasswordComponent() {
               )}
             </div>
           </div>
-
           {/* Confirm Password */}
           <div className="relative">
             <Input
+              disabled={!isPasswordChangeAllowed}
               name="confirmPassword"
               type={showConfirmPassword ? "text" : "password"}
               placeholder="Confirm New Password"
@@ -216,10 +229,19 @@ export function ChangePasswordComponent() {
               )}
             </div>
           </div>
-
-          <Button onClick={handleSendOtp} className="cursor-pointer">
-            Send Code
-          </Button>
+          {isPasswordChangeAllowed ? (
+            <Button
+              disabled={!isPasswordChangeAllowed}
+              onClick={handleSendOtp}
+              className="cursor-pointer"
+            >
+              Send Code
+            </Button>
+          ) : (
+            <p className="text-sm text-destructive">
+              Password change is not allowed because you have login with google
+            </p>
+          )}
         </div>
       )}
 
