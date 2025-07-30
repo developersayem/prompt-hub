@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import { getNotificationHistories, getNotificationSettings, resetNotificationSettings, toggleNotificationSetting } from "../controller/settings.controller";
+import { getNotificationHistories, getNotificationSettings, resetNotificationSettings, toggleNotificationSetting } from "../controller/notifications.controller";
 
 
 const router = Router()
