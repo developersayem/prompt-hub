@@ -12,7 +12,6 @@ import { Comment } from "../models/comments.model";
 import { populateRepliesRecursively } from "../utils/populateRepliesRecursively";
 import { PurchaseHistory } from "../models/purchaseHistory.model";
 import { RequestWithIP } from "../middlewares/getClientIp.middlewares";
-// import { trackPromptView } from "../utils/trackPromptView";
 import { getAllNestedCommentIds } from "../helper/getAllNestedCommentIds";
 import { cleanInvalidPromptReferences } from "../utils/cleanInvalidPromptReferences";
 
@@ -317,6 +316,45 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
     .status(201)
     .json(new ApiResponse(201, { data: newPrompt }, "Prompt created successfully"));
 });
+// Controller to increase prompt views
+const increasePromptViewsController = asyncHandler(
+  async (req: RequestWithIP, res: Response) => {
+    const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+    const promptId = req.params.id;
+    if (!promptId || !mongoose.Types.ObjectId.isValid(promptId)) {
+      throw new ApiError(400, "Valid Prompt ID is required");
+    }
+
+    const prompt = await Prompt.findById(promptId);
+    if (!prompt) {
+      throw new ApiError(404, "Prompt not found");
+    }
+
+    const ip = req.clientIP;
+
+    const alreadyViewedByUser = userId && prompt.viewedBy.includes(userId);
+    const alreadyViewedByIP = ip && prompt.viewedIPs.includes(ip);
+
+    if (!alreadyViewedByUser && !alreadyViewedByIP) {
+      prompt.views += 1;
+      if (userId) prompt.viewedBy.push(userId);
+      if (ip) prompt.viewedIPs.push(ip);
+      await prompt.save();
+    }
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { views: prompt.views },
+        alreadyViewedByUser || alreadyViewedByIP
+          ? "Already viewed"
+          : "View recorded"
+      )
+    );
+  }
+);
 // Controller for like prompt
 const likePromptController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
@@ -1340,6 +1378,7 @@ export {
   getAllPromptsController,
   getTrendingPrompts,
   createPromptController,
+  increasePromptViewsController,
   likePromptController,
   createCommentController,
   updateCommentController,

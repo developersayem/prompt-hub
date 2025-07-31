@@ -26,6 +26,7 @@ import {
   getMyPurchasesController,
   buyPromptController,
   getTrendingPrompts,
+  increasePromptViewsController,
 } from "../controller/prompt.controller";
 
 const router = Router();
@@ -60,6 +61,9 @@ router.put(
 
 // Delete prompt
 router.delete("/:id", verifyJWT, deletePromptController);
+
+//route to increase prompt views
+router.post("/view/:id", verifyJWT,extractClientIP, increasePromptViewsController);
 
 // Get prompt by slug (for see prompt details by share link without login)
 router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
