@@ -1,29 +1,36 @@
-import useragent from "useragent";
 import { Request, Response, NextFunction } from "express";
+import * as UAParser from "ua-parser-js";
+import { getGeoLocationFromIP } from "../utils/ipGeolocation";
 
-export const extractClientDevice = (req: Request, res: Response, next: NextFunction) => {
+export const extractClientDevice = async (req: Request, res: Response, next: NextFunction) => {
+  const parser = new UAParser.UAParser(req.headers["user-agent"]);
+  const ua = parser.getResult();
+
   const ip =
-    req.headers["x-forwarded-for"]?.toString().split(",")[0] ||
+    (req.headers["x-forwarded-for"] as string)?.split(",")[0] ||
     req.socket.remoteAddress ||
-    "";
+    req.ip ||
+    "Unknown";
 
-  const userAgentString = req.headers["user-agent"] || "";
-  const agent = useragent.parse(userAgentString);
-  const os = agent.os.toString();
-  const browser = agent.toAgent();
-  let deviceName = agent.device.toString();
+  const location = await getGeoLocationFromIP(ip);
 
-  // Fallback for "Other 0.0.0"
-  if (deviceName === "Other 0.0.0" || !deviceName.trim()) {
-    deviceName = "Unknown Device";
-  }
+  const os = ua.os.name && ua.os.version ? `${ua.os.name} ${ua.os.version}` : "Unknown OS";
+  const browser =
+    ua.browser.name && ua.browser.version ? `${ua.browser.name} ${ua.browser.version}` : "Unknown Browser";
+  const deviceName =
+    ua.device.vendor && ua.device.model
+      ? `${ua.device.vendor} ${ua.device.model}`
+      : ua.device.model ||
+        `${ua.browser.name} on ${ua.os.name}` ||
+        "Generic Device";
 
   (req as any).deviceInfo = {
     ip,
-    userAgent: userAgentString,
+    userAgent: req.headers["user-agent"],
     os,
     browser,
     deviceName,
+    location,
   };
 
   next();
