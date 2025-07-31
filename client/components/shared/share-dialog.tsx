@@ -16,9 +16,10 @@ import { toast } from "sonner";
 
 interface ShareDialogProps {
   shareUrl: string;
+  trackView?: () => Promise<void>;
 }
 
-export function ShareDialogButton({ shareUrl }: ShareDialogProps) {
+export function ShareDialogButton({ shareUrl, trackView }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -39,7 +40,10 @@ export function ShareDialogButton({ shareUrl }: ShareDialogProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <button className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md cursor-pointer">
+        <button
+          onClick={trackView}
+          className="flex-1 flex items-center justify-center min-w-[60px] bg-transparent hover:bg-black/10 dark:hover:bg-white/10 rounded-md cursor-pointer"
+        >
           <Share2 className="h-4 w-4 mr-2" />
           Share
         </button>

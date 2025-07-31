@@ -44,6 +44,7 @@ import isValidUrl from "@/helper/check-url";
 import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
 import Image from "next/image";
 import { useLoginPrompt } from "@/contexts/login-prompt-context";
+import { useTrackPromptView } from "@/hooks/useTrackPromptView";
 
 interface PromptCardProps {
   prompt: IPrompt;
@@ -59,6 +60,8 @@ const PromptCard: FC<PromptCardProps> = ({
   handlePublicProfile,
 }) => {
   const { user, updateUser } = useAuth();
+  // Track view
+  const { trackView } = useTrackPromptView(prompt._id);
   // All States
   const [openComments, setOpenComments] = useState<Record<string, boolean>>({});
   const [newComment, setNewComment] = useState<Record<string, string>>({});
@@ -109,6 +112,8 @@ const PromptCard: FC<PromptCardProps> = ({
   };
   // Function for toggle description text
   const toggleDescription = (id: string) => {
+    // Track view
+    trackView();
     setExpandedDescriptions((prev: Record<string, boolean>) => ({
       ...prev,
       [id]: !prev[id],
@@ -116,6 +121,8 @@ const PromptCard: FC<PromptCardProps> = ({
   };
   //Function for handling like
   const handleLikePrompt = async () => {
+    // Track view
+    trackView();
     if (!user?._id || !prompt?._id) return;
 
     const liked = prompt.likes.includes(user._id);
@@ -154,6 +161,8 @@ const PromptCard: FC<PromptCardProps> = ({
   };
   // Function for adding comment
   const handleAddComment = async (promptId: string, commentText: string) => {
+    // Track view
+    trackView();
     if (!commentText.trim()) return;
 
     try {
@@ -190,6 +199,8 @@ const PromptCard: FC<PromptCardProps> = ({
   };
   // Function for bookmark prompt
   const handleBookmarkPrompt = async (promptId: string) => {
+    // Track view
+    trackView();
     if (!user) return toast.error("You must be logged in to bookmark");
 
     try {
@@ -233,7 +244,10 @@ const PromptCard: FC<PromptCardProps> = ({
 
   return (
     <>
-      <Card className="hover:shadow-lg transition-shadow">
+      <Card
+        onClick={() => trackView()}
+        className="hover:shadow-lg transition-shadow"
+      >
         <CardHeader>
           <div className="flex items-start justify-between">
             <div
@@ -453,6 +467,7 @@ const PromptCard: FC<PromptCardProps> = ({
             </button>
             {/* Share button */}
             <ShareDialogButton
+              trackView={trackView}
               shareUrl={`${window.location.origin}/feed/${prompt?.slug}`}
             />
             {/* View button */}
@@ -512,7 +527,11 @@ const PromptCard: FC<PromptCardProps> = ({
                       Cancel
                     </AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => handleCopyPrompt(prompt)}
+                      onClick={() => {
+                        // Track view
+                        trackView();
+                        handleCopyPrompt(prompt);
+                      }}
                       className="cursor-pointer"
                     >
                       Buy & Copy
