@@ -72,7 +72,7 @@ export default function FeedLayout({ children }: FeedLayoutProps) {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Left Sidebar */}
           <LeftSidebar />

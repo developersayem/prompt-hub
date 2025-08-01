@@ -1,4 +1,3 @@
-// utils/fetcher.ts
 export const fetcher = async (url: string) => {
   const res = await fetch(url, {
     method: "GET",
@@ -7,10 +6,8 @@ export const fetcher = async (url: string) => {
   });
 
   if (res.status === 401) {
-    // Clear session/local user data
     localStorage.removeItem("user");
 
-    // Prevent infinite reload loop
     if (
       typeof window !== "undefined" &&
       !window.location.pathname.startsWith("/auth")
@@ -28,12 +25,12 @@ export const fetcher = async (url: string) => {
 
   const json = await res.json();
 
-  // Support nested or flat "data"
+  // ✅ Handle both array and object
   if (Array.isArray(json?.data)) {
     return json.data;
-  } else if (Array.isArray(json?.data?.data)) {
-    return json.data.data;
+  } else if (json?.data && typeof json.data === "object") {
+    return json.data;
   }
 
-  return [];
+  return null; // or throw error if required
 };

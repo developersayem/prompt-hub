@@ -67,7 +67,7 @@ export default function LeftSidebar() {
   ];
 
   return (
-    <div className="lg:col-span-1">
+    <div className="lg:col-span-1 -mt-2">
       <div className="sticky top-24 space-y-6">
         <Card>
           <CardHeader>

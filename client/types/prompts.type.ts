@@ -9,22 +9,11 @@ export interface ISocialLinks {
   portfolio: string;
 }
 
-export interface IUserSummary {
+export interface IPromptCreator {
   _id: string;
-  name: string;
-  email: string;
-  isGoogleAuthenticated: boolean;
-  isCertified: boolean;
+  slug:string
+  name:string;
   avatar: string;
-  bio: string;
-  credits: number;
-  prompts: string[];
-  purchasedPrompts: string[];
-  bookmarks: string[];
-  socialLinks: ISocialLinks;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
 }
 
 export interface IPrompt {
@@ -39,7 +28,7 @@ export interface IPrompt {
   aiModel: string;
   price?: number;
   paymentStatus: "free" | "paid";
-  creator: IUserSummary; // populated User
+  creator: IPromptCreator; // populated User
   likes: string[]; // Like IDs
   views: number;
   viewedBy: string[]; // User IDs

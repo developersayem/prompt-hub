@@ -21,8 +21,6 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/auth-context";
 import { IPrompt } from "@/types/prompts.type";
-import { PublicProfileModal } from "@/components/shared/public-profile-modal";
-import { IPublicUser } from "@/types/publicUser.type";
 import { usePrompts } from "@/hooks/usePrompts";
 import PromptCard from "@/components/shared/prompt-card";
 import { useLoginPrompt } from "@/contexts/login-prompt-context";
@@ -40,9 +38,6 @@ export default function FeedPage() {
     tags: [] as string[],
   });
 
-  const [isLoadingPublicProfile, setIsLoadingPublicProfile] = useState(false);
-  const [showPublicProfile, setShowPublicProfile] = useState(false);
-  const [publicUserData, setPublicUserData] = useState<IPublicUser>();
   const { openModal } = usePromptModal();
 
   const { prompts, isLoading, error, mutate } = usePrompts(
@@ -141,32 +136,6 @@ export default function FeedPage() {
     } catch (error) {
       console.error("Error using prompt:", error);
       toast.error("Failed to use this prompt");
-    }
-  };
-
-  // Function for public profile
-  const handlePublicProfile = async (userId: string) => {
-    try {
-      // Check if user is logged in
-      if (!user) {
-        triggerLoginModal();
-        return;
-      }
-
-      setIsLoadingPublicProfile(true);
-      setShowPublicProfile(true);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/profile/basic/${userId}`,
-        {
-          method: "GET",
-          credentials: "include",
-        }
-      );
-      const data = await response.json();
-      setPublicUserData(data.data.profile);
-      setIsLoadingPublicProfile(false);
-    } catch (error) {
-      console.error("Error copying prompt", error);
     }
   };
 
@@ -496,15 +465,6 @@ export default function FeedPage() {
                 </CardContent>
               </Card>
             )}
-            {/* public profile model */}
-            {showPublicProfile && publicUserData && (
-              <PublicProfileModal
-                user={publicUserData}
-                open={showPublicProfile}
-                onOpenChange={setShowPublicProfile}
-                isLoading={isLoadingPublicProfile}
-              />
-            )}
 
             {/* Prompt Cards */}
             {!isLoading &&
@@ -516,7 +476,6 @@ export default function FeedPage() {
                   prompt={prompt}
                   mutatePrompts={mutate}
                   handleCopyPrompt={handleCopyPrompt}
-                  handlePublicProfile={handlePublicProfile}
                 />
               ))}
           </div>

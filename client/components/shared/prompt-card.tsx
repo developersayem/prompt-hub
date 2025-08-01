@@ -45,20 +45,20 @@ import isWhitelistedDomain from "@/helper/isWhiteListedDomain";
 import Image from "next/image";
 import { useLoginPrompt } from "@/contexts/login-prompt-context";
 import { useTrackPromptView } from "@/hooks/useTrackPromptView";
+import { useRouter } from "next/navigation";
 
 interface PromptCardProps {
   prompt: IPrompt;
   mutatePrompts: KeyedMutator<IPrompt[] | undefined>;
   handleCopyPrompt: (prompt: IPrompt) => void;
-  handlePublicProfile: (userId: string) => void;
 }
 
 const PromptCard: FC<PromptCardProps> = ({
   prompt,
   mutatePrompts,
   handleCopyPrompt,
-  handlePublicProfile,
 }) => {
+  const router = useRouter();
   const { user, updateUser } = useAuth();
   // Track view
   const { trackView } = useTrackPromptView(prompt._id);
@@ -242,6 +242,10 @@ const PromptCard: FC<PromptCardProps> = ({
     }
   };
 
+  const seePublicProfile = (slug: string) => {
+    router.push(`/feed/profile/${slug}`);
+  };
+
   return (
     <>
       <Card
@@ -251,7 +255,7 @@ const PromptCard: FC<PromptCardProps> = ({
         <CardHeader>
           <div className="flex items-start justify-between">
             <div
-              onClick={() => handlePublicProfile(prompt?.creator?._id)}
+              onClick={() => seePublicProfile(prompt?.creator?.slug)}
               className="flex items-center space-x-3 cursor-pointer"
             >
               <Avatar>
