@@ -27,6 +27,7 @@ import {
   buyPromptController,
   getTrendingPrompts,
   increasePromptViewsController,
+  getAllPromptsByUserIdController
 } from "../controller/prompt.controller";
 
 const router = Router();
@@ -67,6 +68,8 @@ router.post("/view/:id", verifyJWT,extractClientIP, increasePromptViewsControlle
 
 // Get prompt by slug (for see prompt details by share link without login)
 router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
+// Get all prompt by user slug
+router.get("/user/:slug",verifyJWT, getAllPromptsByUserIdController);
 
 
 //  Drafts Routes

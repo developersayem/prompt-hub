@@ -50,7 +50,11 @@ const prompts = await Prompt.aggregate([
       foreignField: "_id",
       localField: "creator",
       as: "creator",
-      pipeline: [{ $project: { password: 0, refreshToken: 0 } }],
+      pipeline: [{ $project: { 
+            slug: 1,      // add this line to include slug
+            name: 1,      // optional, keep if you want to display name too
+            avatar: 1, 
+          } }],
     },
   },
   {
@@ -106,7 +110,7 @@ const prompts = await Prompt.aggregate([
   }));
 
   res.status(200).json(
-    new ApiResponse(200, { data: promptsWithLikes }, "Prompts fetched successfully")
+    new ApiResponse(200, promptsWithLikes , "Prompts fetched successfully")
   );
 });
 // Controller to get trending prompts
@@ -206,7 +210,7 @@ const getTrendingPrompts = asyncHandler(async (req: Request, res: Response) => {
 
   res
     .status(200)
-    .json(new ApiResponse(200, { data: promptsWithLikes }, "Trending prompts fetched successfully"));
+    .json(new ApiResponse(200, promptsWithLikes, "Trending prompts fetched successfully"));
 });
 // Controller for create prompt
 const createPromptController = asyncHandler(async (req: Request, res: Response) => {
@@ -314,7 +318,7 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
 
   res
     .status(201)
-    .json(new ApiResponse(201, { data: newPrompt }, "Prompt created successfully"));
+    .json(new ApiResponse(201, newPrompt , "Prompt created successfully"));
 });
 // Controller to increase prompt views
 const increasePromptViewsController = asyncHandler(
@@ -388,7 +392,7 @@ const likePromptController = asyncHandler(async (req: Request, res: Response) =>
     await prompt.save();
 
     return res.status(200).json(
-      new ApiResponse(200, { data: newLike }, "Liked successfully")
+      new ApiResponse(200, { data: null }, "Liked successfully")
     );
   } catch (err: any) {
     if (err.code === 11000) {
@@ -626,7 +630,7 @@ const getMyPromptsController = asyncHandler(async (req: Request, res: Response) 
   }));
 
   res.status(200).json(
-    new ApiResponse(200, { data: promptsWithLikes }, "Your prompts fetched successfully")
+    new ApiResponse(200, promptsWithLikes, "Your prompts fetched successfully")
   );
 });
 // Controller for get single
@@ -1140,7 +1144,7 @@ const getAllMyDraftPromptsController = asyncHandler(async (req: Request, res: Re
   }));
 
   res.status(200).json(
-    new ApiResponse(200, { data: promptsWithLikes }, "Prompts fetched successfully")
+    new ApiResponse(200, promptsWithLikes, "Prompts fetched successfully")
   );
 });
 // Controller for publish prompt from draft
@@ -1331,7 +1335,7 @@ const getAllMyBookmarkedPromptsController = asyncHandler(
 
     // Step 6: Return response
     res.status(200).json(
-      new ApiResponse(200, { data: promptsWithLikes }, "Bookmarked prompts fetched successfully")
+      new ApiResponse(200, promptsWithLikes, "Bookmarked prompts fetched successfully")
     );
   }
 );
@@ -1368,6 +1372,112 @@ const removePromptFromBookmarksController = asyncHandler(
       .json(new ApiResponse(200, null, "Prompt removed from bookmarks"));
   }
 );
+// Controller for get all prompt by user slug 
+const getAllPromptsByUserIdController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  const { category, isPaid, searchString } = req.query;
+  const { slug } = req.params;
+
+  const user = await User.findOne({ slug });
+  if (!user) throw new ApiError(404, "User not found");
+
+  const id = String(user._id);
+  if (!id) {
+    throw new ApiError(400, "Invalid or missing user ID");
+  }
+
+  // Build match query
+  const matchQuery: any = {
+    creator: new mongoose.Types.ObjectId(id),
+    isDraft: false,
+  };
+
+  if (category && typeof category === "string") {
+    matchQuery.category = category;
+  }
+
+  if (isPaid === "true") {
+    matchQuery.paymentStatus = "paid";
+  } else if (isPaid === "false") {
+    matchQuery.paymentStatus = "free";
+  }
+
+  if (typeof searchString === "string" && searchString.trim() !== "") {
+    matchQuery.$or = [
+      { title: { $regex: new RegExp(searchString, "i") } },
+      { description: { $regex: new RegExp(searchString, "i") } },
+    ];
+  }
+
+  const prompts = await Prompt.aggregate([
+    { $match: matchQuery },
+    { $sort: { createdAt: -1 } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "creator",
+        foreignField: "_id",
+        as: "creator",
+        pipeline: [{ $project: { password: 0, refreshToken: 0 } }],
+      },
+    },
+    {
+      $unwind: {
+        path: "$creator",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $lookup: {
+        from: "comments",
+        localField: "_id",
+        foreignField: "prompt",
+        as: "comments",
+        pipeline: [
+          { $match: { parentComment: null } },
+          {
+            $project: {
+              text: 1,
+              createdAt: 1,
+              user: 1,
+              replies: 1,
+              likes: 1,
+            },
+          },
+        ],
+      },
+    },
+  ]);
+
+  // Populate nested replies — ensure populateRepliesRecursively is defined
+  for (const prompt of prompts) {
+    for (const comment of prompt.comments) {
+      await populateRepliesRecursively(comment);
+    }
+  }
+
+  // Attach likes
+  const promptLikes = await Like.find({ prompt: { $ne: null } }).lean();
+  const likeMap: Record<string, string[]> = {};
+  for (const like of promptLikes) {
+    const promptId = String(like.prompt);
+    const userId = String(like.user);
+    if (!likeMap[promptId]) likeMap[promptId] = [];
+    likeMap[promptId].push(userId);
+  }
+
+  const promptsWithLikes = prompts.map((prompt) => ({
+    ...prompt,
+    likes: likeMap[String(prompt._id)] || [],
+  }));
+
+  res.status(200).json(
+    new ApiResponse(200, promptsWithLikes, "User prompts fetched successfully")
+  );
+});
+
 
 
 
@@ -1398,4 +1508,5 @@ export {
   savePromptAsBookmarkController,
   getAllMyBookmarkedPromptsController,
   removePromptFromBookmarksController,
+  getAllPromptsByUserIdController
 };

@@ -1,6 +1,11 @@
 import mongoose, { Schema, Document } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt, { SignOptions } from "jsonwebtoken";
+import slugify from "slugify";
+import { customAlphabet } from "nanoid";
+
+// ✨ Generate unique suffix (e.g. 8 characters)
+const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 8);
 
 export interface ISocialLinks {
   facebook?: string;
@@ -21,6 +26,8 @@ export interface IAddress {
 
 export interface IUser extends Document {
   name: string;
+  slug: string;
+  title:string;
   email: string;
   password: string;
   avatar?: string;
@@ -57,6 +64,8 @@ export interface IUser extends Document {
   twoFactorAlerts: boolean;
   inAppSound: boolean;
   doNotDisturb: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): string;
@@ -68,6 +77,16 @@ const userSchema = new Schema<IUser>(
     name: {
       type: String,
       required: true,
+    },
+    slug: {
+      type: String,
+      unique: true,
+      required: true,
+      lowercase: true,
+    },
+    title: {
+      type: String,
+      default: "",
     },
     email: {
       type: String,
@@ -189,6 +208,18 @@ const userSchema = new Schema<IUser>(
   },
   { timestamps: true }
 );
+
+userSchema.pre("save", function (next) {
+  const user = this as IUser;
+
+  if (!user.slug || user.isModified("name")) {
+    const baseSlug = slugify(user.name, { lower: true, strict: true });
+    const randomStr = nanoid();
+    user.slug = `${baseSlug}-${randomStr}`; // e.g., sayem-molla-k9x7l3a1
+  }
+
+  next();
+});
 
 userSchema.pre("save", async function (next) {
   const user = this as IUser;

@@ -79,7 +79,7 @@ router.put("/profile",
     updateProfileController
 );
 // Route for public profile info
-router.get("/profile/basic/:userId", getUserProfileController);
+router.get("/profile/:slug", verifyJWT, getUserProfileController);
 // Route from toggle notification settings on/off
 
 export default router

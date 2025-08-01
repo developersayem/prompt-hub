@@ -1,5 +1,5 @@
 import type {  Request, Response } from "express";
-import { Types } from "mongoose";
+import mongoose, { Types } from "mongoose";
 import { cookieOptions } from "../utils/cookieOptions";
 import asyncHandler from "../utils/asyncHandler";
 import { ApiError } from "../utils/ApiError";
@@ -331,51 +331,64 @@ const updateProfileController = asyncHandler(async (req: Request, res: Response)
     .status(200)
     .json(new ApiResponse(200, updatedUser, "Profile updated successfully"));
 });
-// Controller for public profile info
 const getUserProfileController = asyncHandler(async (req: Request, res: Response) => {
-  const { userId } = req.params;
+  // If this is a public profile, you might not want to require auth:
+  // const userId = (req as any).user?._id;
+  // if (!userId) throw new ApiError(401, "Unauthorized");
 
-  if (!userId) throw new ApiError(400, "User ID is required");
+  const { slug } = req.params;
+  if (!slug) throw new ApiError(400, "User slug is required");
 
-  const user = await User.findById(userId)
-    .select("name email avatar bio socialLinks address countryCode phone isCertified createdAt prompts")
-    .lean() as { 
-      _id: any; 
-      name: string; 
-      email: string; 
-      avatar?: string; 
-      bio?: string; 
-      socialLinks?: any; 
-      address?: any; 
-      countryCode?: string; 
-      phone?: string; 
-      isCertified?: boolean; 
-      createdAt?: Date; 
-      prompts?: any[]; 
-    };
+  // Find user by slug and select fields to expose
+  const user = await User.findOne({ slug })
+    .select("name title email avatar bio socialLinks address countryCode phone isCertified createdAt")
+    .lean();
 
   if (!user) throw new ApiError(404, "User not found");
 
-  const promptCount = user.prompts?.length || 0;
+  // Aggregate prompt stats for the user by their ObjectId
+  const [promptStats] = await Prompt.aggregate([
+  { $match: { creator: user._id } }, // just use user._id directly
+  {
+    $group: {
+      _id: null,
+      totalPrompts: { $sum: 1 },
+      totalLikes: { $sum: { $size: "$likes" } },
+      totalComments: { $sum: { $size: "$comments" } },
+      totalViews: { $sum: "$views" },
+      totalShares: { $sum: "$shareCount" },
+    },
+  },
+]);
 
+  // Build the public profile response object
   const publicProfile = {
     _id: user._id,
     name: user.name,
+    title: user.title,
     email: user.email,
     avatar: user.avatar,
     bio: user.bio,
     socialLinks: user.socialLinks,
     location: user.address,
-    phone: `${user.countryCode}${user.phone}`,
+    phone: user.countryCode && user.phone ? `${user.countryCode}${user.phone}` : null,
     isCertified: user.isCertified,
     joinedAt: user.createdAt,
-    promptCount,
+    promptStats: {
+      totalPrompts: promptStats?.totalPrompts || 0,
+      totalLikes: promptStats?.totalLikes || 0,
+      totalComments: promptStats?.totalComments || 0,
+      totalViews: promptStats?.totalViews || 0,
+      totalShares: promptStats?.totalShares || 0,
+    },
   };
 
   res.status(200).json(
-    new ApiResponse(200, { profile: publicProfile }, "User profile fetched successfully")
+    new ApiResponse(200, publicProfile, "User profile fetched successfully")
   );
 });
+
+
 
 // TODO: add those controllers to separate file ---Start from here
 // Controller for resend verification code
