@@ -1,8 +1,9 @@
 import mongoose, { Schema, Document, Types } from "mongoose";
 import slugify from "slugify";
 import { customAlphabet } from "nanoid";
+import { User } from "./users.model";
 
-// 🔑 Nanoid setup for 8-character random string
+// Nanoid setup for 8-character random string
 const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz1234567890", 8);
 
 export type ResultType = "text" | "image" | "video";
@@ -92,6 +93,25 @@ promptSchema.pre("save", function (next) {
     this.slug = `${baseSlug}-${randomStr}`; // e.g. cool-title-3k7x9ab1
   }
   next();
+});
+
+// 🔁 Post-save hook to add prompt to user's prompts
+promptSchema.post("save", async function (doc, next) {
+  try {
+    if (doc.creator) {
+      await User.updateOne(
+        { _id: doc.creator },
+        { $addToSet: { prompts: doc._id } }
+      );
+    }
+    next();
+  } catch (error) {
+  if (error instanceof Error) {
+    next(error);
+  } else {
+    next();
+  }
+}
 });
 
 export const Prompt = mongoose.model<IPrompt>("Prompt", promptSchema);

@@ -208,7 +208,7 @@ const userSchema = new Schema<IUser>(
   },
   { timestamps: true }
 );
-
+// Generate slug
 userSchema.pre("save", function (next) {
   const user = this as IUser;
 
@@ -220,19 +220,19 @@ userSchema.pre("save", function (next) {
 
   next();
 });
-
+// Hash password
 userSchema.pre("save", async function (next) {
   const user = this as IUser;
   if (!user.isModified("password")) return next();
   user.password = await bcrypt.hash(user.password, 10);
   next();
 });
-
+// Compare password
 userSchema.methods.isPasswordCorrect = async function (password: string) {
   const user = this as IUser;
   return await bcrypt.compare(password, user.password);
 };
-
+// Generate access token
 userSchema.methods.generateAccessToken = function (): string {
   const expiresIn = (process.env.JWT_ACCESS_TOKEN_EXPIRY ||
     "1h") as `${number}${"s" | "m" | "h" | "d"}`; // e.g., '1h', '10d'
@@ -247,7 +247,7 @@ userSchema.methods.generateAccessToken = function (): string {
     options
   );
 };
-
+// Generate refresh token
 userSchema.methods.generateRefreshToken = function (): string {
   const expiresIn = (process.env.JWT_REFRESH_TOKEN_EXPIRY ||
     "7d") as `${number}${"s" | "m" | "h" | "d"}`; // e.g., '1h', '10d' // default 7d

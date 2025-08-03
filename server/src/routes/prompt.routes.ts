@@ -27,7 +27,7 @@ import {
   buyPromptController,
   getTrendingPrompts,
   increasePromptViewsController,
-  getAllPromptsByUserIdController
+  getAllPromptsByUserSlugController
 } from "../controller/prompt.controller";
 
 const router = Router();
@@ -49,8 +49,7 @@ router.get("/trending", getTrendingPrompts);
 // Get my prompts
 router.get("/my-prompts", verifyJWT, getMyPromptsController);
 
-// Get single prompt by ID
-router.get("/:id", verifyJWT, getSinglePromptController);
+
 
 // Update prompt
 router.put(
@@ -69,7 +68,7 @@ router.post("/view/:id", verifyJWT,extractClientIP, increasePromptViewsControlle
 // Get prompt by slug (for see prompt details by share link without login)
 router.get("/slug/:slug", extractClientIP, getPromptBySlugController);
 // Get all prompt by user slug
-router.get("/user/:slug",verifyJWT, getAllPromptsByUserIdController);
+router.get("/user/:slug",verifyJWT, getAllPromptsByUserSlugController);
 
 
 //  Drafts Routes
@@ -101,5 +100,6 @@ router.post("/comment/reply", verifyJWT, replyCommentController);
 router.get("/purchase-history", verifyJWT, getMyPurchasesController);
 router.post("/:id/buy", verifyJWT, buyPromptController);
 
-
+// Get single prompt by ID
+router.get("/:id", verifyJWT, getSinglePromptController);
 export default router;

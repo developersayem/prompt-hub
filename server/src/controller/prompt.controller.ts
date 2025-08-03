@@ -309,13 +309,6 @@ const createPromptController = asyncHandler(async (req: Request, res: Response) 
     throw new ApiError(500, "Failed to create prompt");
   }
 
-  // Add prompt to user's profile
-  const user = await User.findById(userId);
-  if (!user) throw new ApiError(404, "User not found");
-
-  user.prompts.push(newPrompt._id as Schema.Types.ObjectId);
-  await user.save();
-
   res
     .status(201)
     .json(new ApiResponse(201, newPrompt , "Prompt created successfully"));
@@ -1059,6 +1052,7 @@ if (Array.isArray(req.body.tags)) {
   });
 
   const newCreatedPrompt = await Prompt.findById(prompt._id).populate("creator", "name email");
+  if (!newCreatedPrompt) throw new ApiError(404, "Prompt was not created");
 
   res
     .status(200)
@@ -1373,12 +1367,14 @@ const removePromptFromBookmarksController = asyncHandler(
   }
 );
 // Controller for get all prompt by user slug 
-const getAllPromptsByUserIdController = asyncHandler(async (req: Request, res: Response) => {
+const getAllPromptsByUserSlugController = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any)?.user?._id as mongoose.Types.ObjectId;
   if (!userId) throw new ApiError(401, "Unauthorized");
 
   const { category, isPaid, searchString } = req.query;
   const { slug } = req.params;
+
+  console.log("Slug:", slug);
 
   const user = await User.findOne({ slug });
   if (!user) throw new ApiError(404, "User not found");
@@ -1508,5 +1504,5 @@ export {
   savePromptAsBookmarkController,
   getAllMyBookmarkedPromptsController,
   removePromptFromBookmarksController,
-  getAllPromptsByUserIdController
+  getAllPromptsByUserSlugController
 };
