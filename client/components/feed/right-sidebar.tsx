@@ -172,7 +172,7 @@ export default function RightSidebar() {
                   <div className="flex items-center space-x-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={creator.avatar} alt="Avatar" />
-                      <AvatarFallback>
+                      <AvatarFallback className="text-xs bold uppercase">
                         {creator?.name
                           .split(" ")
                           .map((n) => n[0])

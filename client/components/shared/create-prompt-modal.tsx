@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, X, Send, Coins, Save } from "lucide-react";
+import { Upload, X, Send, Coins, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
@@ -62,6 +62,7 @@ export default function CreatePromptModal({
   const [currentTag, setCurrentTag] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [showOfflineDraftModal, setShowOfflineDraftModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // get categories from useCategories hook
   const {
@@ -213,6 +214,7 @@ export default function CreatePromptModal({
       return;
     }
 
+    setIsSubmitting(true);
     const data = new FormData();
     data.append("title", formData.title);
     data.append("description", formData.description);
@@ -233,45 +235,47 @@ export default function CreatePromptModal({
       data.append("promptContent", uploadedFile);
     }
 
-    // try {
-    //   const res = await fetch(
-    //     `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/create`,
-    //     {
-    //       method: "POST",
-    //       body: data,
-    //       credentials: "include",
-    //     }
-    //   );
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/create`,
+        {
+          method: "POST",
+          body: data,
+          credentials: "include",
+        }
+      );
 
-    //   if (!res.ok) {
-    //     const error = await res.json();
-    //     throw new Error(error.message || "Failed to create prompt");
-    //   }
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to create prompt");
+      }
 
-    //   // Clear form data
-    //   setFormData({
-    //     title: "",
-    //     description: "",
-    //     category: "",
-    //     aiModel: "",
-    //     promptText: "",
-    //     resultType: "text",
-    //     resultContent: "",
-    //     tags: [],
-    //     paymentStatus: "free",
-    //     price: "",
-    //   });
-    //   setUploadedFile(null);
-    //   toast.success("Prompt created successfully");
-    //   onClose();
-    //   if (onSuccess) onSuccess();
-    // } catch (err: unknown) {
-    //   if (err instanceof Error) {
-    //     toast.error(err.message);
-    //   } else {
-    //     toast.error("An unexpected error occurred.");
-    //   }
-    // }
+      // Clear form data
+      setFormData({
+        title: "",
+        description: "",
+        category: "",
+        aiModel: "",
+        promptText: "",
+        resultType: "text",
+        resultContent: "",
+        tags: [],
+        paymentStatus: "free",
+        price: "",
+      });
+      setUploadedFile(null);
+      toast.success("Prompt created successfully");
+      onClose();
+      if (onSuccess) onSuccess();
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error("An unexpected error occurred.");
+      }
+    } finally {
+      setIsSubmitting(false); // stop loading
+    }
   };
 
   return (
@@ -775,13 +779,27 @@ export default function CreatePromptModal({
                   variant="outline"
                   className="cursor-pointer"
                   onClick={handleSaveDraft}
+                  disabled={isSubmitting}
                 >
                   <Save />
                   Save Draft
                 </Button>
-                <Button type="submit" className="cursor-pointer">
-                  <Send />
-                  Publish Prompt
+                <Button
+                  type="submit"
+                  className="cursor-pointer flex items-center justify-center"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Publishing...
+                    </>
+                  ) : (
+                    <>
+                      <Send />
+                      Publish Prompt
+                    </>
+                  )}
                 </Button>
               </div>
             </form>

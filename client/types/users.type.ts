@@ -10,6 +10,7 @@ export interface ISocialLinks {
 export interface IUser {
   _id: string;
   name: string;
+  slug:string
   email: string;
   password: string;
   avatar?: string;

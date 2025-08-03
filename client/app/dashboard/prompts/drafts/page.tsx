@@ -45,19 +45,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-
-const fetcher = async (url: string) => {
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-  const json = await res.json();
-  return Array.isArray(json?.data?.data) ? json.data.data : [];
-};
+import { fetcher } from "@/utils/fetcher";
 
 export default function DraftsPage() {
   const [filters, setFilters] = useState({
@@ -204,6 +192,7 @@ export default function DraftsPage() {
       return 0;
     });
 
+  // Function for rendering prompt card
   const renderPromptCard = (prompt: IPrompt) => (
     <Card
       key={prompt._id}
@@ -218,7 +207,7 @@ export default function DraftsPage() {
                 src={prompt.creator.avatar || "/placeholder.svg"}
                 alt={prompt.creator.name || "User avatar"}
               />
-              <AvatarFallback>
+              <AvatarFallback className="uppercase text-xs bold">
                 {prompt.creator.name
                   ?.split(" ")
                   .map((n) => n[0])

@@ -51,12 +51,14 @@ interface PromptCardProps {
   prompt: IPrompt;
   mutatePrompts: KeyedMutator<IPrompt[] | undefined>;
   handleCopyPrompt: (prompt: IPrompt) => void;
+  index?: number; // 👈 add this
 }
 
 const PromptCard: FC<PromptCardProps> = ({
   prompt,
   mutatePrompts,
   handleCopyPrompt,
+  index,
 }) => {
   const router = useRouter();
   const { user, updateUser } = useAuth();
@@ -262,7 +264,7 @@ const PromptCard: FC<PromptCardProps> = ({
                 <AvatarImage
                   src={prompt?.creator?.avatar || "/placeholder.svg"}
                 />
-                <AvatarFallback>
+                <AvatarFallback className="text-xs uppercase">
                   {prompt?.creator?.name
                     ?.split(" ")
                     .map((n) => n[0])
@@ -333,7 +335,7 @@ const PromptCard: FC<PromptCardProps> = ({
                     src={prompt.resultContent}
                     alt={prompt.title || "Prompt image"}
                     className="mx-auto rounded-lg object-contain max-h-[500px]"
-                    loading="lazy"
+                    priority={index !== undefined && index < 2}
                   />
                 ) : (
                   // fallback img for non-whitelisted domains

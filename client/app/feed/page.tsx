@@ -472,6 +472,7 @@ export default function FeedPage() {
               prompts.length > 0 &&
               prompts.map((prompt: IPrompt) => (
                 <PromptCard
+                  index={prompts.indexOf(prompt)}
                   key={prompt._id}
                   prompt={prompt}
                   mutatePrompts={mutate}

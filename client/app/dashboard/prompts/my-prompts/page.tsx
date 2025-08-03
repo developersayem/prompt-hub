@@ -48,19 +48,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ShareDialog } from "@/components/shared/share-dialog";
-
-const fetcher = async (url: string) => {
-  const res = await fetch(url, {
-    method: "GET",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
-  if (!res.ok) {
-    throw new Error(`HTTP error! status: ${res.status}`);
-  }
-  const json = await res.json();
-  return Array.isArray(json?.data?.data) ? json.data.data : [];
-};
+import { fetcher } from "@/utils/fetcher";
 
 export default function MyPromptsPage() {
   const [filters, setFilters] = useState({
@@ -181,6 +169,7 @@ export default function MyPromptsPage() {
       return 0;
     });
 
+  // Function for rendering prompt card
   const renderPromptCard = (prompt: IPrompt) => (
     <Card
       key={prompt._id}
@@ -195,7 +184,7 @@ export default function MyPromptsPage() {
                 src={prompt.creator.avatar || "/placeholder.svg"}
                 alt={prompt.creator.name || "User avatar"}
               />
-              <AvatarFallback>
+              <AvatarFallback className="uppercase text-xs bold">
                 {prompt.creator.name
                   ?.split(" ")
                   .map((n) => n[0])

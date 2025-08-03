@@ -73,6 +73,7 @@ const PublicProfilePage = () => {
     .join(", ");
 
   const phone = user?.phone && user.phone !== "undefine" ? user.phone : null;
+  console.log(phone);
 
   const { data: prompts, mutate: mutatePrompts } = useSWR<
     IPrompt[] | undefined
@@ -129,8 +130,6 @@ const PublicProfilePage = () => {
       return 0;
     });
 
-  console.log("user:", user);
-
   return (
     <div className="container space-y-4">
       {/* Cover + Avatar + Basic Info */}
@@ -138,7 +137,12 @@ const PublicProfilePage = () => {
         <CardHeader className="flex items-center gap-4">
           <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
             <AvatarImage src={user?.avatar} alt={user?.name} />
-            <AvatarFallback>{user?.name?.charAt(0)}</AvatarFallback>
+            <AvatarFallback className="uppercase text-3xl">
+              {user?.name
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("") || "NA"}
+            </AvatarFallback>
           </Avatar>
           <div className="space-y-2">
             <h2 className="text-xl font-semibold flex items-center gap-1 capitalize text-foreground">
@@ -176,18 +180,19 @@ const PublicProfilePage = () => {
           <div className="grid grid-cols-2 gap-4 text-sm">
             {/* Personal info */}
             <div className="space-y-2 text-muted-foreground">
-              <p className="flex items-center gap-2">
-                <Mail className="h-4 w-4" />
-                <span className="text-foreground">{user?.email}</span>
-              </p>
-              {phone !== "undefined" &&
-                phone !== "" &&
-                phone !== "undefinedundefined" && (
-                  <p className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    <span className="text-foreground">{phone}</span>
-                  </p>
-                )}
+              {/* Email */}
+              {user?.email && (
+                <p className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  <span className="text-foreground">{user?.email}</span>
+                </p>
+              )}
+              {phone !== null && phone !== "" && (
+                <p className="flex items-center gap-2">
+                  <Phone className="h-4 w-4" />
+                  <span className="text-foreground">{phone}</span>
+                </p>
+              )}
               {location && (
                 <p className="flex items-center gap-2 capitalize">
                   <MapPin className="h-4 w-4" />
@@ -281,9 +286,8 @@ const PublicProfilePage = () => {
                 })}
             </div>
           ) : (
-            <p className="text-gray-500 text-sm">
-              No social links added yet. Update your profile to add social media
-              links.
+            <p className="text-gray-500 text-sm text-center">
+              No social links added yet.
             </p>
           )}
         </CardContent>
@@ -423,6 +427,7 @@ const PublicProfilePage = () => {
         <div className="space-y-4">
           {filteredPrompts.map((prompt) => (
             <PromptCard
+              index={filteredPrompts.indexOf(prompt)}
               key={prompt._id}
               prompt={prompt}
               mutatePrompts={mutatePrompts}

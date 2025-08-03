@@ -6,6 +6,7 @@ import {
   Coins,
   Home,
   LayoutDashboard,
+  List,
   Settings,
   TrendingUp,
   User,
@@ -30,6 +31,11 @@ export default function LeftSidebar() {
       icon: TrendingUp,
     },
     {
+      name: "profile",
+      href: "/feed/profile/" + user?.slug,
+      icon: User,
+    },
+    {
       name: "dashboard",
       href: "/dashboard",
       icon: LayoutDashboard,
@@ -37,7 +43,7 @@ export default function LeftSidebar() {
     {
       name: "my prompts",
       href: "/dashboard/prompts/my-prompts",
-      icon: User,
+      icon: List,
     },
     {
       name: "bookmarks",
@@ -52,11 +58,6 @@ export default function LeftSidebar() {
     {
       name: "analytics",
       href: "/dashboard/analytics",
-      icon: ChartNoAxesCombined,
-    },
-    {
-      name: "profile",
-      href: "/dashboard/settings/profile",
       icon: ChartNoAxesCombined,
     },
     {
