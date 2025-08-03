@@ -50,4 +50,5 @@ const likeSchema = new mongoose_1.Schema({
         ref: "Comment",
     },
 }, { timestamps: true });
+likeSchema.index({ user: 1, prompt: 1 }, { unique: true });
 exports.Like = mongoose_1.default.model("Like", likeSchema);

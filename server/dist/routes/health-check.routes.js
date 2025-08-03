@@ -6,4 +6,5 @@ const router = (0, express_1.Router)();
 router.route("/").get(health_check_controller_1.healthCheckController);
 router.route("/server-status").get(health_check_controller_1.getServerStatus);
 router.route("/ping-me").get(health_check_controller_1.getServerPing);
+router.route("/test").get(health_check_controller_1.getDeploymentStats);
 exports.default = router;

@@ -40,10 +40,24 @@ exports.User = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const slugify_1 = __importDefault(require("slugify"));
+const nanoid_1 = require("nanoid");
+// ✨ Generate unique suffix (e.g. 8 characters)
+const nanoid = (0, nanoid_1.customAlphabet)("abcdefghijklmnopqrstuvwxyz0123456789", 8);
 const userSchema = new mongoose_1.Schema({
     name: {
         type: String,
         required: true,
+    },
+    slug: {
+        type: String,
+        unique: true,
+        required: true,
+        lowercase: true,
+    },
+    title: {
+        type: String,
+        default: "",
     },
     email: {
         type: String,
@@ -67,7 +81,7 @@ const userSchema = new mongoose_1.Schema({
     avatar: {
         type: String,
         default: "",
-        required: true,
+        required: false,
     },
     bio: {
         type: String,
@@ -77,6 +91,17 @@ const userSchema = new mongoose_1.Schema({
         type: Boolean,
         default: false,
     },
+    // existing fields...
+    isEmailNotificationEnabled: { type: Boolean, default: true },
+    isPushNotificationEnabled: { type: Boolean, default: true },
+    isMarketingNotificationEnabled: { type: Boolean, default: false },
+    loginAlerts: { type: Boolean, default: true },
+    passwordChangeAlerts: { type: Boolean, default: true },
+    twoFactorAlerts: { type: Boolean, default: true },
+    inAppSound: { type: Boolean, default: true },
+    doNotDisturb: { type: Boolean, default: false },
+    dndStart: { type: String, default: "22:00" },
+    dndEnd: { type: String, default: "07:00" },
     verificationCode: {
         type: String,
         default: "",
@@ -85,6 +110,8 @@ const userSchema = new mongoose_1.Schema({
         type: Date,
         default: null,
     },
+    // isDeleted: { type: Boolean, default: false, index: true },
+    // deletedAt: { type: Date, default: null },
     isTwoFactorEnabled: { type: Boolean, default: false },
     twoFactorCode: { type: String },
     twoFactorCodeExpires: { type: Date },
@@ -101,6 +128,18 @@ const userSchema = new mongoose_1.Schema({
         type: Number,
         default: 1000,
     },
+    aiModels: [
+        {
+            type: mongoose_1.default.Schema.Types.ObjectId,
+            ref: "AiModel",
+        },
+    ],
+    categories: [
+        {
+            type: mongoose_1.default.Schema.Types.ObjectId,
+            ref: "Category",
+        },
+    ],
     prompts: [
         {
             type: mongoose_1.default.Schema.Types.ObjectId,
@@ -136,6 +175,17 @@ const userSchema = new mongoose_1.Schema({
         type: String,
     },
 }, { timestamps: true });
+// Generate slug
+userSchema.pre("save", function (next) {
+    const user = this;
+    if (!user.slug || user.isModified("name")) {
+        const baseSlug = (0, slugify_1.default)(user.name, { lower: true, strict: true });
+        const randomStr = nanoid();
+        user.slug = `${baseSlug}-${randomStr}`; // e.g., sayem-molla-k9x7l3a1
+    }
+    next();
+});
+// Hash password
 userSchema.pre("save", async function (next) {
     const user = this;
     if (!user.isModified("password"))
@@ -143,10 +193,12 @@ userSchema.pre("save", async function (next) {
     user.password = await bcrypt_1.default.hash(user.password, 10);
     next();
 });
+// Compare password
 userSchema.methods.isPasswordCorrect = async function (password) {
     const user = this;
     return await bcrypt_1.default.compare(password, user.password);
 };
+// Generate access token
 userSchema.methods.generateAccessToken = function () {
     const expiresIn = (process.env.JWT_ACCESS_TOKEN_EXPIRY ||
         "1h"); // e.g., '1h', '10d'
@@ -156,6 +208,7 @@ userSchema.methods.generateAccessToken = function () {
         email: this.email,
     }, process.env.JWT_ACCESS_TOKEN_SECRET, options);
 };
+// Generate refresh token
 userSchema.methods.generateRefreshToken = function () {
     const expiresIn = (process.env.JWT_REFRESH_TOKEN_EXPIRY ||
         "7d"); // e.g., '1h', '10d' // default 7d

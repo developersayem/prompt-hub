@@ -3,11 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.toggleTwoFactorAuthController = exports.verifyTwoFactorCodeController = exports.send2FACodeController = exports.verifyOTPController = exports.resetPasswordController = exports.changePasswordController = exports.resendVerificationCodeController = exports.verifyUserController = exports.getUserProfileController = exports.updateProfileController = exports.logoutUser = exports.loginUserController = exports.userRegistrationController = exports.getMeController = exports.userController = void 0;
+exports.toggleTwoFactorAuthController = exports.verifyTwoFactorCodeController = exports.send2FACodeController = exports.verifyOTPController = exports.resetPasswordController = exports.setPasswordController = exports.changePasswordController = exports.resendVerificationCodeController = exports.verifyUserController = exports.getUserProfileController = exports.updateProfileController = exports.logoutUser = exports.loginUserController = exports.userRegistrationController = exports.getMeController = exports.userController = void 0;
 const cookieOptions_1 = require("../utils/cookieOptions");
 const asyncHandler_1 = __importDefault(require("../utils/asyncHandler"));
 const ApiError_1 = require("../utils/ApiError");
 const users_model_1 = require("../models/users.model");
+const prompts_model_1 = require("../models/prompts.model");
 const cloudinary_1 = require("../utils/cloudinary");
 const ApiResponse_1 = require("../utils/ApiResponse");
 const sendVerificationEmail_1 = require("../utils/emails/sendVerificationEmail");
@@ -16,6 +17,8 @@ const constants_1 = require("../constants");
 const constants_2 = require("../constants");
 const sendTwoFactorCodeEmail_1 = require("../utils/emails/sendTwoFactorCodeEmail");
 const crypto_1 = __importDefault(require("crypto"));
+const security_event_model_1 = require("../models/security-event.model");
+const trackConnectedDevice_1 = require("../utils/trackConnectedDevice");
 // Generate access token and refresh token for user
 const generateAccessTokenAndRefreshToken = async (userId) => {
     try {
@@ -71,18 +74,6 @@ const userRegistrationController = (0, asyncHandler_1.default)(async (req, res) 
     if (existingUser) {
         throw new ApiError_1.ApiError(400, "User already exists");
     }
-    const avatarLocalPath = req.files?.avatar?.[0]?.path;
-    if (!avatarLocalPath) {
-        throw new ApiError_1.ApiError(400, "Avatar is required");
-    }
-    let avatar = null;
-    try {
-        avatar = await (0, cloudinary_1.uploadOnCloudinary)(avatarLocalPath);
-    }
-    catch (error) {
-        console.error("Cloudinary upload failed:", error);
-        throw new ApiError_1.ApiError(500, "Failed to upload avatar");
-    }
     // Generate email verification code
     const verificationCode = (0, generateVerificationCode_1.generateVerificationCode)();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
@@ -92,7 +83,7 @@ const userRegistrationController = (0, asyncHandler_1.default)(async (req, res) 
             name,
             email,
             password,
-            avatar: avatar?.secure_url,
+            avatar: "",
             isVerified: false,
             verificationCode,
             verificationCodeExpires: expiresAt
@@ -106,28 +97,29 @@ const userRegistrationController = (0, asyncHandler_1.default)(async (req, res) 
     }
     catch (error) {
         console.error("Error creating user:", error);
-        if (avatar)
-            await (0, cloudinary_1.deleteFromCloudinary)(avatar.public_id);
         throw new ApiError_1.ApiError(500, "Failed to create user");
     }
 });
 exports.userRegistrationController = userRegistrationController;
-// Controller for login user
+// Controller for login user (user login)
 const loginUserController = (0, asyncHandler_1.default)(async (req, res) => {
     const { email, password } = req.body;
+    // Validate credentials
     if (!email || !password) {
         throw new ApiError_1.ApiError(400, "All fields are required");
     }
     const user = await users_model_1.User.findOne({ email });
     if (!user)
         throw new ApiError_1.ApiError(404, "User not found");
+    // Check password
     const isPasswordCorrect = await user.isPasswordCorrect(password);
     if (!isPasswordCorrect)
         throw new ApiError_1.ApiError(401, "Password is incorrect");
+    // Ensure email is verified
     if (!user.isVerified) {
         throw new ApiError_1.ApiError(401, "Please verify your email before logging in.");
     }
-    // ✅ If 2FA is enabled
+    // 2FA flow — send code and wait for verification
     if (user.isTwoFactorEnabled) {
         const twoFactorCode = crypto_1.default.randomInt(100000, 999999).toString();
         const twoFactorExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -137,28 +129,66 @@ const loginUserController = (0, asyncHandler_1.default)(async (req, res) => {
         await (0, sendTwoFactorCodeEmail_1.sendTwoFactorCodeEmail)(user.email, twoFactorCode);
         return res.status(200).json(new ApiResponse_1.ApiResponse(200, {
             requiresTwoFactor: true,
-            user: {
-                email: user.email
-            },
+            user: { email: user.email },
             message: "2FA code sent to your email",
         }));
     }
-    // ✅ If no 2FA, proceed to issue tokens
+    // If no 2FA, proceed to issue tokens
     const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id);
     const loggedInUser = await users_model_1.User.findById(user._id).select("-password -refreshToken");
     if (!loggedInUser)
         throw new ApiError_1.ApiError(404, "User not found");
+    // Track current device login info
+    await (0, trackConnectedDevice_1.trackConnectedDevice)(user?._id, req);
     return res
         .status(200)
         .cookie("accessToken", accessToken, cookieOptions_1.cookieOptions)
         .cookie("refreshToken", refreshToken, cookieOptions_1.cookieOptions)
-        .json(new ApiResponse_1.ApiResponse(200, {
-        user: loggedInUser,
-        accessToken,
-        refreshToken,
-    }, "User logged in successfully"));
+        .json(new ApiResponse_1.ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User logged in successfully"));
 });
 exports.loginUserController = loginUserController;
+// Controller for verify user  (user login if 2fa is enabled)
+const verifyUserController = (0, asyncHandler_1.default)(async (req, res) => {
+    const { email, code } = req.body;
+    // Validate input
+    if (!email || !code)
+        throw new ApiError_1.ApiError(400, "Email and code required");
+    const user = await users_model_1.User.findOne({ email });
+    if (!user)
+        throw new ApiError_1.ApiError(404, "User not found");
+    // Check if already verified
+    if (user.isVerified) {
+        return res
+            .status(400)
+            .json(new ApiResponse_1.ApiResponse(400, {}, "User already verified"));
+    }
+    // Check code match and expiration
+    const now = new Date();
+    if (!user.verificationCode || user.verificationCode !== code) {
+        throw new ApiError_1.ApiError(400, "Invalid verification code");
+    }
+    if (!user.verificationCodeExpires || user.verificationCodeExpires < now) {
+        throw new ApiError_1.ApiError(400, "Verification code has expired");
+    }
+    // Mark as verified and clear verification data
+    user.isVerified = true;
+    user.verificationCode = "";
+    user.verificationCodeExpires = null;
+    await user.save();
+    const verifiedUser = await users_model_1.User.findById(user._id).select("-password -refreshToken");
+    if (!verifiedUser)
+        throw new ApiError_1.ApiError(404, "User not found");
+    // Track current device login info
+    await (0, trackConnectedDevice_1.trackConnectedDevice)(user._id, req);
+    // Issue auth tokens
+    const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id);
+    res
+        .status(200)
+        .cookie("accessToken", accessToken, cookieOptions_1.cookieOptions)
+        .cookie("refreshToken", refreshToken, cookieOptions_1.cookieOptions)
+        .json(new ApiResponse_1.ApiResponse(200, { user: verifiedUser }, "Email verified successfully"));
+});
+exports.verifyUserController = verifyUserController;
 // Controller for user login out
 const logoutUser = (0, asyncHandler_1.default)(async (req, res) => {
     const authenticatedReq = req;
@@ -226,62 +256,58 @@ const updateProfileController = (0, asyncHandler_1.default)(async (req, res) => 
         .json(new ApiResponse_1.ApiResponse(200, updatedUser, "Profile updated successfully"));
 });
 exports.updateProfileController = updateProfileController;
-// Controller for public profile info
 const getUserProfileController = (0, asyncHandler_1.default)(async (req, res) => {
-    const { userId } = req.params;
-    if (!userId)
-        throw new ApiError_1.ApiError(400, "User ID is required");
-    const user = await users_model_1.User.findById(userId)
-        .select("name email avatar bio socialLinks address countryCode phone isCertified createdAt prompts")
+    // If this is a public profile, you might not want to require auth:
+    // const userId = (req as any).user?._id;
+    // if (!userId) throw new ApiError(401, "Unauthorized");
+    const { slug } = req.params;
+    if (!slug)
+        throw new ApiError_1.ApiError(400, "User slug is required");
+    // Find user by slug and select fields to expose
+    const user = await users_model_1.User.findOne({ slug })
+        .select("name title email avatar bio socialLinks address countryCode phone isCertified createdAt")
         .lean();
     if (!user)
         throw new ApiError_1.ApiError(404, "User not found");
-    const promptCount = user.prompts?.length || 0;
+    // Aggregate prompt stats for the user by their ObjectId
+    const [promptStats] = await prompts_model_1.Prompt.aggregate([
+        { $match: { creator: user._id } }, // just use user._id directly
+        {
+            $group: {
+                _id: null,
+                totalPrompts: { $sum: 1 },
+                totalLikes: { $sum: { $size: "$likes" } },
+                totalComments: { $sum: { $size: "$comments" } },
+                totalViews: { $sum: "$views" },
+                totalShares: { $sum: "$shareCount" },
+            },
+        },
+    ]);
+    // Build the public profile response object
     const publicProfile = {
         _id: user._id,
         name: user.name,
+        title: user.title,
         email: user.email,
         avatar: user.avatar,
         bio: user.bio,
         socialLinks: user.socialLinks,
         location: user.address,
-        phone: `${user.countryCode}${user.phone}`,
+        phone: user.countryCode && user.phone ? `${user.countryCode}${user.phone}` : null,
         isCertified: user.isCertified,
         joinedAt: user.createdAt,
-        promptCount,
+        promptStats: {
+            totalPrompts: promptStats?.totalPrompts || 0,
+            totalLikes: promptStats?.totalLikes || 0,
+            totalComments: promptStats?.totalComments || 0,
+            totalViews: promptStats?.totalViews || 0,
+            totalShares: promptStats?.totalShares || 0,
+        },
     };
-    res.status(200).json(new ApiResponse_1.ApiResponse(200, { profile: publicProfile }, "User profile fetched successfully"));
+    res.status(200).json(new ApiResponse_1.ApiResponse(200, publicProfile, "User profile fetched successfully"));
 });
 exports.getUserProfileController = getUserProfileController;
-// Controller for verify user 
-const verifyUserController = (0, asyncHandler_1.default)(async (req, res) => {
-    const { email, code } = req.body;
-    if (!email || !code)
-        throw new ApiError_1.ApiError(400, "Email and code required");
-    const user = await users_model_1.User.findOne({ email });
-    if (!user)
-        throw new ApiError_1.ApiError(404, "User not found");
-    if (user.isVerified) {
-        return res
-            .status(400)
-            .json(new ApiResponse_1.ApiResponse(400, {}, "User already verified"));
-    }
-    const now = new Date();
-    if (!user.verificationCode || user.verificationCode !== code) {
-        throw new ApiError_1.ApiError(400, "Invalid verification code");
-    }
-    if (!user.verificationCodeExpires || user.verificationCodeExpires < now) {
-        throw new ApiError_1.ApiError(400, "Verification code has expired");
-    }
-    user.isVerified = true;
-    user.verificationCode = "";
-    user.verificationCodeExpires = null;
-    await user.save();
-    res
-        .status(200)
-        .json(new ApiResponse_1.ApiResponse(200, {}, "Email verified successfully"));
-});
-exports.verifyUserController = verifyUserController;
+// TODO: add those controllers to separate file ---Start from here
 // Controller for resend verification code
 const resendVerificationCodeController = (0, asyncHandler_1.default)(async (req, res) => {
     const { email, action = "verify" } = req.body;
@@ -350,9 +376,47 @@ const changePasswordController = (0, asyncHandler_1.default)(async (req, res) =>
     // Update password
     user.password = newPassword;
     await user.save();
+    // Create security event
+    await security_event_model_1.SecurityEvent.create({
+        userId: user._id,
+        type: "PASSWORD_CHANGED",
+        message: "Password changed",
+    });
     res.status(200).json(new ApiResponse_1.ApiResponse(200, {}, "Password changed successfully"));
 });
 exports.changePasswordController = changePasswordController;
+// Controller for change password
+const setPasswordController = (0, asyncHandler_1.default)(async (req, res) => {
+    const userId = req.user._id;
+    if (!userId)
+        throw new ApiError_1.ApiError(401, "Unauthorized");
+    const { newPassword } = req.body;
+    // Validate input
+    if (!newPassword) {
+        throw new ApiError_1.ApiError(400, "New password are required to set");
+    }
+    if (newPassword.length < 6) {
+        throw new ApiError_1.ApiError(400, "New password must be at least 6 characters long");
+    }
+    // Find user
+    const user = await users_model_1.User.findOne({ userId });
+    if (!user)
+        throw new ApiError_1.ApiError(404, "User not found");
+    // check user is using google account and there was not password filed in data base then set password
+    const isGoogleAuthenticated = user.isGoogleAuthenticated;
+    if (isGoogleAuthenticated && !user.password) {
+        user.password = newPassword;
+        await user.save();
+    }
+    // Create security event
+    await security_event_model_1.SecurityEvent.create({
+        userId: user._id,
+        type: "PASSWORD_CHANGED",
+        message: "Set a new password",
+    });
+    res.status(200).json(new ApiResponse_1.ApiResponse(200, {}, "Password changed successfully"));
+});
+exports.setPasswordController = setPasswordController;
 //Controller for reset password
 const resetPasswordController = (0, asyncHandler_1.default)(async (req, res) => {
     const { password, confirmPassword, email } = req.body;
@@ -397,7 +461,7 @@ const verifyOTPController = (0, asyncHandler_1.default)(async (req, res) => {
     if (!user.verificationCodeExpires || user.verificationCodeExpires < now) {
         throw new ApiError_1.ApiError(400, "Verification code has expired");
     }
-    // ✅ Just clear code after success
+    //   Just clear code after success
     user.verificationCode = "";
     user.verificationCodeExpires = null;
     user.lastVerificationSentAt = null;
@@ -450,10 +514,17 @@ const verifyTwoFactorCodeController = (0, asyncHandler_1.default)(async (req, re
     if (user.twoFactorCodeExpires < new Date()) {
         throw new ApiError_1.ApiError(401, "2FA code has expired");
     }
-    // Clear code after verification
+    // Clear the code & enable 2FA
     user.twoFactorCode = "";
     user.twoFactorCodeExpires = null;
+    user.isTwoFactorEnabled = true;
     await user.save({ validateBeforeSave: false });
+    // Log security event
+    await security_event_model_1.SecurityEvent.create({
+        userId: user._id,
+        type: "2FA_ENABLED",
+        message: "2FA enabled successfully",
+    });
     const { accessToken, refreshToken } = await generateAccessTokenAndRefreshToken(user._id);
     const freshUser = await users_model_1.User.findById(user._id).select("-password -refreshToken");
     if (!freshUser)
@@ -474,13 +545,17 @@ const toggleTwoFactorAuthController = (0, asyncHandler_1.default)(async (req, re
     const user = await users_model_1.User.findById(userId);
     if (!user)
         throw new ApiError_1.ApiError(404, "User not found");
-    if (!user)
-        throw new ApiError_1.ApiError(401, "Unauthorized");
-    if (typeof enable !== "boolean") {
-        throw new ApiError_1.ApiError(400, "Enable flag (boolean) is required");
+    if (enable !== false) {
+        throw new ApiError_1.ApiError(400, "Use /verify-2fa to enable 2FA after verification");
     }
-    user.isTwoFactorEnabled = enable;
+    user.isTwoFactorEnabled = false;
     await user.save({ validateBeforeSave: false });
-    return res.status(200).json(new ApiResponse_1.ApiResponse(200, { isTwoFactorEnabled: enable }, `2FA ${enable ? "enabled" : "disabled"}`));
+    // Log security event
+    await security_event_model_1.SecurityEvent.create({
+        userId,
+        type: "2FA_DISABLED",
+        message: "2FA disabled successfully",
+    });
+    return res.status(200).json(new ApiResponse_1.ApiResponse(200, { isTwoFactorEnabled: false }, "2FA disabled successfully"));
 });
 exports.toggleTwoFactorAuthController = toggleTwoFactorAuthController;

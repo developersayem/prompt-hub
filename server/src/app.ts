@@ -76,6 +76,7 @@ import categoryRoutes from "./routes/category.routes"
 import aiModelRoutes from "./routes/ai-model.route"
 import notificationsRoutes from "./routes/notifications.routes"
 import securityAndPrivacyRoutes from "./routes/security-and-privacy.routes"
+import reportRoutes from "./routes/report.routes"
 
 // Use routes
 app.use("/api/v1/health-check", healthCheckRoutes);
@@ -86,6 +87,7 @@ app.use("/api/v1/categories", categoryRoutes);
 app.use("/api/v1/ai-models", aiModelRoutes);
 app.use("/api/v1/settings/notifications", notificationsRoutes)
 app.use("/api/v1/settings/security-and-privacy", securityAndPrivacyRoutes)
+app.use("/api/v1/reports", reportRoutes)
 
 
 

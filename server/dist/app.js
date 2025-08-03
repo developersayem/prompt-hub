@@ -28,7 +28,7 @@ app.use((0, cors_1.default)({
     },
     credentials: true,
 }));
-app.set("trust proxy", 1); // ✅ Required when behind proxy (e.g. Webuzo/Nginx)
+app.set("trust proxy", 1); //   Required when behind proxy (e.g. Webuzo/Nginx)
 // Multer setup (memory storage, max 5MB file size)
 const storage = multer_1.default.memoryStorage();
 exports.upload = (0, multer_1.default)({
@@ -59,10 +59,18 @@ const health_check_routes_1 = __importDefault(require("./routes/health-check.rou
 const users_routes_1 = __importDefault(require("./routes/users.routes"));
 const prompt_routes_1 = __importDefault(require("./routes/prompt.routes"));
 const stats_routes_1 = __importDefault(require("./routes/stats.routes"));
+const category_routes_1 = __importDefault(require("./routes/category.routes"));
+const ai_model_route_1 = __importDefault(require("./routes/ai-model.route"));
+const notifications_routes_1 = __importDefault(require("./routes/notifications.routes"));
+const security_and_privacy_routes_1 = __importDefault(require("./routes/security-and-privacy.routes"));
 // Use routes
 app.use("/api/v1/health-check", health_check_routes_1.default);
 app.use("/api/v1/users", users_routes_1.default);
-app.use("/api/v1/prompt", prompt_routes_1.default);
+app.use("/api/v1/prompts", prompt_routes_1.default);
 app.use("/api/v1/stats", stats_routes_1.default);
+app.use("/api/v1/categories", category_routes_1.default);
+app.use("/api/v1/ai-models", ai_model_route_1.default);
+app.use("/api/v1/settings/notifications", notifications_routes_1.default);
+app.use("/api/v1/settings/security-and-privacy", security_and_privacy_routes_1.default);
 // custom error middlewares
 app.use(error_middlewares_1.errorHandler);
