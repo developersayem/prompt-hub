@@ -73,7 +73,6 @@ const PublicProfilePage = () => {
     .join(", ");
 
   const phone = user?.phone && user.phone !== "undefine" ? user.phone : null;
-  console.log(phone);
 
   const { data: prompts, mutate: mutatePrompts } = useSWR<
     IPrompt[] | undefined

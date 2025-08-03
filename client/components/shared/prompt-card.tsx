@@ -15,6 +15,11 @@ import {
   Send,
   BookmarkCheck,
   BookmarkPlus,
+  EllipsisVertical,
+  Flag,
+  Bookmark,
+  User,
+  Copy,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -46,6 +51,8 @@ import Image from "next/image";
 import { useLoginPrompt } from "@/contexts/login-prompt-context";
 import { useTrackPromptView } from "@/hooks/useTrackPromptView";
 import { useRouter } from "next/navigation";
+import ReportModal from "./report-modal";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 interface PromptCardProps {
   prompt: IPrompt;
@@ -75,6 +82,7 @@ const PromptCard: FC<PromptCardProps> = ({
   >({});
   const { triggerLoginModal } = useLoginPrompt();
   const commentRef = useRef<HTMLDivElement | null>(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
 
   // Function for handling comments
   useEffect(() => {
@@ -243,9 +251,13 @@ const PromptCard: FC<PromptCardProps> = ({
       toast.error("Something went wrong");
     }
   };
-
+  // Function for seeing public profile
   const seePublicProfile = (slug: string) => {
     router.push(`/feed/profile/${slug}`);
+  };
+  // Function for seeing public prompt
+  const handleOpenReportModal = () => {
+    setIsReportOpen(true);
   };
 
   return (
@@ -294,6 +306,48 @@ const PromptCard: FC<PromptCardProps> = ({
               ) : (
                 <Badge variant="outline">Free</Badge>
               )}
+            </div>
+            {/* Three dot menu Dropdown */}
+            <div className="">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <div className="cursor-pointer">
+                    <EllipsisVertical />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="w-40 p-1">
+                  <ul className="space-y-1">
+                    <li
+                      onClick={() => seePublicProfile(prompt?.creator?.slug)}
+                      className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
+                    >
+                      <User className="h-4 w-4 mr-1" />
+                      Profile
+                    </li>
+                    <li
+                      onClick={() => handleCopyPrompt(prompt)}
+                      className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
+                    >
+                      <Copy className="h-4 w-4 mr-1" />
+                      Copy
+                    </li>
+                    <li
+                      onClick={() => handleBookmarkPrompt(prompt?._id || "")}
+                      className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
+                    >
+                      <Bookmark className="h-4 w-4 mr-1" />
+                      Bookmark
+                    </li>
+                    <li
+                      onClick={() => handleOpenReportModal()}
+                      className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
+                    >
+                      <Flag className="h-4 w-4 mr-1" />
+                      Report Post
+                    </li>
+                  </ul>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </CardHeader>
@@ -613,6 +667,15 @@ const PromptCard: FC<PromptCardProps> = ({
           )}
         </CardContent>
       </Card>
+
+      {/* report modal */}
+      <ReportModal
+        isOpen={isReportOpen}
+        onOpenChange={setIsReportOpen}
+        postId={prompt._id}
+        postAuthorId={prompt.creator._id}
+        postAuthorName={prompt.creator.name}
+      />
     </>
   );
 };
