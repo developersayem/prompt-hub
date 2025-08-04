@@ -54,10 +54,9 @@ const reportPostController = asyncHandler(async (req: Request, res: Response) =>
     reporterUserAgent: req.get("user-agent") || "Unknown",
   });
 
-  return res.status(201).json({
-    message: "Report submitted successfully.",
-    reportId: newReport.reportId,
-  });
+  return res.status(201).json(
+    new ApiResponse(201, {data:null}, "Report submitted successfully")
+  );
 });
 
 
