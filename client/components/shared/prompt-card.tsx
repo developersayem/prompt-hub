@@ -306,48 +306,48 @@ const PromptCard: FC<PromptCardProps> = ({
               ) : (
                 <Badge variant="outline">Free</Badge>
               )}
-            </div>
-            {/* Three dot menu Dropdown */}
-            <div className="">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <div className="cursor-pointer">
-                    <EllipsisVertical />
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="w-40 p-1">
-                  <ul className="space-y-1">
-                    <li
-                      onClick={() => seePublicProfile(prompt?.creator?.slug)}
-                      className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
-                    >
-                      <User className="h-4 w-4 mr-1" />
-                      Profile
-                    </li>
-                    <li
-                      onClick={() => handleCopyPrompt(prompt)}
-                      className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
-                    >
-                      <Copy className="h-4 w-4 mr-1" />
-                      Copy
-                    </li>
-                    <li
-                      onClick={() => handleBookmarkPrompt(prompt?._id || "")}
-                      className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
-                    >
-                      <Bookmark className="h-4 w-4 mr-1" />
-                      Bookmark
-                    </li>
-                    <li
-                      onClick={() => handleOpenReportModal()}
-                      className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
-                    >
-                      <Flag className="h-4 w-4 mr-1" />
-                      Report Post
-                    </li>
-                  </ul>
-                </PopoverContent>
-              </Popover>
+              {/* Three dot menu Dropdown */}
+              <div className="">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <div className="cursor-pointer">
+                      <EllipsisVertical />
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-40 p-1">
+                    <ul className="space-y-1">
+                      <li
+                        onClick={() => seePublicProfile(prompt?.creator?.slug)}
+                        className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
+                      >
+                        <User className="h-4 w-4 mr-1" />
+                        Profile
+                      </li>
+                      <li
+                        onClick={() => handleCopyPrompt(prompt)}
+                        className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
+                      >
+                        <Copy className="h-4 w-4 mr-1" />
+                        Copy
+                      </li>
+                      <li
+                        onClick={() => handleBookmarkPrompt(prompt?._id || "")}
+                        className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
+                      >
+                        <Bookmark className="h-4 w-4 mr-1" />
+                        Bookmark
+                      </li>
+                      <li
+                        onClick={() => handleOpenReportModal()}
+                        className="hover:bg-neutral-50 flex items-center hover:text-black rounded px-2 cursor-pointer"
+                      >
+                        <Flag className="h-4 w-4 mr-1" />
+                        Report Post
+                      </li>
+                    </ul>
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
           </div>
         </CardHeader>

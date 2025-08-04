@@ -97,7 +97,7 @@ function ReportModal({
             postId,
             postAuthorId,
             reason: selectedReason,
-            details: additionalDetails.trim(),
+            additionalDetails: additionalDetails.trim(),
           }),
         }
       );
