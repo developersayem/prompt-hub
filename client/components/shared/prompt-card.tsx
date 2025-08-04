@@ -287,7 +287,7 @@ const PromptCard: FC<PromptCardProps> = ({
                 <p className="font-semibold capitalize">
                   {prompt?.creator?.name}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-neutral-500">
                   {new Intl.DateTimeFormat("en-US", {
                     year: "numeric",
                     month: "short",
@@ -358,7 +358,7 @@ const PromptCard: FC<PromptCardProps> = ({
             <h3 className="text-xl font-semibold mb-2 capitalize">
               {prompt?.title}
             </h3>
-            <div className="text-gray-600 text-sm whitespace-pre-wrap capitalize break-words w-full overflow-hidden">
+            <div className="text-neutral-400 text-sm whitespace-pre-wrap capitalize break-words w-full overflow-hidden">
               {expandedDescriptions[prompt._id]
                 ? prompt?.description ?? ""
                 : (prompt?.description ?? "").length > 150
@@ -377,7 +377,9 @@ const PromptCard: FC<PromptCardProps> = ({
           {/* content preview section */}
           <div
             className={`${
-              prompt?.resultType === "text" ? "bg-gray-200 dark:bg-gray-50" : ""
+              prompt?.resultType === "text"
+                ? "bg-neutral-200 dark:bg-neutral-50"
+                : ""
             } rounded-lg p-4 `}
           >
             {prompt?.resultType === "image" ? (
@@ -403,7 +405,7 @@ const PromptCard: FC<PromptCardProps> = ({
                   />
                 )
               ) : (
-                <p className="text-center text-sm text-gray-500">
+                <p className="text-center text-sm text-neutral-500">
                   Invalid image URL
                 </p>
               )
@@ -415,7 +417,7 @@ const PromptCard: FC<PromptCardProps> = ({
 
                 if (!embed) {
                   return (
-                    <p className="text-center text-sm text-gray-500">
+                    <p className="text-center text-sm text-neutral-500">
                       Unsupported or private media URL
                     </p>
                   );
@@ -424,7 +426,7 @@ const PromptCard: FC<PromptCardProps> = ({
                 if (embed.type === "video") {
                   return (
                     <div
-                      className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg"
+                      className="relative w-full overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-lg"
                       style={{ aspectRatio: "16/9" }}
                     >
                       <video
@@ -442,7 +444,7 @@ const PromptCard: FC<PromptCardProps> = ({
                 // embed.type === "iframe"
                 return (
                   <div
-                    className="relative w-full overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 shadow-lg"
+                    className="relative w-full overflow-hidden rounded-xl border border-neutral-200 dark:border-neutral-800 shadow-lg"
                     style={{ aspectRatio: "16/9" }}
                   >
                     <iframe
@@ -486,7 +488,7 @@ const PromptCard: FC<PromptCardProps> = ({
             ))}
           </div>
           {/* AI model */}
-          <div className="flex items-center text-sm text-gray-500">
+          <div className="flex items-center text-sm text-neutral-500">
             <Sparkles className="h-4 w-4 mr-1" />
             Generated with {prompt?.aiModel}
           </div>
@@ -506,7 +508,7 @@ const PromptCard: FC<PromptCardProps> = ({
                 className={`h-4 w-4 mr-2 ${
                   prompt?.likes.includes(user?._id ?? "")
                     ? "text-red-500"
-                    : "text-gray-500"
+                    : "text-neutral-500"
                 }`}
               />
               {prompt?.likes.length}
@@ -639,7 +641,7 @@ const PromptCard: FC<PromptCardProps> = ({
                         }))
                       }
                       placeholder="Write a comment..."
-                      className="w-full px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
+                      className="w-full px-4 py-2 rounded-full border border-neutral-300 focus:outline-none focus:ring focus:ring-blue-200 text-sm"
                     />
                     <Button size="lg" type="submit" className="cursor-pointer">
                       <Send />
@@ -650,7 +652,7 @@ const PromptCard: FC<PromptCardProps> = ({
 
               <div className="space-y-2">
                 {prompt?.comments.length === 0 && (
-                  <p className="text-sm text-gray-400">No comments yet.</p>
+                  <p className="text-sm text-neutral-400">No comments yet.</p>
                 )}
                 {prompt?.comments.map((comment) => (
                   <CommentThread
