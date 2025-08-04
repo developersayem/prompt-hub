@@ -27,7 +27,8 @@ import {
   buyPromptController,
   getTrendingPrompts,
   increasePromptViewsController,
-  getAllPromptsByUserSlugController
+  getAllPromptsByUserSlugController,
+  getAllReportsAgainstMyPromptsController
 } from "../controller/prompt.controller";
 
 const router = Router();
@@ -99,6 +100,10 @@ router.post("/comment/reply", verifyJWT, replyCommentController);
 // Purchases Routes
 router.get("/purchase-history", verifyJWT, getMyPurchasesController);
 router.post("/:id/buy", verifyJWT, buyPromptController);
+
+// route to get all reports against the current user's prompts
+router.get("/reported-prompts", verifyJWT, getAllReportsAgainstMyPromptsController);
+
 
 // Get single prompt by ID
 router.get("/:id", verifyJWT, getSinglePromptController);

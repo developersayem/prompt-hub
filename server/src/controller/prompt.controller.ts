@@ -14,6 +14,7 @@ import { PurchaseHistory } from "../models/purchaseHistory.model";
 import { RequestWithIP } from "../middlewares/getClientIp.middlewares";
 import { getAllNestedCommentIds } from "../helper/getAllNestedCommentIds";
 import { cleanInvalidPromptReferences } from "../utils/cleanInvalidPromptReferences";
+import { Report } from "../models/report.model";
 
 // Helper: check if a string is a valid URL
 const isValidUrl = (urlString: string) => {
@@ -1374,8 +1375,6 @@ const getAllPromptsByUserSlugController = asyncHandler(async (req: Request, res:
   const { category, isPaid, searchString } = req.query;
   const { slug } = req.params;
 
-  console.log("Slug:", slug);
-
   const user = await User.findOne({ slug });
   if (!user) throw new ApiError(404, "User not found");
 
@@ -1473,6 +1472,103 @@ const getAllPromptsByUserSlugController = asyncHandler(async (req: Request, res:
     new ApiResponse(200, promptsWithLikes, "User prompts fetched successfully")
   );
 });
+// Controller for getting all reports against the current user's prompts
+const getAllReportsAgainstMyPromptsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = (req as any).user?._id;
+    if (!userId) throw new ApiError(401, "Unauthorized: User not found");
+
+    const {
+      status,
+      reason,
+      search,
+      limit = "50",
+    } = req.query as {
+      status?: string;
+      reason?: string;
+      search?: string;
+      limit?: string;
+    };
+
+    const parsedLimit = parseInt(limit);
+    const resultLimit = isNaN(parsedLimit) ? 50 : Math.min(parsedLimit, 100);
+
+    const matchQuery: any = { postAuthor: userId }; // 👈 Match posts owned by current user
+    if (status) matchQuery.status = status;
+    if (reason) matchQuery.reason = reason;
+
+    const searchConditions: any[] = [];
+    if (search?.trim()) {
+      const regex = new RegExp(search, "i");
+      searchConditions.push(
+        { additionalDetails: { $regex: regex } },
+        { "postId.title": { $regex: regex } },
+        { "postId.promptText": { $regex: regex } },
+        { "postId.resultContent": { $regex: regex } }
+      );
+    }
+
+    const reports = await Report.find({
+      ...matchQuery,
+      ...(searchConditions.length ? { $or: searchConditions } : {}),
+    })
+      .populate({
+        path: "postId",
+        model: "Prompt",
+        select:
+          "title promptText description resultContent resultType createdAt slug creator",
+        populate: {
+          path: "creator",
+          model: "User",
+          select: "username slug avatar",
+        },
+      })
+      .sort({ reportedAt: -1 })
+      .limit(resultLimit)
+      .lean();
+
+    const formatted = reports.map((report) => {
+      const post = report.postId as any;
+      const creator = post?.creator || {};
+
+      return {
+        _id: String(report._id),
+        reason: report.reason,
+        additionalDetails: report.additionalDetails,
+        status: report.status,
+        priority: report.priority,
+        actionTaken: report.actionTaken,
+        reportedAt: report.reportedAt?.toISOString() || "",
+        post: {
+          _id: String(post?._id || ""),
+          title: post?.title || "",
+          description: post?.description || "",
+          content: post?.promptText || "",
+          resultContent: post?.resultContent || "",
+          resultType: post?.resultType || "text",
+          createdAt: post?.createdAt?.toISOString() || "",
+          slug: post?.slug || "",
+          author: {
+            _id: String(creator?._id || ""),
+            username: creator?.username || "",
+            slug: creator?.slug || "",
+            avatar: creator?.avatar || "",
+          },
+        },
+        postAuthor: creator?.username || "Unknown",
+      };
+    });
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        formatted,
+        "Reports against your prompts fetched successfully"
+      )
+    );
+  }
+);
+
 
 
 
@@ -1504,5 +1600,6 @@ export {
   savePromptAsBookmarkController,
   getAllMyBookmarkedPromptsController,
   removePromptFromBookmarksController,
-  getAllPromptsByUserSlugController
+  getAllPromptsByUserSlugController,
+  getAllReportsAgainstMyPromptsController
 };

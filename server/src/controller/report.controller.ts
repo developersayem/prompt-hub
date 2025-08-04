@@ -1,8 +1,10 @@
 import type{ Request, Response } from "express";
 import asyncHandler from "../utils/asyncHandler";
-import { Report } from "../models/report.model";
+import { IReport, Report } from "../models/report.model";
 import { ApiError } from "../utils/ApiError";
+import { ApiResponse } from "../utils/ApiResponse";
 import validator from "validator";
+import mongoose from "mongoose";
 
 // Controller for reporting a post
 const reportPostController = asyncHandler(async (req: Request, res: Response) => {
@@ -61,6 +63,9 @@ const reportPostController = asyncHandler(async (req: Request, res: Response) =>
 
 
 
+
+
+
 export {
-    reportPostController
+    reportPostController,
 };
