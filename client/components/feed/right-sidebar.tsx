@@ -172,7 +172,7 @@ export default function RightSidebar() {
                   <div className="flex items-center space-x-2">
                     <Avatar className="h-8 w-8">
                       <AvatarImage src={creator.avatar} alt="Avatar" />
-                      <AvatarFallback className="text-xs bold uppercase">
+                      <AvatarFallback className="text-xs uppercase">
                         {creator?.name
                           .split(" ")
                           .map((n) => n[0])
@@ -180,8 +180,10 @@ export default function RightSidebar() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-sm font-medium">{creator.name}</p>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-sm font-medium capitalize">
+                        {creator.name}
+                      </p>
+                      <p className="text-xs text-neutral-500">
                         {creator.promptCount} prompts
                       </p>
                       {/* <Badge variant="outline" className="text-xs">
@@ -202,19 +204,19 @@ export default function RightSidebar() {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Total Prompts</span>
+              <span className="text-sm text-neutral-200">Total Prompts</span>
               <span className="font-semibold">
                 {communityStats?.totalPrompts}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Active Creators</span>
+              <span className="text-sm text-neutral-200">Active Creators</span>
               <span className="font-semibold">
                 {communityStats?.activeCreators}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">This Week</span>
+              <span className="text-sm text-neutral-200">This Week</span>
               <span className="font-semibold">
                 +{communityStats?.thisWeekPrompts}
               </span>
