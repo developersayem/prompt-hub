@@ -273,6 +273,8 @@ const updateProfileController = asyncHandler(async (req: Request, res: Response)
 
   const {
     name,
+    title,
+    publicEmail,
     bio,
     phone,
     countryCode,
@@ -304,6 +306,8 @@ const updateProfileController = asyncHandler(async (req: Request, res: Response)
 
   // Apply updates
   if (name) user.name = name;
+  if (title) user.title = title;
+  if (publicEmail) user.publicEmail = publicEmail;
   if (bio) user.bio = bio;
   if (phone) user.phone = phone;
   if (countryCode) user.countryCode = countryCode;
@@ -331,6 +335,7 @@ const updateProfileController = asyncHandler(async (req: Request, res: Response)
     .status(200)
     .json(new ApiResponse(200, updatedUser, "Profile updated successfully"));
 });
+// Controller for getting user profile
 const getUserProfileController = asyncHandler(async (req: Request, res: Response) => {
   // If this is a public profile, you might not want to require auth:
   // const userId = (req as any).user?._id;
@@ -703,34 +708,6 @@ const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Res
     new ApiResponse(200, { isTwoFactorEnabled: false }, "2FA disabled successfully")
   );
 });
-
-// TODO: add those controllers to separate file  ---End here
-// TODO: Implement in future Controller for delete user
-// const softDeleteUserAccount = asyncHandler(async (req: Request, res: Response) => {
-//   const userId = (req as any).user?._id;
-//   if (!userId) return res.status(401).json({ message: "Unauthorized" });
-
-//   // Soft delete user
-//   await User.findByIdAndUpdate(userId, { isDeleted: true });
-
-//   // Optional: soft delete or clean up related data (like prompts)
-//   await Prompt.updateMany({ creator: userId }, { isDeleted: true });
-//   await Like.updateMany({ user: userId }, { isDeleted: true });
-//   await Comment.updateMany({ user: userId }, { isDeleted: true });
-//   await PurchaseHistory.updateMany({ user: userId }, { isDeleted: true });
-
-//   // Optionally, clear refresh tokens or sessions
-//   await User.findByIdAndUpdate(userId, { refreshToken: "" });
-
-//   res
-//     .status(200)
-//     .clearCookie("accessToken", cookieOptions)
-//     .clearCookie("refreshToken", cookieOptions)
-//     .json(
-//       new ApiResponse(200, {}, "User account soft deleted successfully")
-//     );
-// });
-// Controller for toggle notifications settings on/off
 
 
 

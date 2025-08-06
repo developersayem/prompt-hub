@@ -4,7 +4,7 @@ import jwt, { SignOptions } from "jsonwebtoken";
 import slugify from "slugify";
 import { customAlphabet } from "nanoid";
 
-// ✨ Generate unique suffix (e.g. 8 characters)
+// Generate unique suffix (e.g. 8 characters)
 const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 8);
 
 export interface ISocialLinks {
@@ -29,6 +29,7 @@ export interface IUser extends Document {
   slug: string;
   title:string;
   email: string;
+  publicEmail?: string;
   password: string;
   avatar?: string;
   bio?: string;
@@ -51,6 +52,8 @@ export interface IUser extends Document {
   address: IAddress;
   phone: string;
   countryCode: string;
+  publicPhone?: string;
+  publicCountryCode?: string;
   refreshToken: string;
   isTwoFactorEnabled: boolean;
   twoFactorCode: string;
@@ -92,6 +95,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       unique: true,
       required: true,
+    },
+    publicEmail: {
+      type: String,
+      default: "",
     },
     password: {
       type: String,
