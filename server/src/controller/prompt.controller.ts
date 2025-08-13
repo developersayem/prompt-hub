@@ -15,6 +15,7 @@ import { RequestWithIP } from "../middlewares/getClientIp.middlewares";
 import { getAllNestedCommentIds } from "../helper/getAllNestedCommentIds";
 import { cleanInvalidPromptReferences } from "../utils/cleanInvalidPromptReferences";
 import { Report } from "../models/report.model";
+import { CreditService } from "../services/credit.service";
 
 // Helper: check if a string is a valid URL
 const isValidUrl = (urlString: string) => {
@@ -861,42 +862,46 @@ const buyPromptController = asyncHandler(async (req: Request, res: Response) => 
 
   if (!buyer || !creator) throw new ApiError(404, "User not found");
 
-  if (buyer.credits < price) {
-    throw new ApiError(400, "Insufficient credits");
+  try {
+    // Use CreditService for the transaction
+    const { fromUser: updatedBuyer } = await CreditService.transferCredits(
+      userId,
+      prompt.creator,
+      price,
+      `Purchased prompt: ${prompt.title}`,
+      { promptId: prompt._id }
+    );
+
+    // Update prompt
+    prompt.purchasedBy.push(userId);
+    await prompt.save();
+
+    // Store purchase history
+    await PurchaseHistory.create({
+      buyer: buyer._id,
+      prompt: prompt._id,
+      seller: creator._id,
+      amount: price,
+      paymentMethod: "credits",
+    });
+
+    // Update buyer purchasedPrompts
+    buyer.purchasedPrompts.push(prompt._id as Schema.Types.ObjectId);
+    await buyer.save();
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { updatedCredits: updatedBuyer.credits },
+        "Prompt purchased successfully"
+      )
+    );
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new ApiError(500, "Failed to process prompt purchase");
   }
-
-  // Deduct from buyer
-  buyer.credits -= price;
-  await buyer.save();
-
-  // Add to creator
-  creator.credits += price;
-  await creator.save();
-
-  // Update prompt
-  prompt.purchasedBy.push(userId);
-  await prompt.save();
-
-  // Store purchase history
-  await PurchaseHistory.create({
-    buyer: buyer._id,
-    prompt: prompt._id,
-    seller: creator._id,
-    amount: price,
-    paymentMethod: "credits",
-  });
-  // updated buyer purchasedPrompts
-  buyer.purchasedPrompts.push(prompt._id as Schema.Types.ObjectId);
-  await buyer.save();
-
-  return res.status(200).json(
-  new ApiResponse(
-    200,
-    { updatedCredits: buyer.credits }, //   send updated buyer credits
-    "Prompt purchased successfully"
-  )
-);
-
 });
 // Controller for get my purchases
 const getMyPurchasesController = asyncHandler(async (req: Request, res: Response) => {

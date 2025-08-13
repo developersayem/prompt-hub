@@ -18,3 +18,8 @@ logs
 
 # OS
 .DS_Store
+
+# Generated Documentation (exclude from git)
+FRAUD_PREVENTION.md
+FRAUD_PREVENTION_NO_DAILY_BONUS.md
+PROJECT_ANALYSIS_REPORT.md

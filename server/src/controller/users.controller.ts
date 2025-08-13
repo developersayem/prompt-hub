@@ -23,6 +23,7 @@ import { SecurityEvent } from "../models/security-event.model";
 import { getGeoLocationFromIP } from "../utils/ipGeolocation";
 import { ConnectedDevice } from "../models/connected-device.model";
 import { trackConnectedDevice } from "../utils/trackConnectedDevice";
+import { CreditService } from "../services/credit.service";
 
 
 interface TokenResponse {
@@ -224,6 +225,14 @@ const verifyUserController = asyncHandler(async (req: Request, res: Response) =>
   user.verificationCode = "";
   user.verificationCodeExpires = null;
   await user.save();
+
+  // Award signup bonus for new verified users
+  try {
+    await CreditService.awardSignupBonus(user._id as string);
+  } catch (error) {
+    console.error("Failed to award signup bonus:", error);
+    // Don't fail the verification process if bonus fails
+  }
 
   const verifiedUser = await User.findById(user._id).select("-password -refreshToken");
   if (!verifiedUser) throw new ApiError(404, "User not found");

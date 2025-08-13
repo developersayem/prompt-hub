@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { X, Coins, Check, CreditCard } from "lucide-react";
+import { X, Coins, Check, CreditCard, Infinity } from "lucide-react";
 
 interface PurchaseCreditsModalProps {
   onClose: () => void;
@@ -24,7 +24,7 @@ export function PurchaseCreditsModal({ onClose }: PurchaseCreditsModalProps) {
       id: "starter",
       name: "Starter Pack",
       credits: 500,
-      price: 9.99,
+      price: 3.99,
       popular: false,
       features: ["500 Credits", "Basic Support", "30 Days Validity"],
     },
@@ -32,27 +32,28 @@ export function PurchaseCreditsModal({ onClose }: PurchaseCreditsModalProps) {
       id: "professional",
       name: "Professional",
       credits: 1500,
-      price: 24.99,
+      price: 6.99,
       popular: true,
       features: [
         "1,500 Credits",
         "Priority Support",
-        "90 Days Validity",
+        "60 Days Validity",
         "Bonus Features",
       ],
     },
     {
-      id: "enterprise",
-      name: "Enterprise",
-      credits: 5000,
-      price: 79.99,
+      id: "unlimited",
+      name: "Unlimited",
+      credits: -1, // Unlimited
+      price: 9.99,
       popular: false,
+      duration: 30,
       features: [
-        "5,000 Credits",
+        "Unlimited Credits",
         "24/7 Support",
-        "1 Year Validity",
-        "All Premium Features",
-        "Custom Integration",
+        "30 Days Duration",
+        "Premium Features",
+        "API Access",
       ],
     },
   ];
@@ -103,7 +104,19 @@ export function PurchaseCreditsModal({ onClose }: PurchaseCreditsModalProps) {
                   <div className="space-y-1">
                     <div className="text-3xl font-bold">${pkg.price}</div>
                     <div className="text-sm text-gray-500">
-                      {pkg.credits.toLocaleString()} Credits
+                      {pkg.credits === -1 ? (
+                        <div className="flex items-center justify-center gap-1">
+                          <Infinity className="w-4 h-4" />
+                          <span>Unlimited Credits</span>
+                        </div>
+                      ) : (
+                        `${pkg.credits.toLocaleString()} Credits`
+                      )}
+                      {pkg.duration && (
+                        <div className="text-xs text-orange-600 mt-1">
+                          ({pkg.duration} days)
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
@@ -138,10 +151,13 @@ export function PurchaseCreditsModal({ onClose }: PurchaseCreditsModalProps) {
                   <h3 className="font-semibold">Payment Summary</h3>
                   <p className="text-sm text-gray-600">
                     {packages.find((p) => p.id === selectedPackage)?.name} -{" "}
-                    {packages
-                      .find((p) => p.id === selectedPackage)
-                      ?.credits.toLocaleString()}{" "}
-                    Credits
+                    {(() => {
+                      const pkg = packages.find((p) => p.id === selectedPackage);
+                      if (pkg?.credits === -1) {
+                        return `Unlimited Credits (${pkg.duration} days)`;
+                      }
+                      return `${pkg?.credits.toLocaleString()} Credits`;
+                    })()}
                   </p>
                 </div>
                 <div className="text-right">
