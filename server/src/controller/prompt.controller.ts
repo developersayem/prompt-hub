@@ -715,7 +715,7 @@ const updatePromptController = asyncHandler(async (req: Request, res: Response) 
         ? parsed.flatMap((tag: string) => tag.split(",").map((t) => t.trim()))
         : [];
     } catch {
-      console.warn("❌ Failed to parse tags JSON:", tags);
+      console.warn("Failed to parse tags JSON:", tags);
       normalizedTags = [];
     }
   }

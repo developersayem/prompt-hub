@@ -1,13 +1,25 @@
 import { Router } from "express";
 import { verifyJWT } from "../middlewares/auth.middlewares";
-import { getConnectedDevices, getSecurityEvents, logoutConnectedDevice } from "../controller/security-and-privacy.controller";
+import { 
+  getConnectedDevices, 
+  getSecurityEvents, 
+  logoutConnectedDevice,
+  logoutAllOtherDevices,
+  getDeviceStats
+} from "../controller/security-and-privacy.controller";
 
+const router = Router();
 
-const router = Router()
+// All routes require authentication
+router.use(verifyJWT);
 
-// route to get security events
-router.get("/security-events", verifyJWT, getSecurityEvents)
-router.get("/devices", verifyJWT, getConnectedDevices)
-router.get("/devices/:id", verifyJWT, logoutConnectedDevice)
+// Security events
+router.get("/security-events", getSecurityEvents);
 
-export default router
+// Device management
+router.get("/devices", getConnectedDevices);
+router.get("/devices/stats", getDeviceStats);
+router.delete("/devices/:id", logoutConnectedDevice);
+router.post("/devices/logout-all", logoutAllOtherDevices);
+
+export default router;
