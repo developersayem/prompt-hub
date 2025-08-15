@@ -52,6 +52,105 @@ const userController = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(200).json(new ApiResponse(200, { user }, "User fetched successfully"));
 })
+// Controller for user profile completion
+const getProfileCompletionController = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  // Find user with all profile fields
+  const user = await User.findById(userId)
+    .select("name email avatar bio title socialLinks address phone countryCode")
+    .lean();
+
+  if (!user) throw new ApiError(404, "User not found");
+
+  // Define profile fields and their weights
+  const profileFields = [
+    { field: 'name', weight: 15, value: user.name },
+    { field: 'email', weight: 15, value: user.email },
+    { field: 'avatar', weight: 10, value: user.avatar },
+    { field: 'bio', weight: 15, value: user.bio },
+    { field: 'title', weight: 10, value: user.title },
+    { field: 'phone', weight: 5, value: user.phone },
+    { field: 'countryCode', weight: 5, value: user.countryCode },
+    // Address fields
+    { field: 'address.street', weight: 5, value: user.address?.street },
+    { field: 'address.city', weight: 5, value: user.address?.city },
+    { field: 'address.state', weight: 5, value: user.address?.state },
+    { field: 'address.country', weight: 5, value: user.address?.country },
+    // Social links (combined weight)
+    { 
+      field: 'socialLinks', 
+      weight: 5, 
+      value: user.socialLinks && Object.values(user.socialLinks).some(link => link && link.trim() !== '') 
+    }
+  ];
+
+  // Calculate completion percentage
+  let completedWeight = 0;
+  const totalWeight = profileFields.reduce((sum, field) => sum + field.weight, 0);
+  
+  const completionDetails = profileFields.map(field => {
+    const isCompleted = field.field === 'socialLinks' 
+      ? field.value 
+      : field.value && field.value.toString().trim() !== '';
+    
+    if (isCompleted) {
+      completedWeight += field.weight;
+    }
+    
+    return {
+      field: field.field,
+      completed: isCompleted,
+      weight: field.weight
+    };
+  });
+
+  const completionPercentage = Math.round((completedWeight / totalWeight) * 100);
+
+  // Identify missing fields for suggestions
+  const missingFields = completionDetails
+    .filter(detail => !detail.completed)
+    .map(detail => ({
+      field: detail.field,
+      weight: detail.weight
+    }))
+    .sort((a, b) => b.weight - a.weight); // Sort by weight descending
+
+  const response = {
+    completionPercentage,
+    completedWeight,
+    totalWeight,
+    completionDetails,
+    missingFields,
+    suggestions: missingFields.slice(0, 3).map(field => {
+      const fieldNames: { [key: string]: string } = {
+        'name': 'Full Name',
+        'email': 'Email Address',
+        'avatar': 'Profile Picture',
+        'bio': 'Bio/Description',
+        'title': 'Professional Title',
+        'phone': 'Phone Number',
+        'countryCode': 'Country Code',
+        'address.street': 'Street Address',
+        'address.city': 'City',
+        'address.state': 'State/Province',
+        'address.country': 'Country',
+        'socialLinks': 'Social Media Links'
+      };
+      
+      return {
+        field: field.field,
+        displayName: fieldNames[field.field] || field.field,
+        impact: `+${field.weight}%`
+      };
+    })
+  };
+
+  res.status(200).json(
+    new ApiResponse(200, response, "Profile completion calculated successfully")
+  );
+});
 //controller for user registration
 const userRegistrationController = asyncHandler(
   async (req: Request, res: Response) => {
@@ -696,6 +795,7 @@ const toggleTwoFactorAuthController = asyncHandler(async (req: Request, res: Res
 export { 
   userController,
   getMeController,
+  getProfileCompletionController,
   userRegistrationController,
   loginUserController,
   logoutUser,

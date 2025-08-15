@@ -215,14 +215,36 @@ const userSchema = new Schema<IUser>(
   },
   { timestamps: true }
 );
-// Generate slug
-userSchema.pre("save", function (next) {
+// Generate slug before validation
+userSchema.pre("validate", async function (next) {
   const user = this as IUser;
 
+  // Only generate slug if it's not already set or if name has changed
   if (!user.slug || user.isModified("name")) {
-    const baseSlug = slugify(user.name, { lower: true, strict: true });
-    const randomStr = nanoid();
-    user.slug = `${baseSlug}-${randomStr}`; // e.g., sayem-molla-k9x7l3a1
+    try {
+      const baseSlug = slugify(user.name, { lower: true, strict: true });
+      const randomStr = nanoid();
+      const newSlug = `${baseSlug}-${randomStr}`;
+      
+      // Check for uniqueness (though very unlikely with nanoid)
+      const existingUser = await mongoose.model<IUser>("User").findOne({ 
+        slug: newSlug, 
+        _id: { $ne: user._id } 
+      });
+      
+      if (existingUser) {
+        // Generate another random string if collision occurs
+        const anotherRandomStr = nanoid();
+        user.slug = `${baseSlug}-${anotherRandomStr}`;
+      } else {
+        user.slug = newSlug;
+      }
+    } catch (error) {
+      console.error("Error generating slug:", error);
+      // Fallback slug generation
+      const fallbackSlug = `user-${nanoid()}`;
+      user.slug = fallbackSlug;
+    }
   }
 
   next();

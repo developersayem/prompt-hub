@@ -1,6 +1,6 @@
 import { Router } from "express";
 import passport from "passport";
-import { userRegistrationController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController, verifyTwoFactorCodeController, toggleTwoFactorAuthController, send2FACodeController, getMeController, setPasswordController } from "../controller/users.controller";
+import { userRegistrationController, loginUserController, logoutUser, userController, updateProfileController, getUserProfileController, verifyUserController, resendVerificationCodeController, changePasswordController, verifyOTPController, resetPasswordController, verifyTwoFactorCodeController, toggleTwoFactorAuthController, send2FACodeController, getMeController, setPasswordController, getProfileCompletionController } from "../controller/users.controller";
 import { upload } from "../middlewares/multer.middlewares";
 import { verifyJWT } from "../middlewares/auth.middlewares";
 import { sendCodeLimiter } from "../middlewares/ratelimit.middlewares";
@@ -17,6 +17,8 @@ const router = Router()
 router.get("/", verifyJWT, userController);
 // Route for get current user
 router.get("/me", verifyJWT, getMeController);
+// Route for get profile completion
+router.route("/profile/completion").get(verifyJWT, getProfileCompletionController);
 // Route for register
 router.route("/register").post(
     userRegistrationController
