@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -9,92 +7,56 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { X, Coins, Check, CreditCard, Infinity } from "lucide-react";
+import { IPackage } from "@/types/package.type";
+import { fetcher } from "@/utils/fetcher";
+import { Check, Coins, CreditCard, Infinity } from "lucide-react";
+import { useState } from "react";
+import useSWR from "swr";
 
-interface PurchaseCreditsModalProps {
-  onClose: () => void;
-}
-
-export function PurchaseCreditsModal({ onClose }: PurchaseCreditsModalProps) {
+const PurchaseCreditsCom = () => {
   const [selectedPackage, setSelectedPackage] = useState<string | null>(null);
-
-  const packages = [
-    {
-      id: "starter",
-      name: "Starter Pack",
-      credits: 500,
-      price: 3.99,
-      popular: false,
-      features: ["500 Credits", "Basic Support", "30 Days Validity"],
-    },
-    {
-      id: "professional",
-      name: "Professional",
-      credits: 1500,
-      price: 6.99,
-      popular: true,
-      features: [
-        "1,500 Credits",
-        "Priority Support",
-        "60 Days Validity",
-        "Bonus Features",
-      ],
-    },
-    {
-      id: "unlimited",
-      name: "Unlimited",
-      credits: -1, // Unlimited
-      price: 9.99,
-      popular: false,
-      duration: 30,
-      features: [
-        "Unlimited Credits",
-        "24/7 Support",
-        "30 Days Duration",
-        "Premium Features",
-        "API Access",
-      ],
-    },
-  ];
+  const {
+    data: packages = [],
+    // isLoading,
+    // mutate,
+  } = useSWR(
+    `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/credits/packages`,
+    fetcher
+  );
 
   const handlePurchase = () => {
     if (selectedPackage) {
       // Here you would integrate with payment processor
       console.log("Processing purchase for package:", selectedPackage);
-      onClose();
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+    <div className="flex items-center justify-center w-full">
+      <Card className="w-full  max-h-[90vh] overflow-y-auto">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Coins className="w-5 h-5 text-yellow-500" />
+              <Coins className="w-5 h-5" />
               Purchase Credits
             </CardTitle>
             <CardDescription>
               Choose a credit package that fits your needs
             </CardDescription>
           </div>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="w-4 h-4" />
-          </Button>
         </CardHeader>
 
         <CardContent className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {packages.map((pkg) => (
+            {packages.map((pkg: IPackage) => (
               <Card
-                key={pkg.id}
+                key={pkg.name}
                 className={`cursor-pointer transition-all ${
-                  selectedPackage === pkg.id
+                  selectedPackage === pkg.name
                     ? "ring-2 ring-blue-500 shadow-lg"
                     : "hover:shadow-md"
                 } ${pkg.popular ? "border-blue-500" : ""}`}
-                onClick={() => setSelectedPackage(pkg.id)}
+                onClick={() => setSelectedPackage(pkg.name)}
               >
                 <CardHeader className="text-center">
                   {pkg.popular && (
@@ -129,7 +91,7 @@ export function PurchaseCreditsModal({ onClose }: PurchaseCreditsModalProps) {
                     </div>
                   ))}
 
-                  {selectedPackage === pkg.id && (
+                  {selectedPackage === pkg.name && (
                     <div className="pt-2">
                       <Badge
                         variant="secondary"
@@ -150,9 +112,15 @@ export function PurchaseCreditsModal({ onClose }: PurchaseCreditsModalProps) {
                 <div>
                   <h3 className="font-semibold">Payment Summary</h3>
                   <p className="text-sm text-gray-600">
-                    {packages.find((p) => p.id === selectedPackage)?.name} -{" "}
+                    {
+                      packages.find((p: IPackage) => p.name === selectedPackage)
+                        ?.name
+                    }{" "}
+                    -{" "}
                     {(() => {
-                      const pkg = packages.find((p) => p.id === selectedPackage);
+                      const pkg = packages.find(
+                        (p: IPackage) => p.name === selectedPackage
+                      );
                       if (pkg?.credits === -1) {
                         return `Unlimited Credits (${pkg.duration} days)`;
                       }
@@ -162,7 +130,11 @@ export function PurchaseCreditsModal({ onClose }: PurchaseCreditsModalProps) {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold">
-                    ${packages.find((p) => p.id === selectedPackage)?.price}
+                    $
+                    {
+                      packages.find((p: IPackage) => p.name === selectedPackage)
+                        ?.price
+                    }
                   </div>
                 </div>
               </div>
@@ -177,4 +149,6 @@ export function PurchaseCreditsModal({ onClose }: PurchaseCreditsModalProps) {
       </Card>
     </div>
   );
-}
+};
+
+export default PurchaseCreditsCom;

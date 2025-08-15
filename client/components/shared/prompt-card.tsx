@@ -578,7 +578,7 @@ const PromptCard: FC<PromptCardProps> = ({
                 </AlertDialogTrigger>
                 <AlertDialogContent className="w-96 bg-neutral-900">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Buy this prompt?</AlertDialogTitle>
+                    <AlertDialogTitle>Purchase this prompt?</AlertDialogTitle>
                     <AlertDialogDescription>
                       You’ll be charged and the prompt will be copied after
                       purchase.
@@ -596,7 +596,7 @@ const PromptCard: FC<PromptCardProps> = ({
                       }}
                       className="cursor-pointer"
                     >
-                      Buy & Copy
+                      Purchase
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>

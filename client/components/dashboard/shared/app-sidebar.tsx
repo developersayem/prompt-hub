@@ -2,13 +2,15 @@
 
 import * as React from "react";
 import {
+  Bell,
+  Blocks,
   ChartNoAxesCombined,
   Coins,
   LayoutDashboard,
   LifeBuoy,
-  Rss,
   Send,
   Settings2,
+  User,
 } from "lucide-react";
 
 import { NavMain } from "@/components/dashboard/shared/nav-main";
@@ -34,14 +36,21 @@ const data = {
       title: "Dashboard",
       url: `${mainRoute}`,
       icon: LayoutDashboard,
-      isActive: true,
+      isActive: false,
+      items: [],
+    },
+    {
+      title: "Notifications",
+      url: `${mainRoute}/notifications`,
+      icon: Bell,
+      isActive: false,
       items: [],
     },
     {
       title: "Prompts",
       url: "#",
-      icon: Rss,
-      isActive: true,
+      icon: Blocks,
+      isActive: false,
       items: [
         {
           title: "My Prompts",
@@ -69,37 +78,49 @@ const data = {
       title: "Analytics",
       url: `${mainRoute}/analytics`,
       icon: ChartNoAxesCombined,
-      isActive: true,
+      isActive: false,
       items: [],
     },
     {
       title: "Earnings",
       url: `${mainRoute}/earnings`,
       icon: Coins,
-      isActive: true,
+      isActive: false,
       items: [],
+    },
+    {
+      title: "Account",
+      url: "#",
+      icon: User,
+      isActive: false,
+      items: [
+        {
+          title: "Profile",
+          url: `${mainRoute}/account/profile`,
+        },
+        {
+          title: "Billing",
+          url: `${mainRoute}/account/billing`,
+        },
+        {
+          title: "Get Certified Badge",
+          url: `${mainRoute}/account/get-certified`,
+        },
+      ],
     },
     {
       title: "Settings",
       url: "#",
       icon: Settings2,
-      isActive: true,
+      isActive: false,
       items: [
         {
-          title: "Profile",
-          url: `${mainRoute}/settings/profile`,
-        },
-        {
-          title: "Account",
-          url: `${mainRoute}/settings/account`,
+          title: "Security & Privacy",
+          url: `${mainRoute}/settings/security-and-privacy`,
         },
         {
           title: "Notifications",
           url: `${mainRoute}/settings/notifications`,
-        },
-        {
-          title: "Security & Privacy",
-          url: `${mainRoute}/settings/security-and-privacy`,
         },
       ],
     },

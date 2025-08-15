@@ -25,6 +25,7 @@ import { usePrompts } from "@/hooks/usePrompts";
 import PromptCard from "@/components/shared/prompt-card";
 import { useLoginPrompt } from "@/contexts/login-prompt-context";
 import { usePromptModal } from "@/contexts/prompt-modal-context";
+import InsufficientCreditsDialog from "@/components/shared/InsufficientCreditsDialog";
 
 export default function FeedPage() {
   const { user, updateUser } = useAuth();
@@ -37,6 +38,13 @@ export default function FeedPage() {
     resultType: "all",
     tags: [] as string[],
   });
+
+  // Add state for the dialog
+  const [creditsDialogOpen, setCreditsDialogOpen] = useState(false);
+  const [creditShortfall, setCreditShortfall] = useState<{
+    current: number;
+    required: number;
+  }>({ current: 0, required: 0 });
 
   const { openModal } = usePromptModal();
 
@@ -86,7 +94,6 @@ export default function FeedPage() {
     try {
       if (!prompt) return;
 
-      // Check if user is logged in
       if (!user) {
         triggerLoginModal();
         return;
@@ -96,24 +103,17 @@ export default function FeedPage() {
       const isFree = prompt.paymentStatus === "free";
       const isPurchased = user?.purchasedPrompts?.includes(prompt._id);
 
-      // Copy directly if allowed
       if (isFree || isOwner || isPurchased) {
         await navigator.clipboard.writeText(prompt.promptText);
         toast.success("Prompt copied to clipboard");
         return;
       }
 
-      // User not logged in
-      // if (handleProtectedAction()) return;
-
-      // Purchase prompt
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/${prompt._id}/buy`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/prompts/${prompt._id}/purchase`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
         }
       );
@@ -121,16 +121,23 @@ export default function FeedPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (data?.data?.error === "INSUFFICIENT_CREDITS") {
+          setCreditShortfall({
+            current: data.data.currentCredits,
+            required: data.data.requiredCredits,
+          });
+          setCreditsDialogOpen(true); // Open dialog instead of toast
+          return;
+        }
+
         throw new Error(data?.message || "Purchase failed. Try again.");
       }
 
-      // Update user context with new credits and purchased prompt
       updateUser({
         credits: data.data.updatedCredits,
         purchasedPrompts: [...(user?.purchasedPrompts || []), prompt._id],
       });
 
-      // Copy prompt after purchase
       await navigator.clipboard.writeText(prompt.promptText);
       toast.success("Prompt purchased and copied to clipboard");
     } catch (error) {
@@ -482,6 +489,13 @@ export default function FeedPage() {
           </div>
         </div>
       </div>
+      {/* Credits Dialog */}
+      <InsufficientCreditsDialog
+        open={creditsDialogOpen}
+        onClose={() => setCreditsDialogOpen(false)}
+        currentCredits={creditShortfall.current}
+        requiredCredits={creditShortfall.required}
+      />
     </div>
   );
 }

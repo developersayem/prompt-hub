@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/auth-context";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import AvatarUploadModal from "@/components/dashboard/settings/profile/avatar-upload-modal";
+import AvatarUploadModal from "@/components/dashboard/account/profile/avatar-upload-modal";
 import { Textarea } from "@/components/ui/textarea";
 import CountryCodeSelect from "@/components/shared/CountryCodeSelect";
 
