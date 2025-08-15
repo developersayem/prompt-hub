@@ -908,12 +908,58 @@ const getMyPurchasesController = asyncHandler(async (req: Request, res: Response
   const userId = (req as any).user?._id;
   if (!userId) throw new ApiError(401, "Unauthorized");
 
-  const history = await PurchaseHistory.find({ buyer: userId })
-    .populate("prompt", "title price")
-    .populate("creator", "name email");
+  const { page = 1, limit = 10, search, sortBy = "purchasedAt", sortOrder = "desc" } = req.query;
 
-  return res.status(200).json(new ApiResponse(200, history, "Purchase history fetched"));
+  const pageNum = parseInt(page as string);
+  const limitNum = parseInt(limit as string);
+  const skip = (pageNum - 1) * limitNum;
+
+  // Build search query
+  let searchQuery = {};
+  if (search && typeof search === "string") {
+    searchQuery = {
+      $or: [
+        { "prompt.title": { $regex: search, $options: "i" } },
+        { "prompt.description": { $regex: search, $options: "i" } },
+        { "seller.name": { $regex: search, $options: "i" } },
+      ],
+    };
+  }
+
+  // Build sort object
+  const sortObj: any = {};
+  sortObj[sortBy as string] = sortOrder === "desc" ? -1 : 1;
+
+  const purchases = await PurchaseHistory.find({ buyer: userId })
+    .populate({
+      path: "prompt",
+      select:
+        "title description tags category promptText resultType resultContent aiModel price paymentStatus isDraft creator likes comments views viewedBy viewedIPs purchasedBy shareCount sharedBy isPublic createdAt updatedAt slug",
+      populate: {
+        path: "creator",
+        select:
+          "name email isGoogleAuthenticated isCertified avatar bio isVerified isEmailNotificationEnabled isPushNotificationEnabled isMarketingNotificationEnabled verificationCode verificationCodeExpires isTwoFactorEnabled lastVerificationSentAt socialLinks credits aiModels categories prompts purchasedPrompts bookmarks address createdAt updatedAt __v dndEnd dndStart doNotDisturb inAppSound loginAlerts passwordChangeAlerts twoFactorAlerts countryCode phone title slug publicEmail",
+      },
+    })
+    .populate("seller", "name email avatar slug")
+    .sort(sortObj)
+    .skip(skip)
+    .limit(limitNum)
+    .lean();
+
+  // Extract just prompt data
+  const promptData = purchases
+    .map((purchase) => purchase.prompt)
+    .filter(Boolean); // remove nulls if any
+
+  return res.status(200).json({
+    statusCode: 200,
+    data: promptData,
+    message: "Prompts fetched successfully",
+    success: true,
+  });
 });
+
 // Controller for get prompt by slug
 const getPromptBySlugController = asyncHandler(
   async (req: RequestWithIP, res: Response) => {

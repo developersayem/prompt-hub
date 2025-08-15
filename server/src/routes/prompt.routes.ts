@@ -101,6 +101,7 @@ router.post("/comment/reply", verifyJWT, replyCommentController);
 router.get("/purchase-history", verifyJWT, getMyPurchasesController);
 router.post("/:id/buy", verifyJWT, buyPromptController);
 
+
 // route to get all reports against the current user's prompts
 router.get("/reported-prompts", verifyJWT, getAllReportsAgainstMyPromptsController);
 
