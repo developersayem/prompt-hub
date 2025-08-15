@@ -90,28 +90,6 @@ const logoutConnectedDevice = asyncHandler(async (req: Request, res: Response) =
   }
 });
 
-// Controller for logout all other devices
-const logoutAllOtherDevices = asyncHandler(async (req: Request, res: Response) => {
-  const userId = (req as any).user?._id;
-  if (!userId) throw new ApiError(401, "Unauthorized");
-
-  // Get current device ID from request (if available)
-  const currentDeviceId = req.headers['x-device-id'] as string;
-
-  try {
-    const loggedOutCount = await logoutAllDevicesUtil(userId, currentDeviceId);
-    
-    res.status(200).json(
-      new ApiResponse(200, { 
-        loggedOutDevices: loggedOutCount,
-        message: `Successfully logged out from ${loggedOutCount} other devices`
-      }, "All other devices logged out successfully")
-    );
-  } catch (error) {
-    throw new ApiError(500, "Failed to logout from other devices");
-  }
-});
-
 // Controller for getting device statistics
 const getDeviceStats = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
@@ -143,6 +121,27 @@ const getDeviceStats = asyncHandler(async (req: Request, res: Response) => {
   );
 });
 
+// Controller for logout all other devices
+const logoutAllOtherDevices = asyncHandler(async (req: Request, res: Response) => {
+  const userId = (req as any).user?._id;
+  if (!userId) throw new ApiError(401, "Unauthorized");
+
+  // Get current device ID from request (if available)
+  const currentDeviceId = req.headers['x-device-id'] as string;
+
+  try {
+    const loggedOutCount = await logoutAllDevicesUtil(userId, currentDeviceId);
+    
+    res.status(200).json(
+      new ApiResponse(200, { 
+        loggedOutDevices: loggedOutCount,
+        message: `Successfully logged out from ${loggedOutCount} other devices`
+      }, "All other devices logged out successfully")
+    );
+  } catch (error) {
+    throw new ApiError(500, "Failed to logout from other devices");
+  }
+});
 
 
 
