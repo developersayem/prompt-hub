@@ -1,18 +1,27 @@
-import type{ Request, Response } from "express";
+import { Request, Response } from "express";
+import asyncHandler  from "../utils/asyncHandler";
 import { ApiResponse } from "../utils/ApiResponse";
 import { ApiError } from "../utils/ApiError";
-import asyncHandler from "../utils/asyncHandler";
+import { EnhancedCreditService } from "../services/enhancedCredit.service";
+import { FraudDetectionService } from "../services/fraudDetection.service";
 import { CreditService } from "../services/credit.service";
 import { TransactionType } from "../models/creditTransaction.model";
 
-// Get user's credit balance and stats
+// Get user's credit balance and stats with fraud info
 const getCreditBalance = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
   
-  const stats = await CreditService.getCreditStats(userId as string);
+  const [stats, fraudReport] = await Promise.all([
+    CreditService.getCreditStats(userId),
+    FraudDetectionService.getFraudReport(userId)
+  ]);
   
   return res.status(200).json(
-    new ApiResponse(200, stats, "Credit balance fetched successfully")
+    new ApiResponse(200, {
+      ...stats,
+      riskLevel: fraudReport?.riskLevel || 'low',
+      isFlagged: fraudReport?.isFlagged || false
+    }, "Credit balance fetched successfully")
   );
 });
 
@@ -22,7 +31,7 @@ const getTransactionHistory = asyncHandler(async (req: Request, res: Response) =
   const { page = 1, limit = 20, type } = req.query;
   
   const history = await CreditService.getTransactionHistory(
-    userId as string,
+    userId,
     parseInt(page as string),
     parseInt(limit as string),
     type as TransactionType
@@ -33,8 +42,7 @@ const getTransactionHistory = asyncHandler(async (req: Request, res: Response) =
   );
 });
 
-
-// Purchase credits (this would integrate with payment processor)
+// Purchase credits with enhanced verification
 const purchaseCredits = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
   const { packageId, paymentIntentId } = req.body;
@@ -62,19 +70,19 @@ const purchaseCredits = asyncHandler(async (req: Request, res: Response) => {
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + 30); // 30 days from now
       
-      const result = await CreditService.addCredits(
-        userId as string,
+      const result = await EnhancedCreditService.purchaseCredits(
+        userId,
         unlimitedCredits,
-        "buy_credits",
-        `Purchased unlimited credits - ${packageId} package (30 days)`,
+        packageId,
+        paymentIntentId,
         { 
-          packageId, 
-          paymentIntentId,
           price: selectedPackage.price,
+          ip: FraudDetectionService.getClientIP(req),
+          deviceFingerprint: FraudDetectionService.generateDeviceFingerprint(req),
           unlimited: true,
-          duration: 30
-        },
-        expirationDate
+          duration: 30,
+          expiresAt: expirationDate
+        }
       );
       
       return res.status(200).json(
@@ -91,15 +99,15 @@ const purchaseCredits = asyncHandler(async (req: Request, res: Response) => {
       );
     } else {
       // Handle regular credit packages
-      const result = await CreditService.addCredits(
-        userId as string,
+      const result = await EnhancedCreditService.purchaseCredits(
+        userId,
         selectedPackage.credits,
-        "buy_credits",
-        `Purchased ${selectedPackage.credits} credits - ${packageId} package`,
+        packageId,
+        paymentIntentId,
         { 
-          packageId, 
-          paymentIntentId,
-          price: selectedPackage.price
+          price: selectedPackage.price,
+          ip: FraudDetectionService.getClientIP(req),
+          deviceFingerprint: FraudDetectionService.generateDeviceFingerprint(req)
         }
       );
       
@@ -120,6 +128,37 @@ const purchaseCredits = asyncHandler(async (req: Request, res: Response) => {
   }
 });
 
+// Admin: Get fraud report for user
+const getUserFraudReport = asyncHandler(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  
+  // TODO: Add admin role check middleware
+  
+  const fraudReport = await FraudDetectionService.getFraudReport(userId);
+  
+  if (!fraudReport) {
+    throw new ApiError(404, "Fraud report not found");
+  }
+  
+  return res.status(200).json(
+    new ApiResponse(200, fraudReport, "Fraud report fetched successfully")
+  );
+});
+
+// Admin: Flag/unflag user account
+const updateAccountFlag = asyncHandler(async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  const { isFlagged, reason } = req.body;
+  
+  // TODO: Add admin role check middleware
+  
+  await FraudDetectionService.updateAccountFlag(userId, isFlagged, reason);
+  
+  return res.status(200).json(
+    new ApiResponse(200, {}, `Account ${isFlagged ? 'flagged' : 'unflagged'} successfully`)
+  );
+});
+
 // Admin: Adjust user credits
 const adjustUserCredits = asyncHandler(async (req: Request, res: Response) => {
   const { userId, amount, reason } = req.body;
@@ -134,7 +173,7 @@ const adjustUserCredits = asyncHandler(async (req: Request, res: Response) => {
   try {
     const result = amount > 0 
       ? await CreditService.addCredits(
-          userId as string,
+          userId,
           Math.abs(amount),
           "admin_adjustment",
           `Admin adjustment: ${reason}`,
@@ -206,6 +245,8 @@ export {
   getCreditBalance,
   getTransactionHistory,
   purchaseCredits,
+  getUserFraudReport,
+  updateAccountFlag,
   adjustUserCredits,
   getCreditPackages
 };

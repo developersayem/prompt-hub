@@ -4,6 +4,8 @@ import {
   getCreditBalance,
   getTransactionHistory,
   purchaseCredits,
+  getUserFraudReport,
+  updateAccountFlag,
   adjustUserCredits,
   getCreditPackages
 } from "../controller/credit.controller";
@@ -22,6 +24,8 @@ router.get("/transactions", getTransactionHistory);
 router.post("/purchase", purchaseCredits);
 
 // Admin routes (TODO: Add admin middleware)
+router.get("/admin/fraud-report/:userId", getUserFraudReport);
+router.post("/admin/flag-account/:userId", updateAccountFlag);
 router.post("/admin/adjust", adjustUserCredits);
 
 export default router;
