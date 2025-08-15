@@ -10,7 +10,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   Shield,
   Clock,
@@ -183,28 +182,6 @@ export function GetCertifiedCom() {
             </Card>
           ))}
         </div>
-
-        {/* Progress Indicator */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Your Progress</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex justify-between text-sm">
-                <span>Profile Completion</span>
-                <span>85%</span>
-              </div>
-              <Progress value={85} />
-
-              <div className="flex justify-between text-sm">
-                <span>Practice Tests Completed</span>
-                <span>3/5</span>
-              </div>
-              <Progress value={60} />
-            </div>
-          </CardContent>
-        </Card>
 
         {selectedCertification && (
           <div className="border-t pt-6">
