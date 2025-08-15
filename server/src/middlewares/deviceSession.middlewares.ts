@@ -73,9 +73,10 @@ export const enforceDeviceLimit = async (req: Request, res: Response, next: Next
 
     if (activeDeviceCount >= 3) {
       // This will be handled by trackConnectedDevice function
-      // Just log for monitoring
-      console.log(`User ${userId} has reached device limit (${activeDeviceCount} devices)`);
-    }
+  return res.status(401).json({
+    error: "Max device limit reached. Please logout from another device to continue.",
+  });
+}
 
     next();
   } catch (error) {

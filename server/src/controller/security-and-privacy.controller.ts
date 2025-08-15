@@ -13,7 +13,7 @@ const getSecurityEvents = asyncHandler(async (req: Request, res: Response) => {
   const userId = (req as any).user?._id;
   if (!userId) throw new ApiError(401, "Unauthorized");
 
-  const { page = 1, limit = 20 } = req.query;
+  const { page = 1, limit = 5 } = req.query;
   const skip = (parseInt(page as string) - 1) * parseInt(limit as string);
 
   const [events, total] = await Promise.all([

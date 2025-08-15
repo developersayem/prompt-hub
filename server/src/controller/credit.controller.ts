@@ -6,6 +6,7 @@ import { EnhancedCreditService } from "../services/enhancedCredit.service";
 import { FraudDetectionService } from "../services/fraudDetection.service";
 import { CreditService } from "../services/credit.service";
 import { TransactionType } from "../models/creditTransaction.model";
+import { Package } from "../models/package.model";
 
 // Get user's credit balance and stats with fraud info
 const getCreditBalance = asyncHandler(async (req: Request, res: Response) => {
@@ -208,34 +209,8 @@ const adjustUserCredits = asyncHandler(async (req: Request, res: Response) => {
 
 // Get credit packages for purchase
 const getCreditPackages = asyncHandler(async (req: Request, res: Response) => {
-  const packages = [
-    {
-      id: "starter",
-      name: "Starter Pack",
-      credits: 500,
-      price: 3.99,
-      popular: false,
-      features: ["500 Credits", "Basic Support", "30 Days Validity"]
-    },
-    {
-      id: "professional", 
-      name: "Professional",
-      credits: 1500,
-      price: 6.99,
-      popular: true,
-      features: ["1,500 Credits", "Priority Support", "60 Days Validity", "Bonus Features"]
-    },
-    {
-      id: "unlimited",
-      name: "Unlimited", 
-      credits: -1, // Unlimited credits
-      price: 9.99,
-      popular: false,
-      duration: 30, // 30 days
-      features: ["Unlimited Credits", "24/7 Support", "30 Days Duration", "Premium Features", "API Access"]
-    }
-  ];
-  
+  const packages = await Package.find();
+
   return res.status(200).json(
     new ApiResponse(200, packages, "Credit packages fetched successfully")
   );

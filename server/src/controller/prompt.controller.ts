@@ -16,6 +16,7 @@ import { getAllNestedCommentIds } from "../helper/getAllNestedCommentIds";
 import { cleanInvalidPromptReferences } from "../utils/cleanInvalidPromptReferences";
 import { Report } from "../models/report.model";
 import { CreditService } from "../services/credit.service";
+import { Package } from "../models/package.model";
 
 // Helper: check if a string is a valid URL
 const isValidUrl = (urlString: string) => {
@@ -833,8 +834,8 @@ await User.updateOne(
     .status(200)
     .json(new ApiResponse(200, {}, "Prompt deleted successfully"));
 });
-//controller for buy prompt
-const buyPromptController = asyncHandler(async (req: Request, res: Response) => {
+//controller for purchase prompt
+const purchasePromptController = asyncHandler(async (req: Request, res: Response) => {
   const promptId = req.params.id;
   const userId = (req as any).user?._id;
 
@@ -861,6 +862,23 @@ const buyPromptController = asyncHandler(async (req: Request, res: Response) => 
   const creator = await User.findById(prompt.creator);
 
   if (!buyer || !creator) throw new ApiError(404, "User not found");
+
+  // Check if user has sufficient credits
+  if (buyer.credits < price) {
+    return res.status(400).json(
+      new ApiResponse(
+        400,
+        {
+          error: "INSUFFICIENT_CREDITS",
+          currentCredits: buyer.credits,
+          requiredCredits: price,
+          shortfall: price - buyer.credits,
+          message: "You don't have enough credits to purchase this prompt. Please buy more credits to continue."
+        },
+        "Insufficient credits to purchase this prompt"
+      )
+    );
+  }
 
   try {
     // Use CreditService for the transaction
@@ -892,12 +910,35 @@ const buyPromptController = asyncHandler(async (req: Request, res: Response) => 
     return res.status(200).json(
       new ApiResponse(
         200,
-        { updatedCredits: updatedBuyer.credits },
+        { 
+          updatedCredits: updatedBuyer.credits,
+          prompt: {
+            id: prompt._id,
+            title: prompt.title,
+            price: price
+          }
+        },
         "Prompt purchased successfully"
       )
     );
   } catch (error) {
     if (error instanceof ApiError) {
+      // Handle specific credit-related errors
+      if (error.message.includes("Insufficient credits")) {
+        return res.status(400).json(
+          new ApiResponse(
+            400,
+            {
+              error: "INSUFFICIENT_CREDITS",
+              currentCredits: buyer.credits,
+              requiredCredits: price,
+              shortfall: price - buyer.credits,
+              message: "You don't have enough credits to purchase this prompt. Please buy more credits to continue."
+            },
+            "Insufficient credits to purchase this prompt"
+          )
+        );
+      }
       throw error;
     }
     throw new ApiError(500, "Failed to process prompt purchase");
@@ -959,7 +1000,6 @@ const getMyPurchasesController = asyncHandler(async (req: Request, res: Response
     success: true,
   });
 });
-
 // Controller for get prompt by slug
 const getPromptBySlugController = asyncHandler(
   async (req: RequestWithIP, res: Response) => {
@@ -1642,7 +1682,7 @@ export {
   getSinglePromptController,
   updatePromptController,
   deletePromptController,
-  buyPromptController,
+  purchasePromptController,
   getMyPurchasesController,
   getPromptBySlugController,
   savePromptAsDraftController,

@@ -92,14 +92,14 @@ const fraudDetectionSchema = new Schema<IFraudDetection>(
     }
   },
   { 
-    timestamps: true,
-    indexes: [
-      { registrationIP: 1, createdAt: -1 },
-      { riskScore: -1, isFlagged: 1 },
-      { userId: 1, bonusClaimCount: -1 }
-    ]
+    timestamps: true
   }
 );
+
+// Define indexes separately
+fraudDetectionSchema.index({ registrationIP: 1, createdAt: -1 });
+fraudDetectionSchema.index({ riskScore: -1, isFlagged: 1 });
+fraudDetectionSchema.index({ userId: 1, bonusClaimCount: -1 });
 
 export const FraudDetection = mongoose.model<IFraudDetection>(
   "FraudDetection", 

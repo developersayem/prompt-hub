@@ -24,7 +24,7 @@ import {
   replyCommentController,
   likeCommentController,
   getMyPurchasesController,
-  buyPromptController,
+  purchasePromptController,
   getTrendingPrompts,
   increasePromptViewsController,
   getAllPromptsByUserSlugController,
@@ -99,7 +99,7 @@ router.post("/comment/reply", verifyJWT, replyCommentController);
 
 // Purchases Routes
 router.get("/purchase-history", verifyJWT, getMyPurchasesController);
-router.post("/:id/buy", verifyJWT, buyPromptController);
+router.post("/:id/purchase", verifyJWT, purchasePromptController);
 
 
 // route to get all reports against the current user's prompts
