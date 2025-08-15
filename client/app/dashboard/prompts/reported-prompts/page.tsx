@@ -33,8 +33,6 @@ export default function MyReportedPosts() {
     fetcher
   );
 
-  console.log("data:", data);
-
   const reportedPosts = useMemo(() => data || [], [data]);
 
   useEffect(() => {
