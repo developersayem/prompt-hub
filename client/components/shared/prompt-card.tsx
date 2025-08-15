@@ -561,7 +561,7 @@ const PromptCard: FC<PromptCardProps> = ({
                 className="flex-1 flex items-center justify-center min-w-[60px] cursor-pointer"
                 onClick={() => handleCopyPrompt(prompt)}
               >
-                <Clipboard className="h-4 w-4 mr-2" />
+                <Clipboard />
                 Copy
               </Button>
             ) : (
@@ -572,7 +572,7 @@ const PromptCard: FC<PromptCardProps> = ({
                     size="sm"
                     className="flex-1 flex items-center justify-center min-w-[60px]"
                   >
-                    <Coins className="h-4 w-4 mr-2" />
+                    <Coins />
                     {prompt.price}
                   </Button>
                 </AlertDialogTrigger>

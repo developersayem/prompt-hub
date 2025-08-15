@@ -207,7 +207,7 @@ export default function FeedPage() {
                         size="sm"
                         className="cursor-pointer"
                       >
-                        <Filter className="h-4 w-4 mr-2" />
+                        <Filter />
                         More
                         {(filters.aiModels.length > 0 ||
                           filters.tags.length > 0 ||

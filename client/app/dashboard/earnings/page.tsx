@@ -56,7 +56,7 @@ export default function EarningsPage() {
           <CardContent>
             <div className="text-3xl font-bold">$67.30</div>
             <Button className="mt-4 w-full">
-              <Download className="h-4 w-4 mr-2" />
+              <Download />
               Request Payout
             </Button>
           </CardContent>

@@ -274,7 +274,7 @@ export function ReportedPostCard({
             onClick={() => onViewDetails(reportedPost)}
             className="flex-1"
           >
-            <Eye className="h-4 w-4 mr-2" />
+            <Eye />
             View Details
           </Button>
           {/* <Button variant="outline" size="sm" asChild>
@@ -283,7 +283,7 @@ export function ReportedPostCard({
               target="_blank"
               rel="noopener noreferrer"
             >
-              <ExternalLink className="h-4 w-4 mr-2" />
+              <ExternalLink   />
               View Post
             </a>
           </Button> */}
